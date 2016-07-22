@@ -30,7 +30,9 @@
 RCT_EXPORT_MODULE()
 
 
-RCT_EXPORT_METHOD(connect:(NSString*)appIDstr callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(connect:(NSString*)appIDstr                            
+                 resolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
 {
     if (!_layerClient) {
         NSLog(@"No Layer Client");
@@ -40,12 +42,13 @@ RCT_EXPORT_METHOD(connect:(NSString*)appIDstr callback:(RCTResponseSenderBlock)c
         [_layerClient connectWithCompletion:^(BOOL success, NSError *error) {
             if (!success) {
                 RCTLogInfo(@"Failed to connect to Layer: %@", error);
-                callback(@[[_jsonHelper convertErrorToDictionary:error], @NO]);
+                reject(@"no_events", @"There were no events", error);
             } else {
                 RCTLogInfo(@"Connected to Layer!");
                 if(_deviceToken)
                     [self updateRemoteNotificationDeviceToken:_deviceToken];
-                callback(@[[NSNull null], @YES]);
+                NSString *thingToReturn = @"YES";
+                resolve(thingToReturn);
             }
         }];
         
@@ -57,7 +60,9 @@ RCT_EXPORT_METHOD(disconnect)
     [_layerClient disconnect];
 }
 
-RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)userIDs callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)userIDs
+                                                             resolver:(RCTPromiseResolveBlock)resolve
+                                                             rejecter:(RCTPromiseRejectBlock)reject)
 {
     // Declares a MIME type string
     static NSString *const MIMETypeTextPlain = @"text/plain";
@@ -71,7 +76,9 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
     }
     if(convErr){
         id retErr = RCTMakeAndLogError(@"Error creating conversastion",convErr,NULL);
-        callback(@[retErr,[NSNull null]]);
+        //callback(@[retErr,[NSNull null]]);
+        NSError *error = retErr;
+        reject(@"no_events", @"Error creating conversastion", error);        
     }
     // Creates a message part with a text/plain MIMEType
     NSError *error = nil;
@@ -86,14 +93,14 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
     
     if(success){
         RCTLogInfo(@"Layer Message sent to %@", userIDs);
-        //callback(@[[NSNull null],conversation]);
-        callback(@[[NSNull null],@YES]);
-        
+        //TODO: return conversation
+        NSString *thingToReturn = @"YES";
+        resolve(thingToReturn);        
     }
     else {
         id retErr = RCTMakeAndLogError(@"Error sending Layer message",error,NULL);
-        callback(@[retErr,[NSNull null]]);
-        
+        NSError *error = retErr;
+        reject(@"no_events", @"Error creating conversastion", error);        
     }
     
 }
@@ -193,18 +200,21 @@ RCT_EXPORT_METHOD(unregisterForTypingEvents)
     [[NSNotificationCenter defaultCenter] removeObserver:self name:LYRConversationDidReceiveTypingIndicatorNotification object:nil];
 }
 #pragma mark - Authentication
-RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID
+                                     resolver:(RCTPromiseResolveBlock)resolve
+                                     rejecter:(RCTPromiseRejectBlock)reject)
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:LYRConversationDidReceiveTypingIndicatorNotification object:nil];
     LayerAuthenticate *lAuth = [LayerAuthenticate new];
     [lAuth authenticateLayerWithUserID:userID layerClient:_layerClient completion:^(NSError *error) {
         if (!error) {
-            //GOOD LOGIN!!!
-            callback(@[[NSNull null],@(YES)]);
+            NSString *thingToReturn = @"YES";
+            resolve(thingToReturn);            
         }
         else{
             id retErr = RCTMakeAndLogError(@"Error logging in",error,NULL);
-            callback(@[retErr,[NSNull null]]);
+            NSError *error = retErr;
+            reject(@"no_events", @"TError logging in", error);            
         }
     }];
 }
