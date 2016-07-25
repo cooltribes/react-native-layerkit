@@ -121,25 +121,28 @@ RCT_EXPORT_METHOD(getConversations:(int)limit offset:(int)offset
     else{
         JSONHelper *helper = [JSONHelper new];
         NSArray *retData = [helper convertConvosToArray:allConvos];
-        callback(@[[NSNull null],retData]);
         NSString *thingToReturn = @"YES";
         resolve(@[thingToReturn,retData]);         
     }
 }
 
-RCT_EXPORT_METHOD(getMessages:(NSString*)convoID limit:(int)limit offset:(int)offset callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(getMessages:(NSString*)convoID limit:(int)limit offset:(int)offset
+                                                                resolver:(RCTPromiseResolveBlock)resolve
+                                                                rejecter:(RCTPromiseRejectBlock)reject) 
 {
     LayerQuery *query = [LayerQuery new];
     NSError *queryError;
     NSOrderedSet *convoMessages = [query fetchMessagesForConvoId:convoID client:_layerClient limit:limit offset:offset error:queryError];
     if(queryError){
         id retErr = RCTMakeAndLogError(@"Error getting Layer messages",queryError,NULL);
-        callback(@[retErr,[NSNull null]]);
+        NSError *error = retErr;
+        reject(@"no_events", @"Error creating conversastion", error); 
     }
     else{
         JSONHelper *helper = [JSONHelper new];
         NSArray *retData = [helper convertMessagesToArray:convoMessages];
-        callback(@[[NSNull null],retData]);
+        NSString *thingToReturn = @"YES";
+        resolve(@[thingToReturn,retData]); 
     }
 }
 
