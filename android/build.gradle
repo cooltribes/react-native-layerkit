@@ -1,0 +1,28 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.1"
+
+    defaultConfig {
+        minSdkVersion 16
+        targetSdkVersion 22
+        versionCode 1
+        versionName "1.0"
+        ndk {
+            abiFilters "armeabi-v7a", "x86"
+        }
+    }
+    lintOptions {
+       warning 'InvalidPackage'
+    }
+}
+repositories {
+    maven { url "https://raw.githubusercontent.com/layerhq/releases-android/master/releases/" }
+}
+dependencies {
+    compile 'com.facebook.react:react-native:0.11.+'
+    compile 'com.google.android.gms:play-services-gcm:8.3.0'
+    compile 'com.layer.sdk:layer-sdk:0.21.3'
+    compile 'org.slf4j:slf4j-nop:1.5.8'    
+}

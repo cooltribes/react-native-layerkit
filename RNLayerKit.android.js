@@ -7,11 +7,12 @@
 'use strict';
 
 var warning = require('warning');
+var RNLayerKit = require('react-native').NativeModules.RNLayerKit;
 
-var RNLayerKit = {
+var RNLayerKitExport = {
   test: function() {
     warning("Not yet implemented for Android.");
   }
 };
 
-module.exports = RNLayerKit;
+module.exports = RNLayerKitExport;
