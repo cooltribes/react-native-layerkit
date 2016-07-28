@@ -9,6 +9,8 @@ import com.facebook.react.uimanager.IllegalViewOperationException;
 
 import com.layer.sdk.LayerClient;
 
+import com.layer.sdk.messaging.Message;
+
 public class RNLayerModule extends ReactContextBaseJavaModule {
 
   ReactApplicationContext reactContext;
@@ -77,5 +79,44 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
       promise.reject(e);
     }
   } 
+
+  @ReactMethod
+  public void getMessages(
+    String convoID
+    Int limit,
+    Int offset,
+    Promise promise) {
+    try {
+
+      Query query = Query.builder(Message.class)
+              .predicate(new Predicate(Conversation.Property.CONVERSATION, Predicate
+                .Operator.EQUAL_TO, this.fetchConvoWithId(convoID,layerClient)))
+              .limit(10)
+              .build();
+
+      List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
+      if (results != null) {
+          promise.resolve("YES",results);
+      }
+    } catch (IllegalViewOperationException e) {
+      promise.reject(e);
+    }
+  }
+
+  private Conversation fetchConvoWithId(
+    String convoID,
+    LayerClient client
+    ) {
+
+    Query query = Query.builder(Conversation.class)
+    .predicate(new Predicate(Conversation.Property.IDENTIFIER, Predicate.Operator.EQUAL_TO, convoID))
+    .build();
+
+    List<Conversation> results = client.executeQuery(query, Query.ResultType.OBJECTS);
+    if (results != null) {
+      results.get(0);
+    } 
+    return new Conversation();
+  }
 
 }
