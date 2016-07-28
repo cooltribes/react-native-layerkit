@@ -103,7 +103,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     }
   }
 
-  private Conversation fetchConvoWithId(
+  private List<Conversation> fetchConvoWithId(
     String convoID,
     LayerClient client
     ) {
@@ -116,7 +116,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     if (results != null) {
       results.get(0);
     } 
-    return new Conversation();
+    return new List<Conversation>;
   }
 
 }
