@@ -39,7 +39,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
       if(authenticationListener == null)
         authenticationListener = new MyAuthenticationListener(this); 
       layerClient.registerAuthenticationListener(authenticationListener); 
-            
+
       layerClient.connect();
       promise.resolve('YES');
     } catch (IllegalViewOperationException e) {
@@ -54,6 +54,25 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     try {
       userIDGlobal = userID;
       layerClient.authenticate();
+    } catch (IllegalViewOperationException e) {
+      promise.reject(e);
+    }
+  } 
+
+  @ReactMethod
+  public void getConversations(
+    Int limit,
+    Int offset,
+    Promise promise) {
+    try {
+      Query query = Query.builder(Conversation.class)
+              .limit(10)
+              .build();
+
+      List<Conversation> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
+      if (results != null) {
+          promise.resolve("YES",results.get(0));
+      }
     } catch (IllegalViewOperationException e) {
       promise.reject(e);
     }
