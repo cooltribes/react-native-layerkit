@@ -19,6 +19,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
   }
 
   private LayerClient layerClient;
+  public static String userIDGlobal;
+
+  private MyAuthenticationListener authenticationListener;
 
   @Override
   public String getName() {
@@ -32,10 +35,28 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     try {
       LayerClient.Options options = new LayerClient.Options();
       layerClient = LayerClient.newInstance(this.reactContext, appIDstr, options);
+
+      if(authenticationListener == null)
+        authenticationListener = new MyAuthenticationListener(this); 
+      layerClient.registerAuthenticationListener(authenticationListener); 
+            
       layerClient.connect();
+      promise.resolve('YES');
     } catch (IllegalViewOperationException e) {
       promise.reject(e);
     }
   }
+
+  @ReactMethod
+  public void authenticateLayerWithUserID(
+    String userID,
+    Promise promise) {
+    try {
+      userIDGlobal = userID;
+      layerClient.authenticate();
+    } catch (IllegalViewOperationException e) {
+      promise.reject(e);
+    }
+  } 
 
 }
