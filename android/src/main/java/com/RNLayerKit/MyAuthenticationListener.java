@@ -70,13 +70,12 @@ public class MyAuthenticationListener implements LayerAuthenticationListener {
     }
 
     //Called when the user has successfully authenticated
-    // public void onAuthenticated(LayerClient client, String userID) {
+     public void onAuthenticated(LayerClient client, String userID) {
 
-    //     //Start the conversation view after a successful authentication
-    //     Log.v(TAG, "Authentication successful");
-    //     if (main_activity != null)
-    //         main_activity.onUserAuthenticated();
-    // }
+         //Start the conversation view after a successful authentication
+         Log.v(TAG, "Authentication successful");
+       
+     }
 
     //Called when there was a problem authenticating
     //Common causes include a malformed identity token, missing parameters in the identity token,

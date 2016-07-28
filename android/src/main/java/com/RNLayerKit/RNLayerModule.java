@@ -8,6 +8,12 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.uimanager.IllegalViewOperationException;
 
 import com.layer.sdk.LayerClient;
+import com.layer.sdk.messaging.Conversation;
+import java.util.List;
+
+import com.layer.sdk.query.Query;
+import com.layer.sdk.query.SortDescriptor;
+import com.layer.sdk.query.Queryable;
 
 import com.layer.sdk.messaging.Message;
 
@@ -41,9 +47,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
       if(authenticationListener == null)
         authenticationListener = new MyAuthenticationListener(this); 
       layerClient.registerAuthenticationListener(authenticationListener); 
-
+            
       layerClient.connect();
-      promise.resolve('YES');
+      promise.resolve("YES");
     } catch (IllegalViewOperationException e) {
       promise.reject(e);
     }
@@ -56,6 +62,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     try {
       userIDGlobal = userID;
       layerClient.authenticate();
+      promise.resolve("YES");
     } catch (IllegalViewOperationException e) {
       promise.reject(e);
     }
@@ -63,17 +70,26 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void getConversations(
-    Int limit,
-    Int offset,
-    Promise promise) {
+    int limit,
+    int offset,
+    Promise promise) {   
+
+    Conversation[] r=new Conversation[2];
+
+    String c="YES";
+
     try {
       Query query = Query.builder(Conversation.class)
               .limit(10)
               .build();
 
       List<Conversation> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
+      
       if (results != null) {
-          promise.resolve("YES",results.get(0));
+        
+        Object[] valor=new Object[]{"YES",results.get(0)};
+      
+          promise.resolve(valor);
       }
     } catch (IllegalViewOperationException e) {
       promise.reject(e);
