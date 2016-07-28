@@ -21,8 +21,8 @@ repositories {
     maven { url "https://raw.githubusercontent.com/layerhq/releases-android/master/releases/" }
 }
 dependencies {
-    compile 'com.facebook.react:react-native:0.11.+'
-    compile 'com.google.android.gms:play-services-gcm:8.3.0'
-    compile 'com.layer.sdk:layer-sdk:0.21.3'
-    compile 'org.slf4j:slf4j-nop:1.5.8'    
+    compile 'com.facebook.react:react-native:+'
+    compile 'com.layer.sdk:layer-sdk:0.21.2'
+    compile 'com.google.android.gms:play-services-gcm:8.4.0'
+    compile 'org.slf4j:slf4j-nop:1.5.8'  
 }
