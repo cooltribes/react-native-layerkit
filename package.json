@@ -2,7 +2,7 @@
   "name": "react-native-layerkit",
   "version": "0.2.0",
   "description": "React Native Bridge for the Layer communication service",
-  "main": "RNLayerKit.ios.js",
+  "main": "RNLayerKit.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

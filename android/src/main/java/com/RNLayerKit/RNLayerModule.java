@@ -7,10 +7,13 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableArray;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.uimanager.IllegalViewOperationException;
 import com.facebook.react.bridge.WritableNativeArray;
 import com.facebook.react.bridge.WritableNativeMap;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.facebook.react.bridge.ReactContext;
 
 import com.layer.sdk.LayerClient;
 import com.layer.sdk.messaging.Conversation;
@@ -21,21 +24,33 @@ import com.layer.sdk.messaging.MessagePart;
 import com.layer.sdk.messaging.Metadata;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import com.layer.sdk.query.Predicate;
 import com.layer.sdk.query.Query;
 import com.layer.sdk.query.SortDescriptor;
 import com.layer.sdk.query.Queryable;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 
 import java.util.Iterator;
+import java.util.TimeZone;
 import javax.annotation.Nullable;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
 import android.util.Log;
+import java.lang.reflect.Type;
+import com.google.gson.reflect.TypeToken;
+import java.text.SimpleDateFormat;
+import java.text.DateFormat;
+
+import java.nio.charset.Charset;
+
 
 public class RNLayerModule extends ReactContextBaseJavaModule {
 
@@ -48,12 +63,23 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
   private LayerClient layerClient;
   public static String userIDGlobal;
+  //public static final String DATE_FORMAT_NOW = "EEE, dd MMM yyyy HH:mm:ss Z";
+  public static final String DATE_FORMAT_NOW = "yyyy-MM-dd'T'HH:mm'Z'";
+  private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
   private MyAuthenticationListener authenticationListener;
-
+  private MyChangeEventListener changeEventListener;
   @Override
   public String getName() {
     return "RNLayerKit";
+  }
+
+  public void sendEvent(ReactContext reactContext,
+                         String eventName,
+                         @Nullable WritableMap params) {
+    reactContext
+        .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+        .emit(eventName, params);
   }
 
   @ReactMethod
@@ -67,7 +93,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
       if(authenticationListener == null)
         authenticationListener = new MyAuthenticationListener(this); 
       layerClient.registerAuthenticationListener(authenticationListener); 
-            
+      if(changeEventListener == null)
+        changeEventListener = new MyChangeEventListener(this);       
+      layerClient.registerEventListener(changeEventListener);      
       layerClient.connect();
       promise.resolve("YES");
     } catch (IllegalViewOperationException e) {
@@ -92,10 +120,12 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
   public void getConversations(
     int limit,
     int offset,
-    Promise promise) {   
+    Promise promise) {
 
     try {
       WritableArray writableArray = new WritableNativeArray();
+      WritableArray writableArray2 = new WritableNativeArray();
+      
 
       Query query = Query.builder(Conversation.class)
               .limit(10)
@@ -104,20 +134,27 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
       List<Conversation> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
       if (results != null) {
           writableArray.pushString("YES");
-          
-          String jsonResults = new Gson().toJson(results);
-           Log.v("RAFA", jsonResults);
-          
-          try {
-          //JSONArray jsonArray = new JSONArray("{'a':1,'b':2}");
-            JSONArray jsonArray = new JSONArray(jsonResults);
-          } catch (JSONException e) {
-            Log.e("RAFA", "Invalid JSON string: " + jsonResults, e);
-            return null;
+          for(int i = 0; i < results.size(); i++){
+            WritableMap writableMap = new WritableNativeMap();
+            writableMap.putString("identifier", results.get(i).getId().toString());
+            writableMap.putBoolean("isDeleted", results.get(i).isDeleted());
+            //TODO Put createdAt from MessagePart
+            //writableMap.putString("createdAt", results.get(i).createdAt.toString());
+            writableMap.putInt("hasUnreadMessages", results.get(i).getTotalUnreadMessageCount());
+            writableMap.putMap("lastMessage", messageToWritableMap(results.get(i).getLastMessage()));
+            Log.v("RAFAgetMetadata", results.get(i).getMetadata().toString());
+            writableMap.putString("metadata", results.get(i).getMetadata().toString());
+            List<String> participants = results.get(i).getParticipants();
+            WritableArray writableArray3 = new WritableNativeArray(); 
+            for(int j = 0; j < participants.size(); j++ ){
+              writableArray3.pushString(participants.get(j));
+            }
+            writableMap.putArray("participants", writableArray3);
+            writableMap.putBoolean("deliveryReceiptsEnabled", results.get(i).isDeliveryReceiptsEnabled());
+            writableArray2.pushMap(writableMap);           
           } 
-          //JSONObject jsonObject = new JSONObject(results.get(0));
-          writableArray.pushArray(jsonArrayToWritableArray(jsonArray));
-          //writableArray.pushMap(jsonToWritableMap(jsonObject));
+          writableArray.pushArray(writableArray2);
+          
           promise.resolve(writableArray);
       }
     } catch (IllegalViewOperationException e) {
@@ -127,10 +164,11 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void getMessages(
-    String convoID
+    String convoID,
     int limit,
     int offset,
     Promise promise) {
+    WritableArray writableArray = new WritableNativeArray();
     try {
 
       Query query = Query.builder(Message.class)
@@ -141,14 +179,63 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
       List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
       if (results != null) {
-          promise.resolve("YES");
+        writableArray.pushString("YES");
+        writableArray.pushArray(messagesToWritableArray(results));
+        promise.resolve(writableArray);
       }
     } catch (IllegalViewOperationException e) {
       promise.reject(e);
     }
   }
+  @ReactMethod
+  public void sendMessageToUserIDs(
+    String messageText,
+    ReadableArray userIDs,
+    Promise promise) {
+    try {
+      Conversation conversation = fetchLayerConversationWithParticipants(userIDs, layerClient);
+      //Put the user's text into a message part, which has a MIME type of "text/plain" by default
+      MessagePart messagePart = layerClient.newMessagePart(messageText);
 
-  private List<Conversation> fetchConvoWithId(
+      //Formats the push notification that the other participants will receive
+      MessageOptions options = new MessageOptions();
+      //TODO: Push Notifications
+      //options.pushNotificationMessage(userIDGlobal + ": " + messageText);
+
+      //Creates and returns a new message object with the given conversation and array of
+      // message parts
+      Message message = layerClient.newMessage(options, Arrays.asList(messagePart)); 
+
+      conversation.send(message);
+      promise.resolve("YES");
+    } catch (IllegalViewOperationException e) {
+      promise.reject(e);
+    } 
+
+  }
+
+  private Conversation fetchLayerConversationWithParticipants(
+    ReadableArray userIDs,
+    LayerClient client
+    ) {
+    String[] userIDsArray = new String[userIDs.size()];
+    for (int i = 0; i < userIDs.size(); i++) {
+      userIDsArray[i] = userIDs.getString(i);  
+    }
+    Query query = Query.builder(Conversation.class)
+    .predicate(new Predicate(Conversation.Property.PARTICIPANTS, Predicate.Operator.EQUAL_TO, userIDsArray))
+    .build();
+
+    List<Conversation> results = client.executeQuery(query, Query.ResultType.OBJECTS);
+    if (results != null) {
+      if (results.size() > 0){
+        return results.get(0);
+      }
+    } 
+    return client.newConversation(userIDsArray);
+  }
+
+  private Conversation fetchConvoWithId(
     String convoID,
     LayerClient client
     ) {
@@ -159,91 +246,87 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
     List<Conversation> results = client.executeQuery(query, Query.ResultType.OBJECTS);
     if (results != null) {
-      results.get(0);
+      return results.get(0);
     } 
-    List<Conversation> returnValue = new List<Conversation>();;
-    return returnValue;
+    //TODO: Return null
+    return results.get(0);
+  }
+
+
+  @Nullable
+  public static WritableArray messagesToWritableArray(List<Message> messages) {
+    WritableArray messagesArray = new WritableNativeArray();
+
+    if (messages == null) {
+        return null;
+    }
+    for(int i = 0; i < messages.size(); i++ ){
+      messagesArray.pushMap(messageToWritableMap(messages.get(i)));
+    }    
+
+    return messagesArray;
+
   }
 
   @Nullable
-  public static WritableMap jsonToWritableMap(JSONObject jsonObject) {
-      WritableMap writableMap = new WritableNativeMap();
+  public static WritableMap messageToWritableMap(Message message) {
+    WritableMap messageMap = new WritableNativeMap();
 
-      if (jsonObject == null) {
-          return null;
-      }
+    if (message == null) {
+        return null;
+    }
+    DateFormat sdf = new SimpleDateFormat(DATE_FORMAT_NOW);
+    TimeZone tz = TimeZone.getTimeZone("UTC");
+    sdf.setTimeZone(tz);    
+    messageMap.putString("identifier",message.getId().toString());
+    messageMap.putBoolean("isDeleted",message.isDeleted());
+    messageMap.putBoolean("isSent",message.isSent());
+    //TODO: ADD isUnread
+    //messageMap.putBoolean("isUnread",message.isUnread());
+    messageMap.putString("receivedAt",sdf.format(message.getReceivedAt()));
+    messageMap.putString("sentAt",sdf.format(message.getSentAt()));
+    messageMap.putArray("part",messagePartsToWritableMap(message.getMessageParts()));
+    messageMap.putString("sender",message.getSender().getUserId().toString()); 
+    if (message.getMessageParts().get(0).getMimeType().equals("text/plain")){
+      messageMap.putString("text",new String(message.getMessageParts().get(0).getData(), UTF8_CHARSET));
+    } 
+    return messageMap;
 
-
-      Iterator<String> iterator = jsonObject.keys();
-      if (!iterator.hasNext()) {
-          return null;
-      }
-
-      while (iterator.hasNext()) {
-          String key = iterator.next();
-
-          try {
-              Object value = jsonObject.get(key);
-
-              if (value == null) {
-                  writableMap.putNull(key);
-              } else if (value instanceof Boolean) {
-                  writableMap.putBoolean(key, (Boolean) value);
-              } else if (value instanceof Integer) {
-                  writableMap.putInt(key, (Integer) value);
-              } else if (value instanceof Double) {
-                  writableMap.putDouble(key, (Double) value);
-              } else if (value instanceof String) {
-                  writableMap.putString(key, (String) value);
-              } else if (value instanceof JSONObject) {
-                  writableMap.putMap(key, jsonToWritableMap((JSONObject) value));
-              } else if (value instanceof JSONArray) {
-                  writableMap.putArray(key, jsonArrayToWritableArray((JSONArray) value));
-              }
-          } catch (JSONException ex) {
-              // Do nothing and fail silently
-          }
-      }
-
-      return writableMap;
   }
-
   @Nullable
-  public static WritableArray jsonArrayToWritableArray(JSONArray jsonArray) {
-      WritableArray writableArray = new WritableNativeArray();
+  public static WritableArray messagePartsToWritableMap(List<MessagePart> messageParts) {
+    WritableArray messagePartArray = new WritableNativeArray();
 
-      if (jsonArray == null) {
-          return null;
-      }
+    if (messageParts == null) {
+        return null;
+    }
+    for(int i = 0; i < messageParts.size(); i++ ){
+      messagePartArray.pushMap(messagePartToWritableMap(messageParts.get(i)));
+    }
+    
+    return messagePartArray;
+  }  
+  @Nullable
+  public static WritableMap messagePartToWritableMap(MessagePart messagePart) {
+    WritableMap messagePartMap = new WritableNativeMap();
 
-      if (jsonArray.length() <= 0) {
-          return null;
-      }
+    if (messagePart == null) {
+        return null;
+    }
 
-      for (int i = 0 ; i < jsonArray.length(); i++) {
-          try {
-              Object value = jsonArray.get(i);
-              if (value == null) {
-                  writableArray.pushNull();
-              } else if (value instanceof Boolean) {
-                  writableArray.pushBoolean((Boolean) value);
-              } else if (value instanceof Integer) {
-                  writableArray.pushInt((Integer) value);
-              } else if (value instanceof Double) {
-                  writableArray.pushDouble((Double) value);
-              } else if (value instanceof String) {
-                  writableArray.pushString((String) value);
-              } else if (value instanceof JSONObject) {
-                  writableArray.pushMap(jsonToWritableMap((JSONObject) value));
-              } else if (value instanceof JSONArray) {
-                  writableArray.pushArray(jsonArrayToWritableArray((JSONArray) value));
-              }
-          } catch (JSONException e) {
-              // Do nothing and fail silently
-          }
-      }
+    messagePartMap.putString("identifier",messagePart.getId().toString());
+    messagePartMap.putString("MIMEType",messagePart.getMimeType());
+    Log.v("RAFAgetMimeType", messagePart.getMimeType());
+    if (messagePart.getMimeType().equals("text/plain")){
+      String s = new String(messagePart.getData(), UTF8_CHARSET);
+      Log.v("RAFAString", s);
+      messagePartMap.putString("data",s);
+    }
+    messagePartMap.putDouble("size",messagePart.getSize());
+    messagePartMap.putInt("transferStatus",messagePart.getTransferStatus().getValue());
+    
+    return messagePartMap;
+  }      
 
-      return writableArray;
-  }
 
 }
