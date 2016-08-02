@@ -28,6 +28,20 @@
     return nil;
   }
 }
+-(NSUInteger*)fetchMessagesCount:client:(LYRClient*)client error:(NSError*)error
+{
+  // Fetches all unread messages
+  LYRQuery *query = [LYRQuery queryWithQueryableClass:[LYRConversation class]];
+  query.predicate = [LYRPredicate predicateWithProperty:@"isUnread" predicateOperator:LYRPredicateOperatorIsEqualTo value:convoID];
+  NSUInteger *count = [client countForQuery:query error:&error];
+  if (!error) {
+    NSLog(@"%tu unread messages in conversation", count);
+    return count;
+  } else {
+      NSLog(@"Query failed with error %@", error);
+      return nil;
+  }
+}
 
 -(LYRConversation*)fetchConvoWithId:(NSString*)convoID client:(LYRClient*)client error:(NSError*)error
 {
