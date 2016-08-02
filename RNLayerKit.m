@@ -217,9 +217,11 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID
     LayerAuthenticate *lAuth = [LayerAuthenticate new];
     [lAuth authenticateLayerWithUserID:userID layerClient:_layerClient completion:^(NSError *error) {
         if (!error) {
-            NSUInteger *count = [query fetchMessagesCount:client:_layerClient error:queryError];
+            LayerQuery *query = [LayerQuery new];
+            NSError *queryError;
+            NSInteger count = [query fetchMessagesCount:_layerClient error:queryError];
             NSString *thingToReturn = @"YES";
-            resolve(@[thingToReturn,count]);            
+            resolve(@[thingToReturn,[NSNumber numberWithInteger:count]]);            
         }
         else{
             id retErr = RCTMakeAndLogError(@"Error logging in",error,NULL);

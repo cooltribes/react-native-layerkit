@@ -62,6 +62,18 @@
   for(LYRObjectChange *thisChange in changes){
     NSMutableDictionary *changeData = [NSMutableDictionary new];
     [changeData setValue:NSStringFromClass([thisChange.object class]) forKey:@"object"];
+    id changeObject = thisChange.object;
+    if ([changeObject isKindOfClass:[LYRConversation class]]) {
+      LYRConversation *conversation = changeObject;
+      [changeData setValue:[self convertCovoToDict:conversation] forKey:@"Conversation"];
+        // Object is a conversation
+    }
+
+    if ([changeObject isKindOfClass:[LYRMessage class]]) {
+      LYRMessage *message = changeObject;
+      [changeData setValue:[self convertMessageToDict:message] forKey:@"Message"];
+        // Object is a message
+    }    
     //TODO: make this safer in the event they change it from NSURL in the future
     [changeData setValue:[[thisChange.object valueForKey:@"identifier"] absoluteString] forKey:@"identifier"];
     //[changeData setValue:[thisChange.object description] forKey:@"description"];

@@ -11,6 +11,7 @@
 
 @interface LayerQuery : NSObject
 -(NSOrderedSet*)fetchConvosForClient:(LYRClient*)client limit:(int)limit offset:(int)offset error:(NSError*)error;
+-(NSInteger*)fetchMessagesCount:(LYRClient*)client error:(NSError*)error;
 -(LYRConversation*)fetchConvoWithId:(NSString*)convoID client:(LYRClient*)client error:(NSError*)error;
 -(NSOrderedSet*)fetchMessagesForConvoId:(NSString*)convoID client:(LYRClient*)client limit:(int)limit offset:(int)offset error:(NSError*)error;
 @end

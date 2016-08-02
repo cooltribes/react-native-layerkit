@@ -120,8 +120,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
       Query query = Query.builder(Message.class)
               .predicate(new Predicate(Message.Property.IS_UNREAD, Predicate
                 .Operator.EQUAL_TO, true))
-              .predicate(new Predicate(Message.Property.SENDER_USER_ID, Predicate
-                .Operator.NOT_EQUAL_TO, userID))              
+              // .predicate(new Predicate(Message.Property.SENDER_USER_ID, Predicate
+              //   .Operator.NOT_EQUAL_TO, userID))              
               .build();
 
       List<Integer> results = layerClient.executeQuery(query, Query.ResultType.COUNT);
