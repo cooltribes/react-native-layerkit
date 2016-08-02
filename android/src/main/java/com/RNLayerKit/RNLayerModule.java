@@ -27,25 +27,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import com.layer.sdk.query.Predicate;
 import com.layer.sdk.query.Query;
+import com.layer.sdk.query.Query.Builder;
 import com.layer.sdk.query.SortDescriptor;
 import com.layer.sdk.query.Queryable;
-
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 
 import java.util.Iterator;
 import java.util.TimeZone;
 import javax.annotation.Nullable;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-
 import android.util.Log;
 import java.lang.reflect.Type;
-import com.google.gson.reflect.TypeToken;
 import java.text.SimpleDateFormat;
 import java.text.DateFormat;
 
@@ -108,13 +99,42 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     String userID,
     Promise promise) {
     try {
+      WritableArray writableArray = new WritableNativeArray();
       userIDGlobal = userID;
       layerClient.authenticate();
-      promise.resolve("YES");
+      String count;
+      count = getMessagesCount(userID);
+      writableArray.pushString("YES");
+      writableArray.pushString(count);
+      promise.resolve(writableArray);
     } catch (IllegalViewOperationException e) {
       promise.reject(e);
     }
   } 
+
+  public String getMessagesCount(
+    String userID){
+
+    try {
+
+      Query query = Query.builder(Message.class)
+              .predicate(new Predicate(Message.Property.IS_UNREAD, Predicate
+                .Operator.EQUAL_TO, true))
+              .predicate(new Predicate(Message.Property.SENDER_USER_ID, Predicate
+                .Operator.NOT_EQUAL_TO, userID))              
+              .build();
+
+      List<Integer> results = layerClient.executeQuery(query, Query.ResultType.COUNT);
+      if (results != null) {
+        Log.v("RAFAresult", results.toString());
+        return String.valueOf(results.get(0));
+      }
+      return "0";
+    } catch (IllegalViewOperationException e) {
+      return "0";
+    }
+
+  }
 
   @ReactMethod
   public void getConversations(
@@ -126,35 +146,18 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
       WritableArray writableArray = new WritableNativeArray();
       WritableArray writableArray2 = new WritableNativeArray();
       
-
-      Query query = Query.builder(Conversation.class)
-              .limit(10)
-              .build();
+      Builder builder = Query.builder(Conversation.class);
+      if (limit != 0)
+        builder.limit(limit);
+      Query query = builder.build(); 
+      // Query query = Query.builder(Conversation.class)
+      //         .limit(10)
+      //         .build();
 
       List<Conversation> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
       if (results != null) {
           writableArray.pushString("YES");
-          for(int i = 0; i < results.size(); i++){
-            WritableMap writableMap = new WritableNativeMap();
-            writableMap.putString("identifier", results.get(i).getId().toString());
-            writableMap.putBoolean("isDeleted", results.get(i).isDeleted());
-            //TODO Put createdAt from MessagePart
-            //writableMap.putString("createdAt", results.get(i).createdAt.toString());
-            writableMap.putInt("hasUnreadMessages", results.get(i).getTotalUnreadMessageCount());
-            writableMap.putMap("lastMessage", messageToWritableMap(results.get(i).getLastMessage()));
-            Log.v("RAFAgetMetadata", results.get(i).getMetadata().toString());
-            writableMap.putString("metadata", results.get(i).getMetadata().toString());
-            List<String> participants = results.get(i).getParticipants();
-            WritableArray writableArray3 = new WritableNativeArray(); 
-            for(int j = 0; j < participants.size(); j++ ){
-              writableArray3.pushString(participants.get(j));
-            }
-            writableMap.putArray("participants", writableArray3);
-            writableMap.putBoolean("deliveryReceiptsEnabled", results.get(i).isDeliveryReceiptsEnabled());
-            writableArray2.pushMap(writableMap);           
-          } 
-          writableArray.pushArray(writableArray2);
-          
+          writableArray.pushArray(conversationsToWritableArray(results));          
           promise.resolve(writableArray);
       }
     } catch (IllegalViewOperationException e) {
@@ -171,11 +174,18 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     WritableArray writableArray = new WritableNativeArray();
     try {
 
-      Query query = Query.builder(Message.class)
-              .predicate(new Predicate(Message.Property.CONVERSATION, Predicate
-                .Operator.EQUAL_TO, this.fetchConvoWithId(convoID,layerClient)))
-              .limit(10)
-              .build();
+      Builder builder = Query.builder(Message.class);
+      builder.predicate(new Predicate(Message.Property.CONVERSATION, Predicate
+                .Operator.EQUAL_TO, this.fetchConvoWithId(convoID,layerClient)));
+      if (limit != 0)
+        builder.limit(limit);
+      Query query = builder.build();
+
+      // Query query = Query.builder(Message.class)
+      //         .predicate(new Predicate(Message.Property.CONVERSATION, Predicate
+      //           .Operator.EQUAL_TO, this.fetchConvoWithId(convoID,layerClient)))
+      //         .limit(10)
+      //         .build();
 
       List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
       if (results != null) {
@@ -252,6 +262,49 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     return results.get(0);
   }
 
+  @Nullable
+  public static WritableArray conversationsToWritableArray(List<Conversation> conversations) {
+    WritableArray conversationsArray = new WritableNativeArray();
+
+    if (conversations == null) {
+        return null;
+    }
+    for(int i = 0; i < conversations.size(); i++ ){
+      conversationsArray.pushMap(conversationToWritableMap(conversations.get(i)));
+    }    
+
+    return conversationsArray;
+
+  }
+
+  @Nullable
+  public static WritableMap conversationToWritableMap(Conversation conversation) {
+    WritableMap conversationMap = new WritableNativeMap();
+
+    if (conversation == null) {
+        return null;
+    }
+    DateFormat sdf = new SimpleDateFormat(DATE_FORMAT_NOW);
+    TimeZone tz = TimeZone.getTimeZone("UTC");
+    sdf.setTimeZone(tz);  
+    conversationMap.putString("identifier", conversation.getId().toString());
+    conversationMap.putBoolean("isDeleted", conversation.isDeleted());
+    //TODO Put createdAt from MessagePart
+    //conversationMap.putString("createdAt", conversation.createdAt.toString());
+    conversationMap.putInt("hasUnreadMessages", conversation.getTotalUnreadMessageCount());
+    conversationMap.putMap("lastMessage", messageToWritableMap(conversation.getLastMessage()));
+    Log.v("RAFAgetMetadata", conversation.getMetadata().toString());
+    conversationMap.putString("metadata", conversation.getMetadata().toString());
+    List<String> participants = conversation.getParticipants();
+    WritableArray writableArray3 = new WritableNativeArray(); 
+    for(int j = 0; j < participants.size(); j++ ){
+      writableArray3.pushString(participants.get(j));
+    }
+    conversationMap.putArray("participants", writableArray3);
+    conversationMap.putBoolean("deliveryReceiptsEnabled", conversation.isDeliveryReceiptsEnabled());
+    return conversationMap;
+
+  }
 
   @Nullable
   public static WritableArray messagesToWritableArray(List<Message> messages) {
@@ -277,14 +330,17 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     }
     DateFormat sdf = new SimpleDateFormat(DATE_FORMAT_NOW);
     TimeZone tz = TimeZone.getTimeZone("UTC");
-    sdf.setTimeZone(tz);    
+    sdf.setTimeZone(tz);  
+    Log.v("RAFAmessage", message.toString());  
     messageMap.putString("identifier",message.getId().toString());
     messageMap.putBoolean("isDeleted",message.isDeleted());
     messageMap.putBoolean("isSent",message.isSent());
     //TODO: ADD isUnread
     //messageMap.putBoolean("isUnread",message.isUnread());
-    messageMap.putString("receivedAt",sdf.format(message.getReceivedAt()));
-    messageMap.putString("sentAt",sdf.format(message.getSentAt()));
+    if (message.getReceivedAt() != null)
+      messageMap.putString("receivedAt",sdf.format(message.getReceivedAt()));
+    if (message.getSentAt() != null)
+      messageMap.putString("sentAt",sdf.format(message.getSentAt()));
     messageMap.putArray("part",messagePartsToWritableMap(message.getMessageParts()));
     messageMap.putString("sender",message.getSender().getUserId().toString()); 
     if (message.getMessageParts().get(0).getMimeType().equals("text/plain")){
