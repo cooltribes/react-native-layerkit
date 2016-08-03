@@ -20,6 +20,7 @@ android {
 }
 repositories {
     maven { url "https://raw.githubusercontent.com/layerhq/releases-android/master/releases/" }
+    mavenCentral() 
 }
 dependencies {
     compile 'com.facebook.react:react-native:+'

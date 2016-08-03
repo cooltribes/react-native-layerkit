@@ -105,7 +105,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
       String count;
       count = getMessagesCount(userID);
       writableArray.pushString("YES");
-      writableArray.pushString(count);
+      writableArray.pushInt(Integer.parseInt(count));
       promise.resolve(writableArray);
     } catch (IllegalViewOperationException e) {
       promise.reject(e);
@@ -125,10 +125,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
               .build();
 
       List<Integer> results = layerClient.executeQuery(query, Query.ResultType.COUNT);
-      if (results != null) {
-        Log.v("RAFAresult", results.toString());
+      if (results != null) 
+        if (results.size() > 0)
         return String.valueOf(results.get(0));
-      }
       return "0";
     } catch (IllegalViewOperationException e) {
       return "0";
@@ -256,10 +255,12 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
     List<Conversation> results = client.executeQuery(query, Query.ResultType.OBJECTS);
     if (results != null) {
-      return results.get(0);
-    } 
+      if (results.size() > 0){
+        return results.get(0);
+      }
+    }
     //TODO: Return null
-    return results.get(0);
+    return null;
   }
 
   @Nullable
