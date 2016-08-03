@@ -29,11 +29,12 @@
   }
 }
 
--(NSInteger*)fetchMessagesCount:(LYRClient*)client error:(NSError*)err
+-(NSInteger*)fetchMessagesCount:(NSString*)userID client:(LYRClient*)client error:(NSError*)err
 {
   // Fetches all unread messages
-  LYRQuery *query = [LYRQuery queryWithQueryableClass:[LYRConversation class]];
+  LYRQuery *query = [LYRQuery queryWithClass:[LYRMessage class]];
   query.predicate = [LYRPredicate predicateWithProperty:@"isUnread" predicateOperator:LYRPredicateOperatorIsEqualTo value:@(YES)];
+  query.predicate = [LYRPredicate predicateWithProperty:@"sender.userID" operator:LYRPredicateOperatorIsNotEqualTo value:userID];
   NSError *error = nil;
   NSInteger *count = [client countForQuery:query error:&error];
   if (!error) {

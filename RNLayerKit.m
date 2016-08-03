@@ -219,7 +219,7 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID
         if (!error) {
             LayerQuery *query = [LayerQuery new];
             NSError *queryError;
-            NSInteger count = [query fetchMessagesCount:_layerClient error:queryError];
+            NSInteger count = [query fetchMessagesCount:userID client:_layerClient error:queryError];
             NSString *thingToReturn = @"YES";
             resolve(@[thingToReturn,[NSNumber numberWithInteger:count]]);            
         }
