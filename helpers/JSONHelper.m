@@ -65,13 +65,13 @@
     id changeObject = thisChange.object;
     if ([changeObject isKindOfClass:[LYRConversation class]]) {
       LYRConversation *conversation = changeObject;
-      [changeData setValue:[self convertCovoToDict:conversation] forKey:@"Conversation"];
+      [changeData setValue:[self convertCovoToDict:conversation] forKey:@"conversation"];
         // Object is a conversation
     }
 
     if ([changeObject isKindOfClass:[LYRMessage class]]) {
       LYRMessage *message = changeObject;
-      [changeData setValue:[self convertMessageToDict:message] forKey:@"Message"];
+      [changeData setValue:[self convertMessageToDict:message] forKey:@"message"];
         // Object is a message
     }    
     //TODO: make this safer in the event they change it from NSURL in the future
@@ -97,7 +97,8 @@
 {
   NSMutableDictionary *propertyDict = [NSMutableDictionary new];
   [propertyDict setValue:[convo.identifier absoluteString] forKey:@"identifier"];
-  [propertyDict setValue:@(convo.hasUnreadMessages) forKey:@"hasUnreadMessages"];
+  [propertyDict setValue:@("2") forKey:@"hasUnreadMessages"];
+  //[propertyDict setValue:@(convo.totalNumberOfUnreadMessages) forKey:@"totalNumberOfUnreadMessages"];
   [propertyDict setValue:@(convo.deliveryReceiptsEnabled) forKey:@"deliveryReceiptsEnabled"];
   [propertyDict setValue:@(convo.isDeleted) forKey:@"isDeleted"];
   [propertyDict setValue:convo.metadata forKey:@"metadata"];
@@ -118,7 +119,7 @@
   [propertyDict setValue:@(msg.isUnread) forKey:@"isUnread"];
   [propertyDict setValue:msg.sender.userID forKey:@"sender"];
   [propertyDict setValue:[self convertDateToJSON:msg.sentAt] forKey:@"sentAt"];
-  [propertyDict setValue:[self convertDateToJSON:msg.receivedAt] forKey:@"recievedAt"];
+  [propertyDict setValue:[self convertDateToJSON:msg.receivedAt] forKey:@"receivedAt"];
   [propertyDict setValue:[msg.identifier absoluteString] forKey:@"identifier"];
 
   NSMutableString *messageText= [NSMutableString new];
@@ -152,7 +153,7 @@
 -(NSString*)convertDateToJSON:(NSDate*)date
 {
   NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
-  [fmt setDateFormat:@"yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'SSS'Z'"];
+  [fmt setDateFormat:@"yyyy'-'MM'-'dd'T'HH':'mm'Z'"];
   return [fmt stringFromDate:date];
 }
 @end

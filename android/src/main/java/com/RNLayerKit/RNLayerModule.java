@@ -293,6 +293,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     //TODO Put createdAt from MessagePart
     //conversationMap.putString("createdAt", conversation.createdAt.toString());
     conversationMap.putInt("hasUnreadMessages", conversation.getTotalUnreadMessageCount());
+    conversationMap.putInt("totalNumberOfUnreadMessages", conversation.getTotalUnreadMessageCount());
     conversationMap.putMap("lastMessage", messageToWritableMap(conversation.getLastMessage()));
     Log.v("RAFAgetMetadata", conversation.getMetadata().toString());
     conversationMap.putString("metadata", conversation.getMetadata().toString());
