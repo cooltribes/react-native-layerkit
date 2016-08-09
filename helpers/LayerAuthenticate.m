@@ -13,9 +13,9 @@
 -(void)authenticateLayerWithUserID:(NSString *)userID layerClient:(LYRClient*)layerClient completion:(void(^)(NSError *error))completion;
 {
   // Check to see if the layerClient is already authenticated.
-  if (layerClient.authenticatedUserID) {
+  if (layerClient.authenticatedUser) {
     // If the layerClient is authenticated with the requested userID, complete the authentication process.
-    if ([layerClient.authenticatedUserID isEqualToString:userID]){
+    if ([layerClient.authenticatedUser.userID isEqualToString:userID]){
       completion(nil);
     } else {
       //If the authenticated userID is different, then deauthenticate the current client and re-authenticate with the new userID.
@@ -75,12 +75,13 @@
       /*
        * 3. Submit identity token to Layer for validation
        */
-      [lyrClient authenticateWithIdentityToken:identityToken completion:^(NSString *authenticatedUserID, NSError *error) {
-        if (authenticatedUserID) {
+      
+      [lyrClient authenticateWithIdentityToken:identityToken completion:^(LYRIdentity *authenticatedUser, NSError *error) {
+        if (authenticatedUser) {
           if (completion) {
             completion(YES, nil);
           }
-          NSLog(@"Layer Authenticated as User: %@", authenticatedUserID);
+          NSLog(@"Layer Authenticated as User: %@", authenticatedUser.userID);
         } else {
           completion(NO, error);
         }

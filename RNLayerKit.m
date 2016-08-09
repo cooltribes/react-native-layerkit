@@ -84,10 +84,19 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
     NSError *error = nil;
     NSData *messageData = [messageText dataUsingEncoding:NSUTF8StringEncoding];
     LYRMessagePart *messagePart = [LYRMessagePart messagePartWithMIMEType:MIMETypeTextPlain data:messageData];
-    
+
     // Creates and returns a new message object with the given conversation and array of message parts
-    LYRMessage *message = [_layerClient newMessageWithParts:@[ messagePart ] options:@{LYRMessageOptionsPushNotificationAlertKey: messageText,LYRMessageOptionsPushNotificationSoundNameKey: @"layerbell.caf"} error:&error];
+    NSString *pushMessage= [NSString stringWithFormat:@"%@ says %@",_layerClient.authenticatedUser.userID ,messageText];
     
+    LYRPushNotificationConfiguration *defaultConfiguration = [LYRPushNotificationConfiguration new];
+    defaultConfiguration.alert = pushMessage;
+    defaultConfiguration.category = @"category_lqs";
+    // The following dictionary will appear in push payload
+    defaultConfiguration.data = @{ @"test_key": @"test_value"};
+    NSDictionary *pushOptions = @{ LYRMessageOptionsPushNotificationConfigurationKey: defaultConfiguration };  
+
+    // Creates and returns a new message object with the given conversation and array of message parts
+    LYRMessage *message = [_layerClient newMessageWithParts:@[messagePart] options:pushOptions error:nil];
     // Sends the specified message
     BOOL success = [conversation sendMessage:message error:&error];
     

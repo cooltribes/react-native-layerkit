@@ -102,7 +102,12 @@
   [propertyDict setValue:@(convo.deliveryReceiptsEnabled) forKey:@"deliveryReceiptsEnabled"];
   [propertyDict setValue:@(convo.isDeleted) forKey:@"isDeleted"];
   [propertyDict setValue:convo.metadata forKey:@"metadata"];
-  [propertyDict setValue:[convo.participants allObjects] forKey:@"participants"];
+  NSMutableArray *participants = [NSMutableArray new];
+  for(LYRIdentity *participant in convo.participants){
+     [participants addObject:participant.userID];
+  }
+  //[propertyDict setValue:[convo.participants allObjects] forKey:@"participants"];
+  [propertyDict setValue:participants forKey:@"participants"];
 
   [propertyDict setValue:[self convertDateToJSON:convo.createdAt] forKey:@"createdAt"];
   [propertyDict setValue:[self convertMessageToDict:convo.lastMessage] forKey:@"lastMessage"];
@@ -120,6 +125,7 @@
   [propertyDict setValue:msg.sender.userID forKey:@"sender"];
   [propertyDict setValue:[self convertDateToJSON:msg.sentAt] forKey:@"sentAt"];
   [propertyDict setValue:[self convertDateToJSON:msg.receivedAt] forKey:@"receivedAt"];
+  
   [propertyDict setValue:[msg.identifier absoluteString] forKey:@"identifier"];
 
   NSMutableString *messageText= [NSMutableString new];
