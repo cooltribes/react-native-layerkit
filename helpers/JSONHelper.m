@@ -97,8 +97,8 @@
 {
   NSMutableDictionary *propertyDict = [NSMutableDictionary new];
   [propertyDict setValue:[convo.identifier absoluteString] forKey:@"identifier"];
-  [propertyDict setValue:@("2") forKey:@"hasUnreadMessages"];
-  //[propertyDict setValue:@(convo.totalNumberOfUnreadMessages) forKey:@"totalNumberOfUnreadMessages"];
+  //[propertyDict setValue:@("2") forKey:@"hasUnreadMessages"];
+  [propertyDict setValue:@(convo.totalNumberOfUnreadMessages) forKey:@"hasUnreadMessages"];
   [propertyDict setValue:@(convo.deliveryReceiptsEnabled) forKey:@"deliveryReceiptsEnabled"];
   [propertyDict setValue:@(convo.isDeleted) forKey:@"isDeleted"];
   [propertyDict setValue:convo.metadata forKey:@"metadata"];

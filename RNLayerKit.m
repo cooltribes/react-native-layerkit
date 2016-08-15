@@ -11,8 +11,9 @@
 
 - (id)init
 {
+    NSLog(@"LayerBridge not init");
     if ((self = [super init])) {
-        RCTLogInfo(@"LayerBridge init");
+        NSLog(@"LayerBridge init");
         _jsonHelper = [JSONHelper new];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(receivedNotification:)
@@ -41,9 +42,11 @@ RCT_EXPORT_METHOD(connect:(NSString*)appIDstr
         [_layerClient setDelegate:self];
         [_layerClient connectWithCompletion:^(BOOL success, NSError *error) {
             if (!success) {
+                NSLog(@"Failed to connect to Layer: %@", error);
                 RCTLogInfo(@"Failed to connect to Layer: %@", error);
                 reject(@"no_events", @"There were no events", error);
             } else {
+                NSLog(@"Connected to Layer!");
                 RCTLogInfo(@"Connected to Layer!");
                 if(_deviceToken)
                     [self updateRemoteNotificationDeviceToken:_deviceToken];
