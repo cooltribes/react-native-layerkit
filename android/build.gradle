@@ -25,7 +25,7 @@ repositories {
 dependencies {
     compile 'com.facebook.react:react-native:+'
     compile 'com.layer.sdk:layer-sdk:0.21.2'
-    compile 'com.google.android.gms:play-services-gcm:8.4.0'
+    compile 'com.google.android.gms:play-services-gcm:9.0.2'
     compile 'org.slf4j:slf4j-nop:1.5.8'  
     
 }
