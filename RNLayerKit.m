@@ -35,33 +35,61 @@ RCT_EXPORT_METHOD(connect:(NSString*)appIDstr
                  resolver:(RCTPromiseResolveBlock)resolve
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
-    if (!_layerClient) {
+    //if (!_layerClient) {
         NSLog(@"No Layer Client");
         NSURL *appID = [NSURL URLWithString:appIDstr];
-        _layerClient = [LYRClient clientWithAppID:appID];
-        [_layerClient setDelegate:self];
-        [_layerClient connectWithCompletion:^(BOOL success, NSError *error) {
-            if (!success) {
-                NSLog(@"Failed to connect to Layer: %@", error);
-                RCTLogInfo(@"Failed to connect to Layer: %@", error);
-                reject(@"no_events", @"There were no events", error);
-            } else {
-                NSLog(@"Connected to Layer!");
-                RCTLogInfo(@"Connected to Layer!");
-                if(_deviceToken)
-                    [self updateRemoteNotificationDeviceToken:_deviceToken];
-                NSString *thingToReturn = @"YES";
-                resolve(thingToReturn);
-            }
-        }];
         
-    }
+        @try {
+            _layerClient = [LYRClient clientWithAppID:appID delegate:self options:nil];
+        }
+        @catch (NSException *exception) {
+            NSLog(@"%@", exception.reason);
+        }        
+        //[_layerClient setDelegate:self];
+        if (!_layerClient.isConnected) {
+            [_layerClient connectWithCompletion:^(BOOL success, NSError *error) {
+                if (!success) {
+                    NSLog(@"Failed to connect to Layer: %@", error);
+                    RCTLogInfo(@"Failed to connect to Layer: %@", error);
+                    reject(@"no_events", @"There were no events", error);
+                } else {
+                    NSLog(@"Connected to Layer!");
+                    RCTLogInfo(@"Connected to Layer!");
+                    if(_deviceToken)
+                        [self updateRemoteNotificationDeviceToken:_deviceToken];
+                    NSString *thingToReturn = @"YES";
+                    resolve(thingToReturn);  
+                }
+            }];
+        } else {
+            NSLog(@"Connected to Layer!");
+            RCTLogInfo(@"Connected to Layer!");
+            if(_deviceToken)
+                [self updateRemoteNotificationDeviceToken:_deviceToken];
+            NSString *thingToReturn = @"YES";
+            resolve(thingToReturn);             
+        }
+        
+    //}
+      
+
 }
 
 RCT_EXPORT_METHOD(disconnect)
 {
-    [_layerClient disconnect];
+    //[_layerClient disconnect];
+    [_layerClient deauthenticateWithCompletion:^(BOOL success, NSError *error) {
+        if (!success) {
+            NSLog(@"Failed to deauthenticate user: %@", error);
+        } else {
+            NSLog(@"User was deauthenticated");
+            [_layerClient disconnect];
+        } 
+    }];   
+
 }
+
+
 
 RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)userIDs
                                                              resolver:(RCTPromiseResolveBlock)resolve
@@ -190,7 +218,7 @@ RCT_EXPORT_METHOD(sendTypingBegin:(NSString*)convoID)
         [self sendErrorEvent:err];
     }
     else {
-        [thisConvo sendTypingIndicator:LYRTypingDidBegin];
+        [thisConvo sendTypingIndicator:LYRTypingIndicatorActionBegin];
     }
 }
 
@@ -203,7 +231,7 @@ RCT_EXPORT_METHOD(sendTypingEnd:(NSString*)convoID)
         [self sendErrorEvent:err];
     }
     else {
-        [thisConvo sendTypingIndicator:LYRTypingDidBegin];
+        [thisConvo sendTypingIndicator:LYRTypingIndicatorActionBegin];
     }
 }
 
@@ -225,8 +253,14 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID
                                      resolver:(RCTPromiseResolveBlock)resolve
                                      rejecter:(RCTPromiseRejectBlock)reject)
 {
+    if (!_layerClient.isConnected) {
+        NSLog(@"Layer is not connected");    
+    } else {
+        NSLog(@"Layer is connected");
+    }
     [[NSNotificationCenter defaultCenter] removeObserver:self name:LYRConversationDidReceiveTypingIndicatorNotification object:nil];
     LayerAuthenticate *lAuth = [LayerAuthenticate new];
+    NSLog(@"Layer authenticated");
     [lAuth authenticateLayerWithUserID:userID layerClient:_layerClient completion:^(NSError *error) {
         if (!error) {
             LayerQuery *query = [LayerQuery new];
@@ -354,11 +388,13 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID
 #pragma mark - Typing Indicator
 - (void)didReceiveTypingIndicator:(NSNotification *)notification
 {
-    NSString *participantID = notification.userInfo[LYRTypingIndicatorParticipantUserInfoKey];
+    //NSString *participantID = notification.userInfo[LYRTypingIndicatorParticipantUserInfoKey];
     NSString *convoID = [[notification.object valueForKey:@"identifier"] absoluteString];
-    LYRTypingIndicator typingIndicator = [notification.userInfo[LYRTypingIndicatorValueUserInfoKey] unsignedIntegerValue];
-    
-    if (typingIndicator == LYRTypingDidBegin) {
+    //LYRTypingIndicator typingIndicator = [notification.userInfo[LYRTypingIndicatorValueUserInfoKey] unsignedIntegerValue];
+    NSString *participantID = notification.userInfo[LYRTypingIndicatorObjectUserInfoKey];
+    LYRTypingIndicator *typingIndicator = notification.userInfo[LYRTypingIndicatorObjectUserInfoKey]; 
+
+    if (typingIndicator == LYRTypingIndicatorActionBegin) {
         NSLog(@"Typing Started");
         [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                      body:@{@"source":@"LayerClient",
@@ -367,7 +403,7 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID
                                                                       @"event":@"LYRTypingDidBegin",
                                                                       @"conversationID":convoID}}];
     }
-    else if(typingIndicator==LYRTypingDidPause){
+    else if(typingIndicator==LYRTypingIndicatorActionPause){
         NSLog(@"Typing paused");
         [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                      body:@{@"source":@"LayerClient",
