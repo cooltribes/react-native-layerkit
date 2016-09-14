@@ -117,17 +117,18 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
     LYRMessagePart *messagePart = [LYRMessagePart messagePartWithMIMEType:MIMETypeTextPlain data:messageData];
 
     // Creates and returns a new message object with the given conversation and array of message parts
-    NSString *pushMessage= [NSString stringWithFormat:@"%@ says %@",_layerClient.authenticatedUser.userID ,messageText];
+    // NSString *pushMessage= [NSString stringWithFormat:@"%@ says %@",_layerClient.authenticatedUser.userID ,messageText];
     
-    LYRPushNotificationConfiguration *defaultConfiguration = [LYRPushNotificationConfiguration new];
-    defaultConfiguration.alert = pushMessage;
-    defaultConfiguration.category = @"category_lqs";
-    // The following dictionary will appear in push payload
-    defaultConfiguration.data = @{ @"test_key": @"test_value"};
-    NSDictionary *pushOptions = @{ LYRMessageOptionsPushNotificationConfigurationKey: defaultConfiguration };  
+    // LYRPushNotificationConfiguration *defaultConfiguration = [LYRPushNotificationConfiguration new];
+    // defaultConfiguration.alert = pushMessage;
+    // defaultConfiguration.category = @"category_lqs";
+    // // The following dictionary will appear in push payload
+    // defaultConfiguration.data = @{ @"test_key": @"test_value"};
+    // NSDictionary *pushOptions = @{ LYRMessageOptionsPushNotificationConfigurationKey: defaultConfiguration };  
 
     // Creates and returns a new message object with the given conversation and array of message parts
-    LYRMessage *message = [_layerClient newMessageWithParts:@[messagePart] options:pushOptions error:nil];
+    //LYRMessage *message = [_layerClient newMessageWithParts:@[messagePart] options:pushOptions error:nil];
+    LYRMessage *message = [_layerClient newMessageWithParts:@[messagePart] options:nil error:nil];
     // Sends the specified message
     BOOL success = [conversation sendMessage:message error:&error];
     
