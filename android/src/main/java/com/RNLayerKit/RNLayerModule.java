@@ -96,8 +96,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void disconnect(){
-    layerClient.deauthenticate();
-    
+    //if (layerClient)
+    //  layerClient.deauthenticate();
   }
 
 
