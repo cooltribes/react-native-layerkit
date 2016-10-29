@@ -49,6 +49,12 @@ public class MyChangeEventListener implements LayerChangeEventListener {
               Log.v("RAFAconversation", "Conversation " + conversation.getId() + " attribute " +
                       change.getAttributeName() + " was changed from " + change.getOldValue() +
                       " to " + change.getNewValue());
+              if (change.getAttributeName() != null)
+                writableMap.putString("attribute",change.getAttributeName());
+              if (change.getOldValue() != null)
+                writableMap.putString("change_from",change.getOldValue().toString());
+              if (change.getNewValue() != null)
+                writableMap.putString("change_to",change.getNewValue().toString());
               switch (change.getChangeType()) {
                   case INSERT:
                     writableMap.putString("type","LYRObjectChangeTypeCreate");
@@ -71,6 +77,12 @@ public class MyChangeEventListener implements LayerChangeEventListener {
                 Log.v("RafaMessage", "Message " + message.getId() + " attribute " + change
                         .getAttributeName() + " was changed from " + change.getOldValue() + " to " +
                         "" + change.getNewValue());
+                if (change.getAttributeName() != null)
+                  writableMap.putString("attribute",change.getAttributeName());
+                if (change.getOldValue() != null)
+                  writableMap.putString("change_from",change.getOldValue().toString());
+                if (change.getNewValue() != null)
+                  writableMap.putString("change_to",change.getNewValue().toString());                
                 switch (change.getChangeType()) {
                     case INSERT:
                       writableMap.putString("type","LYRObjectChangeTypeCreate");

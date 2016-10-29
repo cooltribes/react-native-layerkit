@@ -22,7 +22,15 @@ import com.layer.sdk.messaging.Message;
 import com.layer.sdk.messaging.MessageOptions;
 import com.layer.sdk.messaging.MessagePart;
 import com.layer.sdk.messaging.Metadata;
+import com.layer.sdk.messaging.Identity;
+import com.layer.sdk.messaging.Message.RecipientStatus;
+import com.layer.sdk.messaging.PushNotificationPayload;
+import com.layer.sdk.exceptions.LayerConversationException;
+
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap; 
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.Arrays;
 import com.layer.sdk.query.Predicate;
@@ -33,6 +41,7 @@ import com.layer.sdk.query.Queryable;
 
 import java.util.Iterator;
 import java.util.TimeZone;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 import android.util.Log;
@@ -46,14 +55,17 @@ import java.nio.charset.Charset;
 public class RNLayerModule extends ReactContextBaseJavaModule {
 
   ReactApplicationContext reactContext;
-
-  public RNLayerModule(ReactApplicationContext reactContext) {
+  private LayerClient layerClient;
+  public RNLayerModule(ReactApplicationContext reactContext, LayerClient layerClient) {
     super(reactContext);
     this.reactContext = reactContext;
+    this.layerClient = layerClient;
+    
   }
 
-  private LayerClient layerClient;
+  
   public static String userIDGlobal;
+  public static Identity userIdentityGlobal;
   //public static final String DATE_FORMAT_NOW = "EEE, dd MMM yyyy HH:mm:ss Z";
   public static final String DATE_FORMAT_NOW = "yyyy-MM-dd'T'HH:mm'Z'";
   private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
@@ -79,6 +91,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     Promise promise) {
     try {
       LayerClient.Options options = new LayerClient.Options();
+      options.historicSyncPolicy(LayerClient.Options.HistoricSyncPolicy.ALL_MESSAGES);
+      options.useFirebaseCloudMessaging(true);
       layerClient = LayerClient.newInstance(this.reactContext, appIDstr, options);
 
       if(authenticationListener == null)
@@ -96,8 +110,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void disconnect(){
-    //if (layerClient)
-    //  layerClient.deauthenticate();
+    if (layerClient != null)
+      if (layerClient.isConnected())
+        layerClient.deauthenticate();
   }
 
 
@@ -114,6 +129,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
       writableArray.pushString("YES");
       writableArray.pushInt(Integer.parseInt(count));
       promise.resolve(writableArray);
+      userIdentityGlobal = layerClient.getAuthenticatedUser();
     } catch (IllegalViewOperationException e) {
       promise.reject(e);
     }
@@ -196,6 +212,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
       List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
       if (results != null) {
         writableArray.pushString("YES");
+        //Log.v("RafaMessages", results.toString());  
         writableArray.pushArray(messagesToWritableArray(results));
         promise.resolve(writableArray);
       }
@@ -209,12 +226,25 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     ReadableArray userIDs,
     Promise promise) {
     try {
+    if (!layerClient.isConnected()) {
+      layerClient.connect();
+    }      
       Conversation conversation = fetchLayerConversationWithParticipants(userIDs, layerClient);
       //Put the user's text into a message part, which has a MIME type of "text/plain" by default
       MessagePart messagePart = layerClient.newMessagePart(messageText);
 
       //Formats the push notification that the other participants will receive
+      Map<String, String> data = new HashMap<String, String>();
+      data.put("user_id", userIDGlobal);
+
+
       MessageOptions options = new MessageOptions();
+      PushNotificationPayload payload = new PushNotificationPayload.Builder()
+          .text(messageText)
+          .title("New Message")
+          .data(data)
+          .build();
+      options.defaultPushNotificationPayload(payload);      
       //TODO: Push Notifications
       //options.pushNotificationMessage(userIDGlobal + ": " + messageText);
 
@@ -248,7 +278,15 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
         return results.get(0);
       }
     } 
-    return client.newConversation(userIDsArray);
+    Conversation conversation;
+    try {
+       // Try creating a new distinct conversation with the given user
+       conversation = layerClient.newConversationWithUserIds(userIDsArray);
+    } catch (LayerConversationException e) {
+       // If a distinct conversation with the given user already exists, use that one instead
+       conversation = e.getConversation();
+    }    
+    return conversation;
   }
 
   private Conversation fetchConvoWithId(
@@ -302,13 +340,16 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     conversationMap.putInt("hasUnreadMessages", conversation.getTotalUnreadMessageCount());
     conversationMap.putInt("totalNumberOfUnreadMessages", conversation.getTotalUnreadMessageCount());
     conversationMap.putMap("lastMessage", messageToWritableMap(conversation.getLastMessage()));
-    Log.v("RAFAgetMetadata", conversation.getMetadata().toString());
+    //Log.v("RAFAgetMetadata", conversation.getMetadata().toString());
     conversationMap.putString("metadata", conversation.getMetadata().toString());
-    List<String> participants = conversation.getParticipants();
+    //List<String> participants = conversation.getParticipants();
+    Set<Identity> participants = conversation.getParticipants();
     WritableArray writableArray3 = new WritableNativeArray(); 
-    for(int j = 0; j < participants.size(); j++ ){
-      writableArray3.pushString(participants.get(j));
+    for (Identity participant : participants) {    
+    //for(int j = 0; j < participants.size(); j++ ){
+      writableArray3.pushString(participant.getUserId());
     }
+
     conversationMap.putArray("participants", writableArray3);
     conversationMap.putBoolean("deliveryReceiptsEnabled", conversation.isDeliveryReceiptsEnabled());
     return conversationMap;
@@ -337,14 +378,21 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     if (message == null) {
         return null;
     }
+    //Log.v("userIDGlobal", userIDGlobal);
+    //Log.v("getUserId", message.getSender().getUserId().toString());
+    //Log.v("message", message.toString());
+    if (!Objects.equals(userIDGlobal, message.getSender().getUserId().toString()))
+      message.markAsRead();
     DateFormat sdf = new SimpleDateFormat(DATE_FORMAT_NOW);
     TimeZone tz = TimeZone.getTimeZone("UTC");
     sdf.setTimeZone(tz);  
-    Log.v("RAFAmessage", message.toString());  
+    //Log.v("RAFAmessage", message.toString());  
     messageMap.putString("identifier",message.getId().toString());
     messageMap.putBoolean("isDeleted",message.isDeleted());
     messageMap.putBoolean("isSent",message.isSent());
-    //TODO: ADD isUnread
+
+    RecipientStatus recipientStatus = message.getRecipientStatus(userIdentityGlobal);
+    messageMap.putString("Status",recipientStatus.toString());
     //messageMap.putBoolean("isUnread",message.isUnread());
     if (message.getReceivedAt() != null)
       messageMap.putString("receivedAt",sdf.format(message.getReceivedAt()));
@@ -381,10 +429,10 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
     messagePartMap.putString("identifier",messagePart.getId().toString());
     messagePartMap.putString("MIMEType",messagePart.getMimeType());
-    Log.v("RAFAgetMimeType", messagePart.getMimeType());
+    //Log.v("RAFAgetMimeType", messagePart.getMimeType());
     if (messagePart.getMimeType().equals("text/plain")){
       String s = new String(messagePart.getData(), UTF8_CHARSET);
-      Log.v("RAFAString", s);
+      //Log.v("RAFAString", s);
       messagePartMap.putString("data",s);
     }
     messagePartMap.putDouble("size",messagePart.getSize());
