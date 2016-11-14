@@ -96,52 +96,94 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
                                                              rejecter:(RCTPromiseRejectBlock)reject)
 {
     // Declares a MIME type string
-    static NSString *const MIMETypeTextPlain = @"text/plain";
-    
-    // Creates and returns a new conversation object with a single participant represented by
-    // your backend's user identifier for the participant
-    NSError *convErr = nil;
-    LYRConversation *conversation = [self fetchLayerConversationWithParticipants:userIDs andErr:convErr];
-    if(!conversation){
-        RCTLogError(@"Error creating conversastion");
-    }
-    if(convErr){
-        id retErr = RCTMakeAndLogError(@"Error creating conversastion",convErr,NULL);
-        //callback(@[retErr,[NSNull null]]);
-        NSError *error = retErr;
-        reject(@"no_events", @"Error creating conversastion", error);        
-    }
-    // Creates a message part with a text/plain MIMEType
-    NSError *error = nil;
-    NSData *messageData = [messageText dataUsingEncoding:NSUTF8StringEncoding];
-    LYRMessagePart *messagePart = [LYRMessagePart messagePartWithMIMEType:MIMETypeTextPlain data:messageData];
+    static NSString *const MIMETypeTextPlain = @"text/plain";    
+    // Create a distinct conversation
 
-    // Creates and returns a new message object with the given conversation and array of message parts
-    // NSString *pushMessage= [NSString stringWithFormat:@"%@ says %@",_layerClient.authenticatedUser.userID ,messageText];
-    
-    // LYRPushNotificationConfiguration *defaultConfiguration = [LYRPushNotificationConfiguration new];
-    // defaultConfiguration.alert = pushMessage;
-    // defaultConfiguration.category = @"category_lqs";
-    // // The following dictionary will appear in push payload
-    // defaultConfiguration.data = @{ @"test_key": @"test_value"};
-    // NSDictionary *pushOptions = @{ LYRMessageOptionsPushNotificationConfigurationKey: defaultConfiguration };  
 
-    // Creates and returns a new message object with the given conversation and array of message parts
-    //LYRMessage *message = [_layerClient newMessageWithParts:@[messagePart] options:pushOptions error:nil];
-    LYRMessage *message = [_layerClient newMessageWithParts:@[messagePart] options:nil error:nil];
-    // Sends the specified message
-    BOOL success = [conversation sendMessage:message error:&error];
-    
-    if(success){
-        RCTLogInfo(@"Layer Message sent to %@", userIDs);
-        //TODO: return conversation
-        NSString *thingToReturn = @"YES";
-        resolve(thingToReturn);        
-    }
-    else {
-        id retErr = RCTMakeAndLogError(@"Error sending Layer message",error,NULL);
-        NSError *error = retErr;
-        reject(@"no_events", @"Error creating conversastion", error);        
+    if (!_layerClient.isConnected) {
+        [_layerClient connectWithCompletion:^(BOOL success, NSError *error) {
+            if (!success) {
+                NSLog(@"Failed to connect to Layer: %@", error);
+                RCTLogInfo(@"Failed to connect to Layer: %@", error);
+                reject(@"no_events", @"There were no events", error);
+            } else {
+                NSError *errorConversation = nil;
+                NSSet *participants = [NSSet setWithArray: userIDs];
+                LYRConversationOptions *conversationOptions = [LYRConversationOptions new];
+                conversationOptions.distinctByParticipants = YES;
+                LYRConversation *conversation = [_layerClient newConversationWithParticipants:participants options:conversationOptions error:&errorConversation];
+                if (errorConversation && errorConversation.code == LYRErrorDistinctConversationExists) {
+                    conversation = errorConversation.userInfo[LYRExistingDistinctConversationKey];
+                }
+
+                NSError *error = nil;
+                NSData *messageData = [messageText dataUsingEncoding:NSUTF8StringEncoding];
+                LYRMessagePart *messagePart = [LYRMessagePart messagePartWithMIMEType:MIMETypeTextPlain data:messageData];
+
+                // Creates and returns a new message object with the given conversation and array of message parts
+                NSString *pushMessage= [NSString stringWithFormat:@"%@ says %@",_layerClient.authenticatedUser.userID ,messageText];
+                
+                LYRPushNotificationConfiguration *defaultConfiguration = [LYRPushNotificationConfiguration new];
+                defaultConfiguration.alert = pushMessage;
+                defaultConfiguration.category = @"category_lqs";
+                defaultConfiguration.sound = @"layerbell.caf";  
+                LYRMessageOptions *messageOptions = [LYRMessageOptions new];
+                messageOptions.pushNotificationConfiguration = defaultConfiguration;
+                LYRMessage *message = [_layerClient newMessageWithParts:@[messagePart] options:messageOptions error:nil];
+                // Sends the specified message
+                BOOL success = [conversation sendMessage:message error:&error];
+                
+                if(success){
+                    RCTLogInfo(@"Layer Message sent to %@", userIDs);
+                    //TODO: return conversation
+                    NSString *thingToReturn = @"YES";
+                    resolve(thingToReturn);        
+                }
+                else {
+                    id retErr = RCTMakeAndLogError(@"Error sending Layer message",error,NULL);
+                    NSError *error = retErr;
+                    reject(@"no_events", @"Error creating conversastion", error);        
+                }
+            }
+        }];
+    } else {
+        NSError *errorConversation = nil;
+        NSSet *participants = [NSSet setWithArray: userIDs];
+        LYRConversationOptions *conversationOptions = [LYRConversationOptions new];
+        conversationOptions.distinctByParticipants = YES;
+        LYRConversation *conversation = [_layerClient newConversationWithParticipants:participants options:conversationOptions error:&errorConversation];
+        if (errorConversation && errorConversation.code == LYRErrorDistinctConversationExists) {
+            conversation = errorConversation.userInfo[LYRExistingDistinctConversationKey];
+        }
+
+        NSError *error = nil;
+        NSData *messageData = [messageText dataUsingEncoding:NSUTF8StringEncoding];
+        LYRMessagePart *messagePart = [LYRMessagePart messagePartWithMIMEType:MIMETypeTextPlain data:messageData];
+
+        // Creates and returns a new message object with the given conversation and array of message parts
+        NSString *pushMessage= [NSString stringWithFormat:@"%@ says %@",_layerClient.authenticatedUser.userID ,messageText];
+        
+        LYRPushNotificationConfiguration *defaultConfiguration = [LYRPushNotificationConfiguration new];
+        defaultConfiguration.alert = pushMessage;
+        defaultConfiguration.category = @"category_lqs";
+        defaultConfiguration.sound = @"layerbell.caf";  
+        LYRMessageOptions *messageOptions = [LYRMessageOptions new];
+        messageOptions.pushNotificationConfiguration = defaultConfiguration;
+        LYRMessage *message = [_layerClient newMessageWithParts:@[messagePart] options:messageOptions error:nil];
+        // Sends the specified message
+        BOOL success = [conversation sendMessage:message error:&error];
+        
+        if(success){
+            RCTLogInfo(@"Layer Message sent to %@", userIDs);
+            //TODO: return conversation
+            NSString *thingToReturn = @"YES";
+            resolve(thingToReturn);        
+        }
+        else {
+            id retErr = RCTMakeAndLogError(@"Error sending Layer message",error,NULL);
+            NSError *error = retErr;
+            reject(@"no_events", @"Error creating conversastion", error);        
+        }
     }
     
 }
