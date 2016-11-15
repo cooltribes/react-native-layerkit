@@ -5,6 +5,7 @@
     LYRClient *_layerClient;
     JSONHelper *_jsonHelper;
     NSData *_deviceToken;
+    NSString *_userID;
 }
 
 @synthesize bridge = _bridge;
@@ -39,12 +40,8 @@ RCT_EXPORT_METHOD(connect:(NSString*)appIDstr
         NSLog(@"No Layer Client");
         NSURL *appID = [NSURL URLWithString:appIDstr];
         
-        @try {
-            _layerClient = [LYRClient clientWithAppID:appID delegate:self options:nil];
-        }
-        @catch (NSException *exception) {
-            NSLog(@"%@", exception.reason);
-        }        
+        _layerClient = [LYRClient clientWithAppID:appID delegate:self options:nil];
+      
         //[_layerClient setDelegate:self];
         if (!_layerClient.isConnected) {
             [_layerClient connectWithCompletion:^(BOOL success, NSError *error) {
@@ -301,6 +298,7 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID
     } else {
         NSLog(@"Layer is connected");
     }
+    _userID = userID;
     [[NSNotificationCenter defaultCenter] removeObserver:self name:LYRConversationDidReceiveTypingIndicatorNotification object:nil];
     LayerAuthenticate *lAuth = [LayerAuthenticate new];
     NSLog(@"Layer authenticated");
@@ -393,8 +391,21 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID
 }
 - (void)layerClient:(LYRClient *)client didReceiveAuthenticationChallengeWithNonce:(NSString *)nonce
 {
-    [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
-                                                 body:@{@"source":@"LayerClient", @"type": @"didReceiveAuthenticationChallengeWithNonce"}];
+    NSLog(@"Layer Client did receive an authentication challenge with nonce=%@", nonce);
+    if (_layerClient.authenticatedUser)
+        _userID = _layerClient.authenticatedUser.userID;
+    LayerAuthenticate *lAuth = [LayerAuthenticate new];
+    [lAuth authenticationChallenge:_userID layerClient:_layerClient nonce:nonce completion:^(NSError *error) {
+        if (!error) {
+            [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
+                                                     body:@{@"source":@"LayerClient", @"type": @"didReceiveAuthenticationChallengeWithNonce"}];           
+        }
+        else{
+            [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
+                                                 body:@{@"source":@"LayerClient", @"type": @"didReceiveAuthenticationChallengeWithNonce"}];            
+        }
+    }];    
+
 }
 - (void)layerClient:(LYRClient *)client objectsDidChange:(NSArray *)changes;
 {

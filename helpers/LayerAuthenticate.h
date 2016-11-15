@@ -11,4 +11,6 @@
 
 @interface LayerAuthenticate : NSObject
 -(void)authenticateLayerWithUserID:(NSString *)userID layerClient:(LYRClient*)layerClient completion:(void(^)(NSError *error))completion;
+-(void)authenticationChallenge:(NSString *)userID layerClient:(LYRClient*)layerClient nonce:nonce completion:(void(^)(NSError *error))completion;
+
 @end

@@ -15,7 +15,9 @@
   // Check to see if the layerClient is already authenticated.
   if (layerClient.authenticatedUser) {
     // If the layerClient is authenticated with the requested userID, complete the authentication process.
+    NSLog(@"Layer is authenticated");
     if ([layerClient.authenticatedUser.userID isEqualToString:userID]){
+      NSLog(@"Layer is same userID");
       completion(nil);
     } else {
       //If the authenticated userID is different, then deauthenticate the current client and re-authenticate with the new userID.
@@ -37,6 +39,7 @@
     }
   } else {
     // If the layerClient isn't already authenticated, then authenticate.
+    NSLog(@"Layer is not authenticated");
     [self authenticationTokenWithUserId:userID lyrClient:layerClient completion:^(BOOL success, NSError *error) {
       if(error){
         completion(error);
@@ -48,6 +51,37 @@
   }
 
 }
+- (void)authenticationChallenge:(NSString *)userID layerClient:(LYRClient*)layerClient nonce:nonce completion:(void(^)(NSError *error))completion{
+
+   /*
+    * 1. Connect to your backend to generate an identity token using the provided nonce.
+    */
+  [self requestIdentityTokenForUserID:userID appID:[layerClient.appID absoluteString] nonce:nonce completion:^(NSString *identityToken, NSError *error) {
+    if (!identityToken) {
+      if (completion) {
+        completion(error);
+      }
+      return;
+    }
+    
+   /*
+    * 2. Submit identity token to Layer for validation
+    */
+    
+    [layerClient authenticateWithIdentityToken:identityToken completion:^(LYRIdentity *authenticatedUser, NSError *error) {
+      if (authenticatedUser) {
+        if (completion) {
+          completion(nil);
+        }
+        NSLog(@"Layer Authenticated as User: %@", authenticatedUser.userID);
+      } else {
+        completion(error);
+      }
+    }];
+  }];
+
+}
+
 - (void)authenticationTokenWithUserId:(NSString *)userID lyrClient:(LYRClient*)lyrClient completion:(void (^)(BOOL success, NSError* error))completion{
   
   /*
