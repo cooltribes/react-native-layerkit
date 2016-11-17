@@ -190,34 +190,46 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void getMessages(
     String convoID,
+    ReadableArray userIDs,
     int limit,
     int offset,
     Promise promise) {
     WritableArray writableArray = new WritableNativeArray();
-    try {
-
-      Builder builder = Query.builder(Message.class);
-      builder.predicate(new Predicate(Message.Property.CONVERSATION, Predicate
-                .Operator.EQUAL_TO, this.fetchConvoWithId(convoID,layerClient)));
-      if (limit != 0)
-        builder.limit(limit);
-      Query query = builder.build();
-
-      // Query query = Query.builder(Message.class)
-      //         .predicate(new Predicate(Message.Property.CONVERSATION, Predicate
-      //           .Operator.EQUAL_TO, this.fetchConvoWithId(convoID,layerClient)))
-      //         .limit(10)
-      //         .build();
-
-      List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
-      if (results != null) {
-        writableArray.pushString("YES");
-        //Log.v("RafaMessages", results.toString());  
-        writableArray.pushArray(messagesToWritableArray(results));
-        promise.resolve(writableArray);
+    if (convoID != null){
+      try {
+        Builder builder = Query.builder(Message.class);
+        builder.predicate(new Predicate(Message.Property.CONVERSATION, Predicate
+                  .Operator.EQUAL_TO, this.fetchConvoWithId(convoID,layerClient)));
+        if (limit != 0)
+          builder.limit(limit);
+        Query query = builder.build();
+        List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
+        if (results != null) {
+          writableArray.pushString("YES");
+          writableArray.pushArray(messagesToWritableArray(results));
+          promise.resolve(writableArray);
+        }
+      } catch (IllegalViewOperationException e) {
+        promise.reject(e);
       }
-    } catch (IllegalViewOperationException e) {
-      promise.reject(e);
+    } else {
+      Conversation conversation = fetchLayerConversationWithParticipants(userIDs, layerClient);
+      try {
+        Builder builder = Query.builder(Message.class);
+        builder.predicate(new Predicate(Message.Property.CONVERSATION, Predicate
+                  .Operator.EQUAL_TO, conversation));
+        if (limit != 0)
+          builder.limit(limit);
+        Query query = builder.build();
+        List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
+        if (results != null) {
+          writableArray.pushString("YES");
+          writableArray.pushArray(messagesToWritableArray(results));
+          promise.resolve(writableArray);
+        }
+      } catch (IllegalViewOperationException e) {
+        promise.reject(e);
+      }      
     }
   }
   @ReactMethod
@@ -381,8 +393,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     //Log.v("userIDGlobal", userIDGlobal);
     //Log.v("getUserId", message.getSender().getUserId().toString());
     //Log.v("message", message.toString());
-    if (!Objects.equals(userIDGlobal, message.getSender().getUserId().toString()))
-      message.markAsRead();
+    //if (!Objects.equals(userIDGlobal, message.getSender().getUserId().toString()))
+    //  message.markAsRead();
     DateFormat sdf = new SimpleDateFormat(DATE_FORMAT_NOW);
     TimeZone tz = TimeZone.getTimeZone("UTC");
     sdf.setTimeZone(tz);  

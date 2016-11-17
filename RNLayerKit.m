@@ -206,23 +206,53 @@ RCT_EXPORT_METHOD(getConversations:(int)limit offset:(int)offset
     }
 }
 
-RCT_EXPORT_METHOD(getMessages:(NSString*)convoID limit:(int)limit offset:(int)offset
+RCT_EXPORT_METHOD(getMessages:(NSString*)convoID userIDs:(NSArray*)userIDs limit:(int)limit offset:(int)offset
                                                                 resolver:(RCTPromiseResolveBlock)resolve
                                                                 rejecter:(RCTPromiseRejectBlock)reject) 
 {
-    LayerQuery *query = [LayerQuery new];
-    NSError *queryError;
-    NSOrderedSet *convoMessages = [query fetchMessagesForConvoId:convoID client:_layerClient limit:limit offset:offset error:queryError];
-    if(queryError){
-        id retErr = RCTMakeAndLogError(@"Error getting Layer messages",queryError,NULL);
-        NSError *error = retErr;
-        reject(@"no_events", @"Error creating conversastion", error); 
-    }
-    else{
-        JSONHelper *helper = [JSONHelper new];
-        NSArray *retData = [helper convertMessagesToArray:convoMessages];
-        NSString *thingToReturn = @"YES";
-        resolve(@[thingToReturn,retData]); 
+    if (convoID){
+        LayerQuery *query = [LayerQuery new];
+        NSError *queryError;
+        NSOrderedSet *convoMessages = [query fetchMessagesForConvoId:convoID client:_layerClient limit:limit offset:offset error:queryError];
+        if(queryError){
+            id retErr = RCTMakeAndLogError(@"Error getting Layer messages",queryError,NULL);
+            NSError *error = retErr;
+            reject(@"no_events", @"Error creating conversastion", error); 
+        }
+        else{
+            JSONHelper *helper = [JSONHelper new];
+            NSArray *retData = [helper convertMessagesToArray:convoMessages];
+            NSString *thingToReturn = @"YES";
+            resolve(@[thingToReturn,retData]); 
+        }
+    } else {
+        NSError *errorConversation = nil;
+        NSSet *participants = [NSSet setWithArray: userIDs];
+        LYRConversationOptions *conversationOptions = [LYRConversationOptions new];
+        conversationOptions.distinctByParticipants = YES;
+        LYRConversation *conversation = [_layerClient newConversationWithParticipants:participants options:conversationOptions error:&errorConversation];
+        NSLog(@"No conversation");
+        if (errorConversation && errorConversation.code == LYRErrorDistinctConversationExists) {
+            conversation = errorConversation.userInfo[LYRExistingDistinctConversationKey];
+            NSLog(@"old conversation");
+        }     
+        if (conversation){
+            LayerQuery *query = [LayerQuery new];
+            NSError *queryError;
+            NSLog(@"old conversation get messages %@", conversation);
+            NSOrderedSet *convoMessages = [query fetchMessagesForConvoId:conversation client:_layerClient limit:limit offset:offset error:queryError];
+            if(queryError){
+                id retErr = RCTMakeAndLogError(@"Error getting Layer messages",queryError,NULL);
+                NSError *error = retErr;
+                reject(@"no_events", @"Error creating conversastion", error); 
+            }
+            else{
+                JSONHelper *helper = [JSONHelper new];
+                NSArray *retData = [helper convertMessagesToArray:convoMessages];
+                NSString *thingToReturn = @"YES";
+                resolve(@[thingToReturn,retData]); 
+            }            
+        }   
     }
 }
 
