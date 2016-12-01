@@ -32,7 +32,7 @@
 RCT_EXPORT_MODULE()
 
 
-RCT_EXPORT_METHOD(connect:(NSString*)appIDstr                            
+RCT_EXPORT_METHOD(connect:(NSString*)appIDstr deviceToken:(NSData*)deviceToken                           
                  resolver:(RCTPromiseResolveBlock)resolve
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
@@ -41,7 +41,7 @@ RCT_EXPORT_METHOD(connect:(NSString*)appIDstr
         NSURL *appID = [NSURL URLWithString:appIDstr];
         
         _layerClient = [LYRClient clientWithAppID:appID delegate:self options:nil];
-      
+        _deviceToken = deviceToken;
         //[_layerClient setDelegate:self];
         if (!_layerClient.isConnected) {
             [_layerClient connectWithCompletion:^(BOOL success, NSError *error) {
@@ -354,7 +354,7 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID
     // [notification name] should always be @"TestNotification"
     // unless you use this method for observation of other notifications
     // as well.
-    
+    NSLog (@"Enter to receivedNotification!");
     if ([[notification name] isEqualToString:@"RNLayerKitNotification"])
     {
         NSLog (@"Successfully received the test notification!");
@@ -366,6 +366,7 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID
 -(void)updateRemoteNotificationDeviceToken:(NSData*)deviceToken
 {
     // if we haven't initialize our client, then save the token for later
+    NSLog (@"Enter on updateRemoteNotificationDeviceToken");
     if(!_layerClient){
         _deviceToken=deviceToken;
     }
@@ -389,6 +390,10 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID
                                                  body:@{@"source":@"LayerClient", @"type": @"error",@"error":@{@"code":@(error.code),@"domain":error.domain,@"description":[error localizedDescription]}}];
 }
 #pragma mark - Layer Client Delegate
+- (void)layerClient:(LYRClient *)client didFailToRegisterForRemoteNotificationsWithError:(NSError *)error
+{
+    NSLog(@"PUSH ERROR: %@", error);
+}
 - (void)layerClient:(LYRClient *)client didAuthenticateAsUserID:(NSString *)userID
 {
     [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
