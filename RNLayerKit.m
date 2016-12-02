@@ -36,12 +36,12 @@ RCT_EXPORT_METHOD(connect:(NSString*)appIDstr deviceToken:(NSData*)deviceToken
                  resolver:(RCTPromiseResolveBlock)resolve
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
-    //if (!_layerClient) {
-        NSLog(@"No Layer Client");
         NSURL *appID = [NSURL URLWithString:appIDstr];
-        
-        _layerClient = [LYRClient clientWithAppID:appID delegate:self options:nil];
         _deviceToken = deviceToken;
+        if (!_layerClient) {
+            NSLog(@"No Layer Client");     
+            _layerClient = [LYRClient clientWithAppID:appID delegate:self options:nil];
+        }   
         //[_layerClient setDelegate:self];
         if (!_layerClient.isConnected) {
             [_layerClient connectWithCompletion:^(BOOL success, NSError *error) {
@@ -67,7 +67,7 @@ RCT_EXPORT_METHOD(connect:(NSString*)appIDstr deviceToken:(NSData*)deviceToken
             resolve(thingToReturn);             
         }
         
-    //}
+    
       
 
 }
@@ -80,7 +80,7 @@ RCT_EXPORT_METHOD(disconnect)
             NSLog(@"Failed to deauthenticate user: %@", error);
         } else {
             NSLog(@"User was deauthenticated");
-            [_layerClient disconnect];
+            //[_layerClient disconnect];
         } 
     }];   
 
@@ -319,7 +319,7 @@ RCT_EXPORT_METHOD(unregisterForTypingEvents)
     [[NSNotificationCenter defaultCenter] removeObserver:self name:LYRConversationDidReceiveTypingIndicatorNotification object:nil];
 }
 #pragma mark - Authentication
-RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID
+RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSString *)header
                                      resolver:(RCTPromiseResolveBlock)resolve
                                      rejecter:(RCTPromiseRejectBlock)reject)
 {
@@ -332,7 +332,7 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID
     [[NSNotificationCenter defaultCenter] removeObserver:self name:LYRConversationDidReceiveTypingIndicatorNotification object:nil];
     LayerAuthenticate *lAuth = [LayerAuthenticate new];
     NSLog(@"Layer authenticated");
-    [lAuth authenticateLayerWithUserID:userID layerClient:_layerClient completion:^(NSError *error) {
+    [lAuth authenticateLayerWithUserID:userID header:header layerClient:_layerClient completion:^(NSError *error) {
         if (!error) {
             LayerQuery *query = [LayerQuery new];
             NSError *queryError;
