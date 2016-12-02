@@ -65,6 +65,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
   
   public static String userIDGlobal;
+  public static String headerGlobal;
   public static Identity userIdentityGlobal;
   //public static final String DATE_FORMAT_NOW = "EEE, dd MMM yyyy HH:mm:ss Z";
   public static final String DATE_FORMAT_NOW = "yyyy-MM-dd'T'HH:mm'Z'";
@@ -88,6 +89,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void connect(
     String appIDstr,
+    String deviceToken,
     Promise promise) {
     try {
       LayerClient.Options options = new LayerClient.Options();
@@ -119,10 +121,12 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void authenticateLayerWithUserID(
     String userID,
+    String header,
     Promise promise) {
     try {
       WritableArray writableArray = new WritableNativeArray();
       userIDGlobal = userID;
+      headerGlobal = header;
       layerClient.authenticate();
       String count;
       count = getMessagesCount(userID);
@@ -402,9 +406,10 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     messageMap.putString("identifier",message.getId().toString());
     messageMap.putBoolean("isDeleted",message.isDeleted());
     messageMap.putBoolean("isSent",message.isSent());
-
-    RecipientStatus recipientStatus = message.getRecipientStatus(userIdentityGlobal);
-    messageMap.putString("Status",recipientStatus.toString());
+    //TODO: FIX THIS
+    //RecipientStatus recipientStatus = message.getRecipientStatus(userIdentityGlobal);
+    //messageMap.putString("Status",recipientStatus.toString());
+    
     //messageMap.putBoolean("isUnread",message.isUnread());
     if (message.getReceivedAt() != null)
       messageMap.putString("receivedAt",sdf.format(message.getReceivedAt()));

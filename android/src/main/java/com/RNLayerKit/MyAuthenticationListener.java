@@ -36,28 +36,33 @@ public class MyAuthenticationListener implements LayerAuthenticationListener {
     //   to call
     public void onAuthenticationChallenge(final LayerClient client, final String nonce) {
         final String mUserId = RNLayerModule.userIDGlobal;
+        final String header = RNLayerModule.headerGlobal;
 
         //Note: This Layer Authentication Service is for TESTING PURPOSES ONLY
         //When going into production, you will need to create your own web service
         //Check out https://developer.layer.com/docs/guides#authentication for guidance
+        JSONObject jsonHeader = new JSONObject(header);
         (new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
                 try {
-                    HttpPost post = new HttpPost("https://layer-identity-provider.herokuapp" +
-                            ".com/identity_tokens");
+                    HttpPost post = new HttpPost(jsonHeader.apiUrl +
+                            "/layer_auth_token");
                     post.setHeader("Content-Type", "application/json");
-                    post.setHeader("Accept", "application/json");
+                    post.setHeader("Accept", jsonHeader.accept);
+                    post.setHeader("Client", jsonHeader.client);
+                    post.setHeader("access-token", jsonHeader.access-token);
+                    post.setHeader("uid", jsonHeader.uid);
 
                     JSONObject json = new JSONObject()
-                            .put("app_id", client.getAppId())
-                            .put("user_id", mUserId)
                             .put("nonce", nonce);
                     post.setEntity(new StringEntity(json.toString()));
 
                     HttpResponse response = (new DefaultHttpClient()).execute(post);
-                    String eit = (new JSONObject(EntityUtils.toString(response.getEntity())))
-                            .optString("identity_token");
+                    // String eit = (new JSONObject(EntityUtils.toString(response.getEntity())))
+                    //         .optString("identity_token");
+                    String eit = response.toString();
+                    Log.v("LayerResponse", response.toString());  
 
                     client.answerAuthenticationChallenge(eit);
 
