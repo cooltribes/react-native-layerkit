@@ -133,7 +133,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
       writableArray.pushString("YES");
       writableArray.pushInt(Integer.parseInt(count));
       promise.resolve(writableArray);
-      userIdentityGlobal = layerClient.getAuthenticatedUser();
+      //userIdentityGlobal = layerClient.getAuthenticatedUser();
+      //Log.v("User: ", userIdentityGlobal.toString() );
     } catch (IllegalViewOperationException e) {
       promise.reject(e);
     }
@@ -407,8 +408,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     messageMap.putBoolean("isDeleted",message.isDeleted());
     messageMap.putBoolean("isSent",message.isSent());
     //TODO: FIX THIS
-    //RecipientStatus recipientStatus = message.getRecipientStatus(userIdentityGlobal);
-    //messageMap.putString("Status",recipientStatus.toString());
+    RecipientStatus recipientStatus = message.getRecipientStatus(userIdentityGlobal);
+    messageMap.putString("Status",recipientStatus.toString());
     
     //messageMap.putBoolean("isUnread",message.isUnread());
     if (message.getReceivedAt() != null)

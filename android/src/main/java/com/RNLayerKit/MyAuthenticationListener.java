@@ -13,6 +13,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
+import org.json.JSONException;
 
 public class MyAuthenticationListener implements LayerAuthenticationListener {
 
@@ -37,22 +38,32 @@ public class MyAuthenticationListener implements LayerAuthenticationListener {
     public void onAuthenticationChallenge(final LayerClient client, final String nonce) {
         final String mUserId = RNLayerModule.userIDGlobal;
         final String header = RNLayerModule.headerGlobal;
+        //Log.v("Layer-log:",header);
 
         //Note: This Layer Authentication Service is for TESTING PURPOSES ONLY
         //When going into production, you will need to create your own web service
         //Check out https://developer.layer.com/docs/guides#authentication for guidance
-        JSONObject jsonHeader = new JSONObject(header);
+
+        // try {
+               
+        // } catch (JSONException e) {
+        //     Log.v("LayerResponse", e.toString());
+        //     final JSONObject jsonHeader = new JSONObject();
+        //     //some exception handler code.
+        // }        
         (new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... params) {
                 try {
-                    HttpPost post = new HttpPost(jsonHeader.apiUrl +
+                    //Log.v("Layer-header", header); 
+                    final JSONObject jsonHeader = new JSONObject(header);    
+                    HttpPost post = new HttpPost(jsonHeader.get("apiUrl").toString() +
                             "/layer_auth_token");
                     post.setHeader("Content-Type", "application/json");
-                    post.setHeader("Accept", jsonHeader.accept);
-                    post.setHeader("Client", jsonHeader.client);
-                    post.setHeader("access-token", jsonHeader.access-token);
-                    post.setHeader("uid", jsonHeader.uid);
+                    post.setHeader("Accept", jsonHeader.get("accept").toString());
+                    post.setHeader("Client", jsonHeader.get("client").toString());
+                    post.setHeader("access-token", jsonHeader.get("access-token").toString());
+                    post.setHeader("uid", jsonHeader.get("uid").toString());
 
                     JSONObject json = new JSONObject()
                             .put("nonce", nonce);
@@ -61,8 +72,9 @@ public class MyAuthenticationListener implements LayerAuthenticationListener {
                     HttpResponse response = (new DefaultHttpClient()).execute(post);
                     // String eit = (new JSONObject(EntityUtils.toString(response.getEntity())))
                     //         .optString("identity_token");
-                    String eit = response.toString();
-                    Log.v("LayerResponse", response.toString());  
+                    String eit = EntityUtils.toString(response.getEntity());
+                    eit = eit.substring(1, eit.length()-1);
+                    //Log.v("LayerResponse", eit);  
 
                     client.answerAuthenticationChallenge(eit);
 
@@ -78,7 +90,9 @@ public class MyAuthenticationListener implements LayerAuthenticationListener {
      public void onAuthenticated(LayerClient client, String userID) {
 
          //Start the conversation view after a successful authentication
-         Log.v(TAG, "Authentication successful");
+         //Log.v(TAG, "Authentication successful");
+         RNLayerModule.userIdentityGlobal = client.getAuthenticatedUser();
+         //og.v("User: ", userID );
        
      }
 
