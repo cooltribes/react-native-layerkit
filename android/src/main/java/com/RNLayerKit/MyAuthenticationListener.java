@@ -92,7 +92,7 @@ public class MyAuthenticationListener implements LayerAuthenticationListener {
          //Start the conversation view after a successful authentication
          //Log.v(TAG, "Authentication successful");
          RNLayerModule.userIdentityGlobal = client.getAuthenticatedUser();
-         //og.v("User: ", userID );
+         //Log.v("User: ", userID );
        
      }
 
@@ -102,6 +102,8 @@ public class MyAuthenticationListener implements LayerAuthenticationListener {
     //or incorrect nonce
     public void onAuthenticationError(LayerClient layerClient, LayerException e) {
         Log.v(TAG, "There was an error authenticating: " + e);
+        RNLayerModule.userIdentityGlobal = null;
+
     }
 
     //Called after the user has been deauthenticated

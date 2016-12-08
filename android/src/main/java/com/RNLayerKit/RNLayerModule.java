@@ -408,8 +408,11 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     messageMap.putBoolean("isDeleted",message.isDeleted());
     messageMap.putBoolean("isSent",message.isSent());
     //TODO: FIX THIS
-    RecipientStatus recipientStatus = message.getRecipientStatus(userIdentityGlobal);
-    messageMap.putString("Status",recipientStatus.toString());
+    //Log.v("userIdentityGlobal: ", userIdentityGlobal.toString());
+    if (userIdentityGlobal != null){
+      RecipientStatus recipientStatus = message.getRecipientStatus(userIdentityGlobal);
+      messageMap.putString("Status",recipientStatus.toString());
+    }
     
     //messageMap.putBoolean("isUnread",message.isUnread());
     if (message.getReceivedAt() != null)
