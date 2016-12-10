@@ -1,10 +1,10 @@
 #import "RNLayerKit.h"
+NSData *_deviceToken;
 
 @implementation RNLayerKit{
     NSString *_appID;
     LYRClient *_layerClient;
     JSONHelper *_jsonHelper;
-    NSData *_deviceToken;
     NSString *_userID;
 }
 
@@ -37,7 +37,7 @@ RCT_EXPORT_METHOD(connect:(NSString*)appIDstr deviceToken:(NSData*)deviceToken
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
         NSURL *appID = [NSURL URLWithString:appIDstr];
-        _deviceToken = deviceToken;
+        //_deviceToken = deviceToken;
         if (!_layerClient) {
             NSLog(@"No Layer Client");     
             _layerClient = [LYRClient clientWithAppID:appID delegate:self options:nil];
@@ -250,7 +250,7 @@ RCT_EXPORT_METHOD(getMessages:(NSString*)convoID userIDs:(NSArray*)userIDs limit
                 JSONHelper *helper = [JSONHelper new];
                 NSArray *retData = [helper convertMessagesToArray:convoMessages];
                 NSString *thingToReturn = @"YES";
-                resolve(@[thingToReturn,retData]); 
+                resolve(@[thingToReturn,retData,[conversation.identifier absoluteString]]); 
             }            
         }   
     }
@@ -374,7 +374,7 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
         NSError *error;
         BOOL success = [_layerClient updateRemoteNotificationDeviceToken:deviceToken error:&error];
         if (success) {
-            NSLog(@"Application did register for remote notifications");
+            NSLog(@"Application did register for remote notifications: %@", deviceToken);
             [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                          body:@{@"source":@"LayerClient",@"type": @"didRegisterForRemoteNotificationsWithDeviceToken"}];
         } else {
@@ -473,6 +473,33 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
     [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                  body:@{@"source":@"LayerClient", @"type": @"layerClientDidDisconnect"}];
 }
+
++ (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
+{
+    NSLog(@"didRegisterForRemoteNotificationsWithDeviceToken Layer: %@", deviceToken);
+    _deviceToken = deviceToken;
+    //[self updateRemoteNotificationDeviceToken:deviceToken];
+    // NSError *error;
+    // BOOL success = [LYRClient updateRemoteNotificationDeviceToken:deviceToken error:&error];
+    // if (success) {
+    // NSLog(@"Application did register for remote notifications");
+    // } else {
+    // NSLog(@"Error updating Layer device token for push:%@", error);
+    // }    
+}
+
+// - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
+// {
+//    NSLog(@"didRegisterForRemoteNotificationsWithDeviceToken: %@", deviceToken);
+// //   NSError *error;
+// //   BOOL success = [LYRClient updateRemoteNotificationDeviceToken:deviceToken error:&error];
+// //   if (success) {
+// //     NSLog(@"Application did register for remote notifications");
+// //   } else {
+// //     NSLog(@"Error updating Layer device token for push:%@", error);
+// //   }
+
+// }
 
 #pragma mark - Typing Indicator
 - (void)didReceiveTypingIndicator:(NSNotification *)notification

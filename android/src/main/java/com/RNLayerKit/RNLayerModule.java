@@ -230,6 +230,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
         if (results != null) {
           writableArray.pushString("YES");
           writableArray.pushArray(messagesToWritableArray(results));
+          writableArray.pushString(conversation.getId().toString());
           promise.resolve(writableArray);
         }
       } catch (IllegalViewOperationException e) {
