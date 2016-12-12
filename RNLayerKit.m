@@ -223,6 +223,17 @@ RCT_EXPORT_METHOD(getMessages:(NSString*)convoID userIDs:(NSArray*)userIDs limit
             JSONHelper *helper = [JSONHelper new];
             NSArray *retData = [helper convertMessagesToArray:convoMessages];
             NSString *thingToReturn = @"YES";
+            // NSLog(@"entro en mensajes de conversation")
+            // for (LYRMessage *msg in convoMessages) {
+            //     NSError *errorMsg = nil;
+            //     NSLog(@"mensaje con conversation: %@",msg);
+            //     BOOL success = [msg markAsRead:&errorMsg];
+            //     if (success) {
+            //         NSLog(@'Message successfully marked as read');
+            //     } else {
+            //         NSLog(@'Failed to mark message as read with error %@', errorMsg);
+            //     }
+            // } 
             resolve(@[thingToReturn,retData]); 
         }
     } else {
@@ -250,30 +261,46 @@ RCT_EXPORT_METHOD(getMessages:(NSString*)convoID userIDs:(NSArray*)userIDs limit
                 JSONHelper *helper = [JSONHelper new];
                 NSArray *retData = [helper convertMessagesToArray:convoMessages];
                 NSString *thingToReturn = @"YES";
+                // for (LYRMessage *msg in convoMessages) {
+                //     NSError *errorMsg = nil;
+                //     NSLog(@"mensaje no conversation: %@",msg);
+                //     BOOL success = [msg markAsRead:&errorMsg];
+                //     if (success) {
+                //         NSLog(@'Message successfully marked as read');
+                //     } else {
+                //         NSLog(@'Failed to mark message as read with error %@', errorMsg);
+                //     }
+                // }                 
                 resolve(@[thingToReturn,retData,[conversation.identifier absoluteString]]); 
             }            
         }   
     }
 }
 
-RCT_EXPORT_METHOD(markAllAsRead:(NSString*)convoID callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(markAllAsRead:(NSString*)convoID resolver:(RCTPromiseResolveBlock)resolve
+                                                                rejecter:(RCTPromiseRejectBlock)reject) 
 {
     LayerQuery *query = [LayerQuery new];
     NSError *err;
+    //NSLog(@"entro en markAllAsRead: %@", convoID);
     LYRConversation *thisConvo = [query fetchConvoWithId:convoID client:_layerClient error:err];
     if(err){
         [self sendErrorEvent:err];
     }
     else {
         NSError *error;
+        //NSLog(@"conversation on mark all as read: %@",thisConvo);
         BOOL success = [thisConvo markAllMessagesAsRead:&error];
         if(success){
-            //RCTLogInfo(@"Layer Messages marked as read");
-            callback(@[[NSNull null],@YES]);
+            RCTLogInfo(@"Layer Messages marked as read");
+            NSError *queryError;
+            NSInteger count = [query fetchMessagesCount:_userID client:_layerClient error:queryError];
+            resolve(@[[NSNumber numberWithInteger:count],@YES]);
         }
         else {
             id retErr = RCTMakeAndLogError(@"Error marking messages as read ",error,NULL);
-            callback(@[retErr,[NSNull null]]);
+            NSError *error = retErr;
+            reject(@"no_events", @"Error mark all as read", error); 
         }
     }
     

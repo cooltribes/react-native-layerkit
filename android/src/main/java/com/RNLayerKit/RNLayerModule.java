@@ -186,12 +186,43 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
           writableArray.pushString("YES");
           writableArray.pushArray(conversationsToWritableArray(results));          
           promise.resolve(writableArray);
+      } else {
+        promise.reject("NO");
       }
     } catch (IllegalViewOperationException e) {
       promise.reject(e);
     }
   } 
 
+  @ReactMethod
+  public void markAllAsRead(
+    String convoID,
+    Promise promise) {
+      try {
+        Builder builder = Query.builder(Message.class);
+        builder.predicate(new Predicate(Message.Property.CONVERSATION, Predicate
+                  .Operator.EQUAL_TO, this.fetchConvoWithId(convoID,layerClient)));
+        Query query = builder.build();
+        List<Message> messages = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
+        if (messages != null) {      
+          for(int i = 0; i < messages.size(); i++ ){
+            Message message = messages.get(i);
+            if (!Objects.equals(userIDGlobal, message.getSender().getUserId().toString()))
+              message.markAsRead();
+          }
+          String count;
+          WritableArray writableArray = new WritableNativeArray();
+          count = getMessagesCount(userIDGlobal);
+          writableArray.pushInt(Integer.parseInt(count));  
+          writableArray.pushString("YES");
+          promise.resolve(writableArray);
+        } else {
+          promise.reject("NO");
+        }
+      } catch (IllegalViewOperationException e) {
+        promise.reject(e);
+      } 
+  }
   @ReactMethod
   public void getMessages(
     String convoID,
