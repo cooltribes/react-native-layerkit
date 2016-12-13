@@ -8,5 +8,6 @@
 #import "RCTEventDispatcher.h"
 
 @interface RNLayerKit : NSObject <RCTBridgeModule>
++ (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken;
 - (void)didReceiveTypingIndicator:(NSNotification *)notification;
 @end
