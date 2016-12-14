@@ -445,7 +445,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
       RecipientStatus recipientStatus = message.getRecipientStatus(userIdentityGlobal);
       messageMap.putString("Status",recipientStatus.toString());
     }
-    
+    messageMap.putArray("recipientStatus",message.getRecipientStatus());
     //messageMap.putBoolean("isUnread",message.isUnread());
     if (message.getReceivedAt() != null)
       messageMap.putString("receivedAt",sdf.format(message.getReceivedAt()));

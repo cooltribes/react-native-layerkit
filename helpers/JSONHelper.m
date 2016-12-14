@@ -127,7 +127,7 @@
   [propertyDict setValue:[self convertDateToJSON:msg.receivedAt] forKey:@"receivedAt"];
   
   [propertyDict setValue:[msg.identifier absoluteString] forKey:@"identifier"];
-
+  [propertyDict setValue:msg.recipientStatusByUserID forKey:@"recipientStatus"];
   NSMutableString *messageText= [NSMutableString new];
   NSMutableArray *messageParts = [NSMutableArray new];
   for(LYRMessagePart *part in msg.parts){
