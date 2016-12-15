@@ -445,7 +445,13 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
       RecipientStatus recipientStatus = message.getRecipientStatus(userIdentityGlobal);
       messageMap.putString("Status",recipientStatus.toString());
     }
-    messageMap.putArray("recipientStatus",message.getRecipientStatus());
+    Map<Identity,RecipientStatus> recipientStatus = message.getRecipientStatus();
+    WritableNativeMap mapRecipientStatus = new WritableNativeMap(); 
+    for (Map.Entry<Identity,RecipientStatus> recipient : recipientStatus.entrySet()) {    
+    //for(int j = 0; j < participants.size(); j++ ){    
+      mapRecipientStatus.putString(recipient.getKey().getUserId().toString(),recipient.getValue().toString());
+    }    
+    messageMap.putMap("recipientStatus",mapRecipientStatus);
     //messageMap.putBoolean("isUnread",message.isUnread());
     if (message.getReceivedAt() != null)
       messageMap.putString("receivedAt",sdf.format(message.getReceivedAt()));
