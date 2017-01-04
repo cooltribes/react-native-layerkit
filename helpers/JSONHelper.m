@@ -159,6 +159,7 @@
 -(NSString*)convertDateToJSON:(NSDate*)date
 {
   NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
+  [fmt setTimeZone:[NSTimeZone timeZoneWithName:@"UTC"]];
   [fmt setDateFormat:@"yyyy'-'MM'-'dd'T'HH':'mm'Z'"];
   return [fmt stringFromDate:date];
 }
