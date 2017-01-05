@@ -298,9 +298,11 @@ RCT_EXPORT_METHOD(markAllAsRead:(NSString*)convoID resolver:(RCTPromiseResolveBl
             resolve(@[[NSNumber numberWithInteger:count],@YES]);
         }
         else {
-            id retErr = RCTMakeAndLogError(@"Error marking messages as read ",error,NULL);
-            NSError *error = retErr;
-            reject(@"no_events", @"Error mark all as read", error); 
+            if (thisConvo != NULL) {
+                id retErr = RCTMakeAndLogError(@"Error marking messages as read ",error,NULL);
+                NSError *error = retErr;
+                reject(@"no_events", @"Error mark all as read", error); 
+            }
         }
     }
     
