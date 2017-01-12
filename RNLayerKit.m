@@ -6,6 +6,7 @@ NSData *_deviceToken;
     LYRClient *_layerClient;
     JSONHelper *_jsonHelper;
     NSString *_userID;
+    NSString *_header;
 }
 
 @synthesize bridge = _bridge;
@@ -32,23 +33,26 @@ NSData *_deviceToken;
 RCT_EXPORT_MODULE()
 
 
-RCT_EXPORT_METHOD(connect:(NSString*)appIDstr deviceToken:(NSData*)deviceToken                           
+RCT_EXPORT_METHOD(connect:(NSString*)appIDstr header:(NSString*)header                           
                  resolver:(RCTPromiseResolveBlock)resolve
                  rejecter:(RCTPromiseRejectBlock)reject)
 {
         NSURL *appID = [NSURL URLWithString:appIDstr];
+        LYRClientOptions *clientOptions = [LYRClientOptions new];
+        clientOptions.synchronizationPolicy = 1;
+        _header = header;
         //_deviceToken = deviceToken;
         if (!_layerClient) {
             NSLog(@"No Layer Client");     
-            _layerClient = [LYRClient clientWithAppID:appID delegate:self options:nil];
+            _layerClient = [LYRClient clientWithAppID:appID delegate:self options:clientOptions];
         }   
         //[_layerClient setDelegate:self];
         if (!_layerClient.isConnected) {
             [_layerClient connectWithCompletion:^(BOOL success, NSError *error) {
                 if (!success) {
                     NSLog(@"Failed to connect to Layer: %@", error);
-                    RCTLogInfo(@"Failed to connect to Layer: %@", error);
-                    reject(@"no_events", @"There were no events", error);
+                    //RCTLogInfo(@"Failed to connect to Layer: %@", error);
+                    reject(@"no_events", @"There were no events", nil);
                 } else {
                     NSLog(@"Connected to Layer!");
                     RCTLogInfo(@"Connected to Layer!");
@@ -306,6 +310,7 @@ RCT_EXPORT_METHOD(markAllAsRead:(NSString*)convoID resolver:(RCTPromiseResolveBl
         }
     }
     
+    
 }
 
 RCT_EXPORT_METHOD(sendTypingBegin:(NSString*)convoID)
@@ -370,9 +375,9 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
             resolve(@[thingToReturn,[NSNumber numberWithInteger:count]]);            
         }
         else{
-            id retErr = RCTMakeAndLogError(@"Error logging in",error,NULL);
-            NSError *error = retErr;
-            reject(@"no_events", @"TError logging in", error);            
+            //id retErr = RCTMakeAndLogError(@"Error logging in",error,NULL);
+            //NSError *error = retErr;
+            reject(@"no_events", @"Error logging in", error);            
         }
     }];
 }
@@ -456,15 +461,18 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
 - (void)layerClient:(LYRClient *)client didReceiveAuthenticationChallengeWithNonce:(NSString *)nonce
 {
     NSLog(@"Layer Client did receive an authentication challenge with nonce=%@", nonce);
+    NSLog(@"Header: %@",_header);
     if (_layerClient.authenticatedUser)
         _userID = _layerClient.authenticatedUser.userID;
+    NSLog(@"LayerUserID: %@",_userID);
     LayerAuthenticate *lAuth = [LayerAuthenticate new];
-    [lAuth authenticationChallenge:_userID layerClient:_layerClient nonce:nonce completion:^(NSError *error) {
+    [lAuth authenticationChallenge:_userID layerClient:_layerClient nonce:nonce header:_header completion:^(NSError *error) {
         if (!error) {
             [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                      body:@{@"source":@"LayerClient", @"type": @"didReceiveAuthenticationChallengeWithNonce"}];           
         }
         else{
+            NSLog(@"Error %@",error);
             [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                  body:@{@"source":@"LayerClient", @"type": @"didReceiveAuthenticationChallengeWithNonce"}];            
         }
@@ -473,10 +481,12 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
 }
 - (void)layerClient:(LYRClient *)client objectsDidChange:(NSArray *)changes;
 {
+    NSLog(@"Entro objectsDidChange");
     [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                  body:@{@"source":@"LayerClient",
                                                         @"type": @"objectsDidChange",
                                                         @"data":[_jsonHelper convertChangesToArray:changes]}];
+    NSLog(@"Salio objectsDidChange");
 }
 - (void)layerClient:(LYRClient *)client willAttemptToConnect:(NSUInteger)attemptNumber afterDelay:(NSTimeInterval)delayInterval maximumNumberOfAttempts:(NSUInteger)attemptLimit
 {

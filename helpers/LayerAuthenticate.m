@@ -67,11 +67,21 @@
   }
 
 }
-- (void)authenticationChallenge:(NSString *)userID layerClient:(LYRClient*)layerClient nonce:nonce completion:(void(^)(NSError *error))completion{
+- (void)authenticationChallenge:(NSString *)userID layerClient:(LYRClient*)layerClient nonce:nonce header:header completion:(void(^)(NSError *error))completion{
 
+  NSData *data = [header dataUsingEncoding:NSUTF8StringEncoding];
+  NSDictionary *headerObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+  
+  _accept = [headerObject valueForKey:@"accept"];
+  _client = [headerObject valueForKey:@"client"];
+  _accessToken = [headerObject valueForKey:@"access-token"];
+  _uid = [headerObject valueForKey:@"uid"];
+  _apiUrl = [headerObject valueForKey:@"apiUrl"];
+  
    /*
     * 1. Connect to your backend to generate an identity token using the provided nonce.
     */
+  NSLog(@"requestIdentityTokenForUserID %@",userID);
   [self requestIdentityTokenForUserID:userID appID:[layerClient.appID absoluteString] nonce:nonce completion:^(NSString *identityToken, NSError *error) {
     if (!identityToken) {
       if (completion) {
@@ -83,7 +93,7 @@
    /*
     * 2. Submit identity token to Layer for validation
     */
-    
+    NSLog(@"authenticationChallenge: %@",identityToken);
     [layerClient authenticateWithIdentityToken:identityToken completion:^(LYRIdentity *authenticatedUser, NSError *error) {
       if (authenticatedUser) {
         if (completion) {

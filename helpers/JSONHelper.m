@@ -58,26 +58,42 @@
 
 -(NSArray*)convertChangesToArray:(NSArray*)changes
 {
+  //NSLog(@"Entro Changes");
   NSMutableArray *allChanges = [NSMutableArray new];
   for(LYRObjectChange *thisChange in changes){
+
     NSMutableDictionary *changeData = [NSMutableDictionary new];
     [changeData setValue:NSStringFromClass([thisChange.object class]) forKey:@"object"];
     id changeObject = thisChange.object;
     if ([changeObject isKindOfClass:[LYRConversation class]]) {
       LYRConversation *conversation = changeObject;
       [changeData setValue:[self convertCovoToDict:conversation] forKey:@"conversation"];
-        // Object is a conversation
+      // Object is a conversation
     }
 
     if ([changeObject isKindOfClass:[LYRMessage class]]) {
       LYRMessage *message = changeObject;
       [changeData setValue:[self convertMessageToDict:message] forKey:@"message"];
         // Object is a message
-    }    
+    }   
+    //NSLog(@"PASO"); 
     //TODO: make this safer in the event they change it from NSURL in the future
     [changeData setValue:[[thisChange.object valueForKey:@"identifier"] absoluteString] forKey:@"identifier"];
     //[changeData setValue:[thisChange.object description] forKey:@"description"];
-    [changeData setValue:thisChange.property forKey:@"property"];
+    if ([thisChange.beforeValue isKindOfClass:[LYRMessage class]]) {
+      //NSLog(@"Entro if");
+      //[changeData setValue:[[thisChange.beforeValue valueForKey:@"identifier"] absoluteString] forKey:@"change_from"];
+      //changeData setValue:[[thisChange.afterValue valueForKey:@"identifier"] absoluteString] forKey:@"change_to"];
+      [changeData setValue:thisChange.property forKey:@"attribute"];      
+    }
+      else {
+        //if (thisChange.beforeValue)
+        //  [changeData setObject:thisChange.beforeValue forKey:@"change_from"];
+        //if (thisChange.afterValue)
+        //  [changeData setObject:thisChange.afterValue forKey:@"change_to"];
+      [changeData setValue:thisChange.property forKey:@"attribute"];
+    }
+    //NSLog(@"Salio if");
     if(thisChange.type==LYRObjectChangeTypeCreate)
       [changeData setValue:@"LYRObjectChangeTypeCreate" forKey:@"type"];
     else if(thisChange.type==LYRObjectChangeTypeDelete)
@@ -86,6 +102,7 @@
       [changeData setValue:@"LYRObjectChangeTypeUpdate" forKey:@"type"];
 
     [allChanges addObject:changeData];
+    //NSLog(@"Salio Changes");
   }
   
   return allChanges;
