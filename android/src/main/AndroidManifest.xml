@@ -11,10 +11,11 @@
     <permission android:name="com.RNLayerKit.permission.LAYER_PUSH"
        android:protectionLevel="signature"/>
     <uses-permission android:name="com.RNLayerKit.permission.LAYER_PUSH"/>
+    <!--
     <permission android:name="com.RNLayerKit.permission.C2D_MESSAGE"
        android:protectionLevel="signature"/>
     <uses-permission android:name="com.RNLayerKit.permission.C2D_MESSAGE"/>
-
+    -->
     <!-- LayerClient.sendLogs() permissions -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_LOGS"/>
