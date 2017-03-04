@@ -11,36 +11,11 @@
     <permission android:name="com.RNLayerKit.permission.LAYER_PUSH"
        android:protectionLevel="signature"/>
     <uses-permission android:name="com.RNLayerKit.permission.LAYER_PUSH"/>
-    <!--
-    <permission android:name="com.RNLayerKit.permission.C2D_MESSAGE"
-       android:protectionLevel="signature"/>
-    <uses-permission android:name="com.RNLayerKit.permission.C2D_MESSAGE"/>
-    -->
-    <!-- LayerClient.sendLogs() permissions -->
+
+    <!-- LayerClient Logs permissions -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_LOGS"/>
 
-    <application>
-       <!-- Your custom "com.layer.sdk.PUSH" notification Receiver -->
-       <receiver android:name=".LayerPushReceiver">
-          <intent-filter>
-             <action android:name="com.layer.sdk.PUSH"/>
-             <category android:name="com.RNLayerKit"/>
-          </intent-filter>
-       </receiver>
-        <service
-            android:name="com.layer.sdk.services.LayerFcmService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
-        <service
-            android:name="com.layer.sdk.services.LayerFcmInstanceIdService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
-            </intent-filter>
-        </service>       
+    <application>     
     </application>
 </manifest>
