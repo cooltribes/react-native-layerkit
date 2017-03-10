@@ -1,0 +1,234 @@
+package com.RNLayerKit.utils;
+
+import android.annotation.SuppressLint;
+
+import com.RNLayerKit.modules.RNLayerModule;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableArray;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableNativeArray;
+import com.facebook.react.bridge.WritableNativeMap;
+import com.layer.sdk.changes.LayerChange;
+import com.layer.sdk.changes.LayerChangeEvent;
+import com.layer.sdk.messaging.Conversation;
+import com.layer.sdk.messaging.Identity;
+import com.layer.sdk.messaging.LayerObject;
+import com.layer.sdk.messaging.Message;
+import com.layer.sdk.messaging.MessagePart;
+
+import java.nio.charset.Charset;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
+
+
+public class ConverterHelper {
+
+    private final static  String DATE_FORMAT_NOW = "yyyy-MM-dd'T'HH:mm'Z'";
+    private final static Charset UTF8_CHARSET = Charset.forName("UTF-8");
+
+    public static WritableMap convertChangesToArray (LayerChangeEvent event) {
+
+        List<LayerChange> changes = event.getChanges();
+        WritableArray writableArray = new WritableNativeArray();
+
+        for (int i = 0; i < changes.size(); i++) {
+            LayerChange change = changes.get(i);
+
+            WritableMap writableMap = new WritableNativeMap();
+            Object changeObject = change.getObject();
+            writableMap.putString("object", changeObject.getClass().getSimpleName());
+
+            if (change.getObjectType() == LayerObject.Type.CONVERSATION) {
+                writableMap.putString("object", "LYRConversation");
+            }
+
+            Message message = (Message) change.getObject();
+            writableMap.putString("identifier", message.getId().toString());
+
+            if (change.getObjectType() == LayerObject.Type.MESSAGE) {
+                writableMap.putString("object", "LYRMessage");
+                writableMap.putMap("message", messageToWritableMap(message) );
+            }
+
+
+            if (change.getAttributeName() != null) {
+                writableMap.putString("attribute", change.getAttributeName());
+            }
+
+            if (change.getOldValue() != null) {
+                writableMap.putString("change_from", change.getOldValue().toString());
+            }
+
+            if (change.getNewValue() != null) {
+                writableMap.putString("change_to", change.getNewValue().toString());
+            }
+
+            switch (change.getChangeType()) {
+                case INSERT:
+                    writableMap.putString("type", "LYRObjectChangeTypeCreate");
+                    break;
+                case UPDATE:
+                    writableMap.putString("type", "LYRObjectChangeTypeUpdate");
+                    break;
+                case DELETE:
+                    writableMap.putString("type", "LYRObjectChangeTypeDelete");
+                    break;
+            }
+
+            writableArray.pushMap(writableMap);
+        }
+
+        WritableMap params = Arguments.createMap();
+        params.putString("source", "LayerClient");
+        params.putString("type", "objectsDidChange");
+        params.putArray("data", writableArray);
+
+        return params;
+
+    }
+
+    public static WritableArray conversationsToWritableArray(List<Conversation> conversations) {
+        WritableArray conversationsArray = new WritableNativeArray();
+
+        if (conversations == null) {
+            return null;
+        }
+        for (int i = 0; i < conversations.size(); i++) {
+            conversationsArray.pushMap(conversationToWritableMap(conversations.get(i)));
+        }
+
+        return conversationsArray;
+
+    }
+
+    private static WritableMap conversationToWritableMap(Conversation conversation) {
+        WritableMap conversationMap = new WritableNativeMap();
+
+        if (conversation == null) {
+            return null;
+        }
+
+        conversationMap.putString("identifier", conversation.getId().toString());
+        conversationMap.putInt("hasUnreadMessages", conversation.getTotalUnreadMessageCount());
+        conversationMap.putBoolean("deliveryReceiptsEnabled", conversation.isDeliveryReceiptsEnabled());
+        conversationMap.putBoolean("isDeleted", conversation.isDeleted());
+        conversationMap.putString("metadata", conversation.getMetadata().toString());
+
+        Set<Identity> participants = conversation.getParticipants();
+        WritableArray writableArray = new WritableNativeArray();
+        for (Identity participant : participants) {
+            //for(int j = 0; j < participants.size(); j++ ){
+            writableArray.pushString(participant.getUserId());
+        }
+        conversationMap.putArray("participants", writableArray);
+
+        // TODO Put createdAt from MessagePart
+        // conversationMap.putString("createdAt", conversation.createdAt.toString());
+        conversationMap.putInt("totalNumberOfUnreadMessages", conversation.getTotalUnreadMessageCount());
+        conversationMap.putMap("lastMessage", messageToWritableMap(conversation.getLastMessage()));
+
+        return conversationMap;
+
+    }
+
+    public static WritableArray messagesToWritableArray(List<Message> messages) {
+        WritableArray messagesArray = new WritableNativeArray();
+
+        if (messages == null) {
+            return null;
+        }
+        for (int i = 0; i < messages.size(); i++) {
+            messagesArray.pushMap(messageToWritableMap(messages.get(i)));
+        }
+
+        return messagesArray;
+
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    private static WritableMap messageToWritableMap(Message message) {
+        WritableMap messageMap = new WritableNativeMap();
+
+        if (message == null) {
+            return null;
+        }
+
+        messageMap.putString("identifier", message.getId().toString());
+        messageMap.putBoolean("isDeleted", message.isDeleted());
+        messageMap.putBoolean("isSent", message.isSent());
+
+        if (RNLayerModule.userIdentityGlobal != null) {
+            Message.RecipientStatus recipientStatus = message.getRecipientStatus(RNLayerModule.userIdentityGlobal);
+            messageMap.putString("Status", recipientStatus.toString());
+        }
+
+        Map<Identity, Message.RecipientStatus> recipientStatus = message.getRecipientStatus();
+        WritableNativeMap mapRecipientStatus = new WritableNativeMap();
+        for (Map.Entry<Identity, Message.RecipientStatus> recipient : recipientStatus.entrySet()) {
+            mapRecipientStatus.putString(recipient.getKey().toString(), recipient.getValue().toString());
+        }
+        messageMap.putMap("recipientStatus", mapRecipientStatus);
+
+        DateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT_NOW);
+        TimeZone timeZone = TimeZone.getTimeZone("UTC");
+        simpleDateFormat.setTimeZone(timeZone);
+
+        if (message.getReceivedAt() != null) {
+            messageMap.putString("receivedAt", simpleDateFormat.format(message.getReceivedAt()));
+        }
+
+        if (message.getSentAt() != null) {
+            messageMap.putString("sentAt", simpleDateFormat.format(message.getSentAt()));
+        }
+
+        messageMap.putArray("part", messagePartsToWritableMap(message.getMessageParts()));
+        Identity identity = message.getSender();
+        if (identity != null) {
+            messageMap.putString("sender", identity.toString());
+        }
+
+        if (message.getMessageParts().get(0).getMimeType().equals("text/plain")) {
+            messageMap.putString("text", new String(message.getMessageParts().get(0).getData(), UTF8_CHARSET));
+        }
+
+        return messageMap;
+
+    }
+
+    private static WritableArray messagePartsToWritableMap(List<MessagePart> messageParts) {
+        WritableArray messagePartArray = new WritableNativeArray();
+
+        if (messageParts == null) {
+            return null;
+        }
+        for (int i = 0; i < messageParts.size(); i++) {
+            messagePartArray.pushMap(messagePartToWritableMap(messageParts.get(i)));
+        }
+
+        return messagePartArray;
+    }
+
+    private static WritableMap messagePartToWritableMap(MessagePart messagePart) {
+        WritableMap messagePartMap = new WritableNativeMap();
+
+        if (messagePart == null) {
+            return null;
+        }
+
+        messagePartMap.putString("identifier", messagePart.getId().toString());
+        messagePartMap.putString("MIMEType", messagePart.getMimeType());
+
+        if (messagePart.getMimeType().equals("text/plain")) {
+            String s = new String(messagePart.getData(), UTF8_CHARSET);
+            messagePartMap.putString("data", s);
+        }
+        messagePartMap.putDouble("size", messagePart.getSize());
+        messagePartMap.putInt("transferStatus", messagePart.getTransferStatus().getValue());
+
+        return messagePartMap;
+    }
+}

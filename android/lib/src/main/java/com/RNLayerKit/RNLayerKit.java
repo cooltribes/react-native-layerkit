@@ -1,11 +1,12 @@
 package com.RNLayerKit;
 
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import android.app.Application;
+
+import com.RNLayerKit.modules.RNLayerModule;
 import com.layer.sdk.LayerClient;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;
