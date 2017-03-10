@@ -12,14 +12,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
-
-import javax.net.ssl.HttpsURLConnection;
 
 public class AuthenticationListener implements LayerAuthenticationListener {
 
@@ -38,47 +36,9 @@ public class AuthenticationListener implements LayerAuthenticationListener {
      * to call
      */
     @Override
-    public void onAuthenticationChallenge(LayerClient client, String nonce) {
-
-        //Note: This Layer Authentication Service is for TESTING PURPOSES ONLY
-        //When going into production, you will need to create your own web service
-        //Check out https://developer.layer.com/docs/guides#authentication for guidance
+    public void onAuthenticationChallenge(LayerClient client, final String nonce) {
 
         Log.d(TAG, "On Authentication Challenge");
-
-//        (new AsyncTask<Void, Void, Void>() {
-//            @Override
-//            protected Void doInBackground(Void... params) {
-//                try {
-//                    //Log.v("Layer-header", header);
-//                    final JSONObject jsonHeader = new JSONObject(header);
-//                    HttpPost post = new HttpPost(jsonHeader.get("apiUrl").toString() +
-//                            "/layer_auth_token");
-//                    post.setHeader("Content-Type", "application/json");
-//                    post.setHeader("Accept", jsonHeader.get("accept").toString());
-//                    post.setHeader("Client", jsonHeader.get("client").toString());
-//                    post.setHeader("access-token", jsonHeader.get("access-token").toString());
-//                    post.setHeader("uid", jsonHeader.get("uid").toString());
-//
-//                    JSONObject json = new JSONObject()
-//                            .put("nonce", nonce);
-//                    post.setEntity(new StringEntity(json.toString()));
-//
-//                    HttpResponse response = (new DefaultHttpClient()).execute(post);
-//                    // String eit = (new JSONObject(EntityUtils.toString(response.getEntity())))
-//                    //         .optString("identity_token");
-//                    String eit = EntityUtils.toString(response.getEntity());
-//                    eit = eit.substring(1, eit.length() - 1);
-//                    //Log.v("LayerResponse", eit);
-//
-//                    client.answerAuthenticationChallenge(eit);
-//
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//                return null;
-//            }
-//        }).execute();
 
         new AutenticationChallenge(client, nonce).execute();
     }
@@ -88,6 +48,7 @@ public class AuthenticationListener implements LayerAuthenticationListener {
 
         private LayerClient layerClient;
         private String nonce;
+        private static final String UTF_8 = "UTF-8";
 
         AutenticationChallenge(LayerClient layerClient, String nonce) {
             this.layerClient = layerClient;
@@ -121,10 +82,10 @@ public class AuthenticationListener implements LayerAuthenticationListener {
          */
         private String downloadUrl(URL url) throws IOException {
             InputStream stream = null;
-            HttpsURLConnection connection = null;
+            HttpURLConnection connection = null;
             String result = null;
             try {
-                connection = (HttpsURLConnection) url.openConnection();
+                connection = (HttpURLConnection) url.openConnection();
                 // Timeout for reading InputStream arbitrarily set to 3000ms.
                 connection.setReadTimeout(3000);
                 // Timeout for connection.connect() arbitrarily set to 3000ms.
@@ -134,10 +95,11 @@ public class AuthenticationListener implements LayerAuthenticationListener {
                 // Already true by default but setting just in case; needs to be true since this request
                 // is carrying an input (response) body.
                 connection.setDoInput(true);
+                connection.setDoOutput(true);
 
                 try {
                     if (LayerkitSingleton.getInstance().getHeaderGlobal() == null) {
-                        Log.e(TAG, "Header is null");
+                        Log.d(TAG, "Header is null");
                         return null;
                     }
 
@@ -149,13 +111,14 @@ public class AuthenticationListener implements LayerAuthenticationListener {
                     connection.setRequestProperty("access-token", jsonHeader.get("access-token").toString());
                     connection.setRequestProperty("uid", jsonHeader.get("uid").toString());
 
-                    String charset = "UTF-8";
-                    String parameters = "unit_type=" + URLEncoder.encode(nonce, charset);
-
-                    connection.setFixedLengthStreamingMode(parameters.getBytes().length);
-                    PrintWriter out = new PrintWriter(connection.getOutputStream());
-                    out.print(parameters);
-                    out.close();
+                    DataOutputStream wr = new DataOutputStream( connection.getOutputStream() );
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("nonce", nonce);
+                    String data = jsonObject.toString();
+                    byte[] utf8JsonString = data.getBytes( UTF_8 );
+                    wr.write( utf8JsonString, 0, utf8JsonString.length );
+                    wr.flush();
+                    wr.close();
 
                 } catch (JSONException e) {
                     return null;
@@ -165,7 +128,7 @@ public class AuthenticationListener implements LayerAuthenticationListener {
                 connection.connect();
 
                 int responseCode = connection.getResponseCode();
-                if (responseCode != HttpsURLConnection.HTTP_OK) {
+                if (responseCode != HttpURLConnection.HTTP_OK) {
                     throw new IOException("HTTP error code: " + responseCode);
                 }
 
@@ -174,7 +137,7 @@ public class AuthenticationListener implements LayerAuthenticationListener {
 
                 if (stream != null) {
                     result = getStringFromInputStream(stream);
-                    Log.d(TAG, String.format("result: %s",result));
+                    Log.d(TAG, String.format("result: %s", result));
                     layerClient.answerAuthenticationChallenge(result);
                 }
 
@@ -190,7 +153,6 @@ public class AuthenticationListener implements LayerAuthenticationListener {
             return result;
         }
 
-        // convert InputStream to String
         private String getStringFromInputStream(InputStream is) {
 
             BufferedReader bufferedReader = null;
@@ -214,6 +176,9 @@ public class AuthenticationListener implements LayerAuthenticationListener {
                     }
                 }
             }
+
+            sb.deleteCharAt(0);
+            sb.deleteCharAt(sb.length() - 1);
 
             return sb.toString();
 

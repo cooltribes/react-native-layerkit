@@ -46,13 +46,14 @@ public class ConverterHelper {
 
             if (change.getObjectType() == LayerObject.Type.CONVERSATION) {
                 writableMap.putString("object", "LYRConversation");
+                Conversation conversation = (Conversation) change.getObject();
+                writableMap.putString("identifier", conversation.getId().toString());
             }
-
-            Message message = (Message) change.getObject();
-            writableMap.putString("identifier", message.getId().toString());
 
             if (change.getObjectType() == LayerObject.Type.MESSAGE) {
                 writableMap.putString("object", "LYRMessage");
+                Message message = (Message) change.getObject();
+                writableMap.putString("identifier", message.getId().toString());
                 writableMap.putMap("message", messageToWritableMap(message));
             }
 
