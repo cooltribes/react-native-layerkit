@@ -1,20 +1,31 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+apply plugin: 'com.android.library'
 
-buildscript {
-    repositories {
-        jcenter()
+android {
+    compileSdkVersion 23
+    buildToolsVersion "25.0.0"
+    useLibrary  'org.apache.http.legacy'
+
+    defaultConfig {
+        minSdkVersion 16
+        targetSdkVersion 22
+        versionCode 1
+        versionName "1.0"
+        ndk {
+            abiFilters "armeabi-v7a", "x86"
+        }
     }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.0'
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
+    lintOptions {
+       warning 'InvalidPackage'
     }
 }
-
-allprojects {
-    repositories {
-        mavenLocal()
-        jcenter()
-    }
+repositories {
+    maven { url "https://raw.githubusercontent.com/layerhq/releases-android/master/releases/" }
+    mavenCentral() 
+}
+dependencies {
+    compile 'com.facebook.react:react-native:+'
+    compile 'com.layer.sdk:layer-sdk:0.23.1'
+    compile 'org.slf4j:slf4j-nop:1.5.8'
+    compile 'com.google.firebase:firebase-messaging:10.2.0'
+    
 }
