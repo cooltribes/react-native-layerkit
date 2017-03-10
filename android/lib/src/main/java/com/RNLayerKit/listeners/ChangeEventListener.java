@@ -1,6 +1,6 @@
 package com.RNLayerKit.listeners;
 
-import com.RNLayerKit.modules.RNLayerModule;
+import com.RNLayerKit.react.RNLayerModule;
 import com.RNLayerKit.utils.ConverterHelper;
 import com.layer.sdk.changes.LayerChangeEvent;
 import com.layer.sdk.listeners.LayerChangeEventListener;

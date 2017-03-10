@@ -3,29 +3,21 @@ package com.RNLayerKit.listeners;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.RNLayerKit.modules.RNLayerModule;
+import com.RNLayerKit.singleton.LayerkitSingleton;
 import com.layer.sdk.LayerClient;
 import com.layer.sdk.exceptions.LayerException;
 import com.layer.sdk.listeners.LayerAuthenticationListener;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -106,7 +98,13 @@ public class AuthenticationListener implements LayerAuthenticationListener {
         protected Void doInBackground(Void... params) {
 
             try {
-                JSONObject jsonHeader = new JSONObject(RNLayerModule.headerGlobal);
+
+                if (LayerkitSingleton.getInstance().getHeaderGlobal() == null) {
+                    Log.e(TAG, "Header is null");
+                    return null;
+                }
+
+                JSONObject jsonHeader = new JSONObject(LayerkitSingleton.getInstance().getHeaderGlobal());
                 String stringURL = String.format("%s%s", jsonHeader.get("apiUrl").toString(), "/layer_auth_token");
                 URL url = new URL(stringURL);
                 downloadUrl(url);
@@ -138,7 +136,12 @@ public class AuthenticationListener implements LayerAuthenticationListener {
                 connection.setDoInput(true);
 
                 try {
-                    JSONObject jsonHeader = new JSONObject(RNLayerModule.headerGlobal);
+                    if (LayerkitSingleton.getInstance().getHeaderGlobal() == null) {
+                        Log.e(TAG, "Header is null");
+                        return null;
+                    }
+
+                    JSONObject jsonHeader = new JSONObject(LayerkitSingleton.getInstance().getHeaderGlobal());
 
                     connection.setRequestProperty("Content-Type", "application/json");
                     connection.setRequestProperty("Accept", jsonHeader.get("accept").toString());
@@ -222,11 +225,9 @@ public class AuthenticationListener implements LayerAuthenticationListener {
      */
     @Override
     public void onAuthenticated(LayerClient client, String userID) {
-
         Log.d(TAG, "On Authenticated");
-
         //Start the conversation view after a successful authentication
-        RNLayerModule.userIdentityGlobal = client.getAuthenticatedUser();
+        LayerkitSingleton.getInstance().setUserIdentityGlobal(client.getAuthenticatedUser());
     }
 
     /**
@@ -237,8 +238,7 @@ public class AuthenticationListener implements LayerAuthenticationListener {
     @Override
     public void onAuthenticationError(LayerClient layerClient, LayerException e) {
         Log.d(TAG, "There was an error authenticating: " + e);
-        RNLayerModule.userIdentityGlobal = null;
-
+        LayerkitSingleton.getInstance().setUserIdentityGlobal(null);
     }
 
     /**
@@ -247,5 +247,6 @@ public class AuthenticationListener implements LayerAuthenticationListener {
     @Override
     public void onDeauthenticated(LayerClient client) {
         Log.d(TAG, "User is deauthenticated.");
+        LayerkitSingleton.deleteInstance();
     }
 }

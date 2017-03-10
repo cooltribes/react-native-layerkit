@@ -1,10 +1,11 @@
-package com.RNLayerKit.modules;
+package com.RNLayerKit.react;
 
 
-import android.annotation.SuppressLint;
+import android.util.Log;
 
 import com.RNLayerKit.listeners.AuthenticationListener;
 import com.RNLayerKit.listeners.ChangeEventListener;
+import com.RNLayerKit.singleton.LayerkitSingleton;
 import com.RNLayerKit.utils.ConverterHelper;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -15,15 +16,12 @@ import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeArray;
-import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.facebook.react.uimanager.IllegalViewOperationException;
 import com.layer.sdk.LayerClient;
 import com.layer.sdk.exceptions.LayerConversationException;
 import com.layer.sdk.messaging.Conversation;
-import com.layer.sdk.messaging.Identity;
 import com.layer.sdk.messaging.Message;
-import com.layer.sdk.messaging.Message.RecipientStatus;
 import com.layer.sdk.messaging.MessageOptions;
 import com.layer.sdk.messaging.MessagePart;
 import com.layer.sdk.messaging.PushNotificationPayload;
@@ -31,28 +29,21 @@ import com.layer.sdk.query.Predicate;
 import com.layer.sdk.query.Query;
 import com.layer.sdk.query.Query.Builder;
 
-import java.nio.charset.Charset;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
 
 import javax.annotation.Nullable;
 
 
 public class RNLayerModule extends ReactContextBaseJavaModule {
 
+    private final static String TAG = RNLayerModule.class.getSimpleName();
+
     // Class Variables
     private final static String YES = "YES";
     private final static String ZERO = "0";
-
-    public static String userIDGlobal;
-    public static String headerGlobal;
-    public static Identity userIdentityGlobal;
 
     // Class intaces
     private ReactApplicationContext reactContext;
@@ -61,11 +52,10 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     private AuthenticationListener authenticationListener;
     private ChangeEventListener changeEventListener;
 
-    public RNLayerModule(ReactApplicationContext reactContext, LayerClient layerClient) {
+    @SuppressWarnings("WeakerAccess")
+    public RNLayerModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
-        this.layerClient = layerClient;
-
     }
 
     /* ***************************************************************************** */
@@ -148,8 +138,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
         try {
 
-            userIDGlobal = userID;
-            headerGlobal = header;
+            LayerkitSingleton.getInstance().setUserIdGlobal(userID);
+            LayerkitSingleton.getInstance().setHeaderGlobal(header);
+
             layerClient.authenticate();
 
             String count;
@@ -214,6 +205,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 writableArray.pushArray(ConverterHelper.conversationsToWritableArray(results));
                 promise.resolve(writableArray);
             } else {
+                Log.v(TAG, "Error creating conversations");
                 promise.reject( new Throwable("Error creating conversations") );
             }
 
@@ -256,10 +248,12 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                     promise.resolve(writableArray);
 
                 } else {
+                    Log.v(TAG, "Error getting conversations");
                     promise.reject(new Throwable("Error getting conversations"));
                 }
 
             } else  {
+                Log.v(TAG, "Error getting conversation from convo id");
                 promise.reject(new Throwable("Error getting conversation from convo id"));
             }
         } catch (IllegalViewOperationException e) {
@@ -336,7 +330,13 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             MessagePart messagePart = layerClient.newMessagePart(messageText);
 
             Map<String, String> data = new HashMap();
-            data.put("user_id", userIDGlobal);
+
+            if (LayerkitSingleton.getInstance().getUserIdGlobal() == null) {
+                Log.v(TAG, "User id is null");
+                return;
+            }
+
+            data.put("user_id", LayerkitSingleton.getInstance().getUserIdGlobal());
 
             MessageOptions options = new MessageOptions();
             PushNotificationPayload payload = new PushNotificationPayload.Builder()

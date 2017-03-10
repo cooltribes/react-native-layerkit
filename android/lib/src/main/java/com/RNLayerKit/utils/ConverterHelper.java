@@ -1,8 +1,9 @@
 package com.RNLayerKit.utils;
 
 import android.annotation.SuppressLint;
+import android.util.Log;
 
-import com.RNLayerKit.modules.RNLayerModule;
+import com.RNLayerKit.singleton.LayerkitSingleton;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
@@ -27,10 +28,11 @@ import java.util.TimeZone;
 
 public class ConverterHelper {
 
-    private final static  String DATE_FORMAT_NOW = "yyyy-MM-dd'T'HH:mm'Z'";
+    private final static String TAG = ConverterHelper.class.getSimpleName();
+    private final static String DATE_FORMAT_NOW = "yyyy-MM-dd'T'HH:mm'Z'";
     private final static Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
-    public static WritableMap convertChangesToArray (LayerChangeEvent event) {
+    public static WritableMap convertChangesToArray(LayerChangeEvent event) {
 
         List<LayerChange> changes = event.getChanges();
         WritableArray writableArray = new WritableNativeArray();
@@ -51,7 +53,7 @@ public class ConverterHelper {
 
             if (change.getObjectType() == LayerObject.Type.MESSAGE) {
                 writableMap.putString("object", "LYRMessage");
-                writableMap.putMap("message", messageToWritableMap(message) );
+                writableMap.putMap("message", messageToWritableMap(message));
             }
 
 
@@ -154,6 +156,7 @@ public class ConverterHelper {
         WritableMap messageMap = new WritableNativeMap();
 
         if (message == null) {
+            Log.d(TAG, "Message is null");
             return null;
         }
 
@@ -161,8 +164,8 @@ public class ConverterHelper {
         messageMap.putBoolean("isDeleted", message.isDeleted());
         messageMap.putBoolean("isSent", message.isSent());
 
-        if (RNLayerModule.userIdentityGlobal != null) {
-            Message.RecipientStatus recipientStatus = message.getRecipientStatus(RNLayerModule.userIdentityGlobal);
+        if (LayerkitSingleton.getInstance().getUserIdentityGlobal() != null) {
+            Message.RecipientStatus recipientStatus = message.getRecipientStatus(LayerkitSingleton.getInstance().getUserIdentityGlobal());
             messageMap.putString("Status", recipientStatus.toString());
         }
 
