@@ -41,13 +41,12 @@ public class ConverterHelper {
             LayerChange change = changes.get(i);
 
             WritableMap writableMap = new WritableNativeMap();
-            Object changeObject = change.getObject();
-            writableMap.putString("object", changeObject.getClass().getSimpleName());
 
             if (change.getObjectType() == LayerObject.Type.CONVERSATION) {
                 writableMap.putString("object", "LYRConversation");
                 Conversation conversation = (Conversation) change.getObject();
                 writableMap.putString("identifier", conversation.getId().toString());
+                writableMap.putMap("conversation", conversationToWritableMap(conversation));
             }
 
             if (change.getObjectType() == LayerObject.Type.MESSAGE) {
@@ -124,7 +123,6 @@ public class ConverterHelper {
         Set<Identity> participants = conversation.getParticipants();
         WritableArray writableArray = new WritableNativeArray();
         for (Identity participant : participants) {
-            //for(int j = 0; j < participants.size(); j++ ){
             writableArray.pushString(participant.getUserId());
         }
         conversationMap.putArray("participants", writableArray);
@@ -173,7 +171,7 @@ public class ConverterHelper {
         Map<Identity, Message.RecipientStatus> recipientStatus = message.getRecipientStatus();
         WritableNativeMap mapRecipientStatus = new WritableNativeMap();
         for (Map.Entry<Identity, Message.RecipientStatus> recipient : recipientStatus.entrySet()) {
-            mapRecipientStatus.putString(recipient.getKey().toString(), recipient.getValue().toString());
+            mapRecipientStatus.putString(recipient.getKey().getUserId(), recipient.getValue().toString());
         }
         messageMap.putMap("recipientStatus", mapRecipientStatus);
 
@@ -192,7 +190,7 @@ public class ConverterHelper {
         messageMap.putArray("part", messagePartsToWritableMap(message.getMessageParts()));
         Identity identity = message.getSender();
         if (identity != null) {
-            messageMap.putString("sender", identity.toString());
+            messageMap.putString("sender", identity.getUserId());
         }
 
         if (message.getMessageParts().get(0).getMimeType().equals("text/plain")) {

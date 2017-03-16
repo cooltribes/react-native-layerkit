@@ -7,6 +7,7 @@ import com.RNLayerKit.listeners.AuthenticationListener;
 import com.RNLayerKit.listeners.ChangeEventListener;
 import com.RNLayerKit.singleton.LayerkitSingleton;
 import com.RNLayerKit.utils.ConverterHelper;
+import com.RNLayerKit.utils.LayerUtils;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
@@ -21,6 +22,7 @@ import com.facebook.react.uimanager.IllegalViewOperationException;
 import com.layer.sdk.LayerClient;
 import com.layer.sdk.exceptions.LayerConversationException;
 import com.layer.sdk.messaging.Conversation;
+import com.layer.sdk.messaging.Identity;
 import com.layer.sdk.messaging.Message;
 import com.layer.sdk.messaging.MessageOptions;
 import com.layer.sdk.messaging.MessagePart;
@@ -95,6 +97,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             options.historicSyncPolicy(LayerClient.Options.HistoricSyncPolicy.ALL_MESSAGES);
             options.useFirebaseCloudMessaging(true);
             layerClient = LayerClient.newInstance(this.reactContext, appIDstr, options);
+
+            LayerUtils.setAppId(this.reactContext, appIDstr);
 
             if (authenticationListener == null) {
                 authenticationListener = new AuthenticationListener();
@@ -238,7 +242,10 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
                     for (int i = 0; i < messages.size(); i++) {
                         Message message = (Message) messages.get(i);
-                        message.markAsRead();
+                        Identity sender = message.getSender();
+                        if (sender != null && !sender.getUserId().equals(LayerkitSingleton.getInstance().getUserIdGlobal())) {
+                            message.markAsRead();
+                        }
                     }
 
                     WritableArray writableArray = new WritableNativeArray();
