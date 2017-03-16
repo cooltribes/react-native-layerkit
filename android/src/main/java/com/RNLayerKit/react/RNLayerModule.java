@@ -345,12 +345,17 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
             data.put("user_id", LayerkitSingleton.getInstance().getUserIdGlobal());
 
+            Identity identity = layerClient.getAuthenticatedUser();
+            String title = identity != null ? identity.getDisplayName() : "New Message";
+
             MessageOptions options = new MessageOptions();
             PushNotificationPayload payload = new PushNotificationPayload.Builder()
                     .text(messageText)
-                    .title("New Message")
+                    .title(title)
                     .data(data)
                     .build();
+
+
             options.defaultPushNotificationPayload(payload);
 
             Message message = layerClient.newMessage(options, Collections.singletonList(messagePart));
