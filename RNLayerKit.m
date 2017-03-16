@@ -142,9 +142,10 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
                     resolve(thingToReturn);
                 }
                 else {
-                    id retErr = RCTMakeAndLogError(@"Error sending Layer message",error,NULL);
-                    NSError *error = retErr;
-                    reject(@"no_events", @"Error creating conversastion", error);
+                    //id retErr = RCTMakeAndLogError(@"Error sending Layer message",error,NULL);
+                    //NSError *error = retErr;
+                    NSLog(@"Error Sending Layer Message %@", error);
+                    reject(@"no_events", @"Error creating conversastion", nil);
                 }
             }
         }];
@@ -183,9 +184,10 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
             resolve(thingToReturn);
         }
         else {
-            id retErr = RCTMakeAndLogError(@"Error sending Layer message",error,NULL);
-            NSError *error = retErr;
-            reject(@"no_events", @"Error creating conversastion", error);
+            //id retErr = RCTMakeAndLogError(@"Error sending Layer message",error,NULL);
+            //NSError *error = retErr;
+            NSLog(@"Error Sending Layer Message %@", error);
+            reject(@"no_events", @"Error creating conversastion", nil);
         }
     }
     
