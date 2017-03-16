@@ -122,7 +122,7 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
                 LYRMessagePart *messagePart = [LYRMessagePart messagePartWithMIMEType:MIMETypeTextPlain data:messageData];
 
                 // Creates and returns a new message object with the given conversation and array of message parts
-                NSString *pushMessage= [NSString stringWithFormat:@"%@ says %@",_layerClient.authenticatedUser.userID ,messageText];
+                NSString *pushMessage= [NSString stringWithFormat:@"%@", messageText];
                 
                 LYRPushNotificationConfiguration *defaultConfiguration = [LYRPushNotificationConfiguration new];
                 defaultConfiguration.alert = pushMessage;
@@ -162,7 +162,7 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
         LYRMessagePart *messagePart = [LYRMessagePart messagePartWithMIMEType:MIMETypeTextPlain data:messageData];
 
         // Creates and returns a new message object with the given conversation and array of message parts
-        NSString *pushMessage= [NSString stringWithFormat:@"%@ says %@",_layerClient.authenticatedUser.userID ,messageText];
+        NSString *pushMessage= [NSString stringWithFormat:@"%@", messageText];
         
         LYRPushNotificationConfiguration *defaultConfiguration = [LYRPushNotificationConfiguration new];
         defaultConfiguration.alert = pushMessage;
