@@ -123,7 +123,11 @@ public class ConverterHelper {
         Set<Identity> participants = conversation.getParticipants();
         WritableArray writableArray = new WritableNativeArray();
         for (Identity participant : participants) {
-            writableArray.pushString(participant.getUserId());
+            WritableMap participantMap = new WritableNativeMap();
+            participantMap.putString("id", participant.getUserId());
+            participantMap.putString("fullname", participant.getDisplayName());
+            participantMap.putString("avatar_url", participant.getAvatarImageUrl());
+            writableArray.pushMap(participantMap);
         }
         conversationMap.putArray("participants", writableArray);
 
