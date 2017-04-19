@@ -1,9 +1,10 @@
 #import "RNLayerKit.h"
 NSData *_deviceToken;
+LYRClient *_layerClient;
 
 @implementation RNLayerKit{
     NSString *_appID;
-    LYRClient *_layerClient;
+
     JSONHelper *_jsonHelper;
     NSString *_userID;
     NSString *_header;
@@ -37,15 +38,15 @@ RCT_EXPORT_METHOD(connect:(NSString*)appIDstr header:(NSString*)header
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    NSURL *appID = [NSURL URLWithString:appIDstr];
-    LYRClientOptions *clientOptions = [LYRClientOptions new];
-    clientOptions.synchronizationPolicy = 1;
     _header = header;
-    //_deviceToken = deviceToken;
-    if (!_layerClient) {
-        NSLog(@"No Layer Client");
-        _layerClient = [LYRClient clientWithAppID:appID delegate:self options:clientOptions];
-    }
+    // NSURL *appID = [NSURL URLWithString:appIDstr];
+    // LYRClientOptions *clientOptions = [LYRClientOptions new];
+    // clientOptions.synchronizationPolicy = 1;
+    // //_deviceToken = deviceToken;
+    // if (!_layerClient) {
+    //     NSLog(@"No Layer Client");
+    //     _layerClient = [LYRClient clientWithAppID:appID delegate:self options:clientOptions];
+    // }
     //[_layerClient setDelegate:self];
     if (!_layerClient.isConnected) {
         [_layerClient connectWithCompletion:^(BOOL success, NSError *error) {
@@ -515,6 +516,12 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
 {
     [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                  body:@{@"source":@"LayerClient", @"type": @"layerClientDidDisconnect"}];
+}
+
++ (void)initializeLayer:(LYRClient *)layerInitialized
+{
+    NSLog(@"Layer Client initialize %@", layerInitialized);
+    _layerClient = layerInitialized;   
 }
 
 + (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
