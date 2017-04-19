@@ -119,13 +119,11 @@
   [propertyDict setValue:@(convo.deliveryReceiptsEnabled) forKey:@"deliveryReceiptsEnabled"];
   [propertyDict setValue:@(convo.isDeleted) forKey:@"isDeleted"];
   [propertyDict setValue:convo.metadata forKey:@"metadata"];
-  NSMutableArray *participants = [NSMutableArray new];
+  NSMutableArray *participants = [NSMutableArray new];  
   for(LYRIdentity *participant in convo.participants){
-     [participants addObject:participant.userID];
+     [participants addObject:[self convertParticipantToDict:participant]];
   }
-  //[propertyDict setValue:[convo.participants allObjects] forKey:@"participants"];
   [propertyDict setValue:participants forKey:@"participants"];
-
   [propertyDict setValue:[self convertDateToJSON:convo.createdAt] forKey:@"createdAt"];
   [propertyDict setValue:[self convertMessageToDict:convo.lastMessage] forKey:@"lastMessage"];
 
@@ -159,6 +157,17 @@
 
   
   return [NSDictionary dictionaryWithDictionary:propertyDict];
+}
+
+-(NSDictionary*)convertParticipantToDict:(LYRIdentity*)participant
+{
+  NSMutableDictionary *participantDict = [NSMutableDictionary new];
+  
+  [participantDict setValue:[participant.avatarImageURL absoluteString] forKey:@"avatar_url"];
+  [participantDict setValue:participant.displayName forKey:@"fullname"];
+  [participantDict setValue:participant.userID forKey:@"id"];
+
+  return [NSDictionary dictionaryWithDictionary:participantDict];
 }
 
 -(NSDictionary*)convertMessagePartToDict:(LYRMessagePart*)msgPart
