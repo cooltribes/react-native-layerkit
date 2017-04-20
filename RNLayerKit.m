@@ -4,7 +4,6 @@ LYRClient *_layerClient;
 
 @implementation RNLayerKit{
     NSString *_appID;
-
     JSONHelper *_jsonHelper;
     NSString *_userID;
     NSString *_header;
@@ -12,6 +11,28 @@ LYRClient *_layerClient;
 
 @synthesize bridge = _bridge;
 
++ (nonnull instancetype)bridgeWithLayerAppID:(nonnull NSURL *)layerAppID
+{
+    NSLog(@"bridgeWithLayerAppID");
+    return [[self alloc] initWithLayerAppID:layerAppID];
+}
+- (id)initWithLayerAppID:(nonnull NSURL *)layerAppID
+{
+    NSLog(@"initWithLayerAppID");
+    self = [super init];
+    if (self) {
+        _jsonHelper = [JSONHelper new];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(receivedNotification:)
+                                                     name:@"RNLayerKitNotification"
+                                                   object:nil];
+        //NSURL *appID = [NSURL URLWithString:appIDstr];
+        LYRClientOptions *clientOptions = [LYRClientOptions new];
+        clientOptions.synchronizationPolicy = 1;
+        _layerClient = [LYRClient clientWithAppID:layerAppID delegate:self options:clientOptions];
+    }
+    return self;
+}
 - (id)init
 {
     NSLog(@"LayerBridge not init");
@@ -470,28 +491,30 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
     if (_layerClient.authenticatedUser)
         _userID = _layerClient.authenticatedUser.userID;
     NSLog(@"LayerUserID: %@",_userID);
-    LayerAuthenticate *lAuth = [LayerAuthenticate new];
-    [lAuth authenticationChallenge:_userID layerClient:_layerClient nonce:nonce header:_header completion:^(NSError *error) {
-        if (!error) {
-            [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
-                                                         body:@{@"source":@"LayerClient", @"type": @"didReceiveAuthenticationChallengeWithNonce"}];
-        }
-        else{
-            NSLog(@"Error %@",error);
-            [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
-                                                         body:@{@"source":@"LayerClient", @"type": @"didReceiveAuthenticationChallengeWithNonce"}];
-        }
-    }];
+    if (_header){
+        LayerAuthenticate *lAuth = [LayerAuthenticate new];
+        [lAuth authenticationChallenge:_userID layerClient:_layerClient nonce:nonce header:_header completion:^(NSError *error) {
+            if (!error) {
+                [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
+                                                             body:@{@"source":@"LayerClient", @"type": @"didReceiveAuthenticationChallengeWithNonce"}];
+            }
+            else{
+                NSLog(@"Error %@",error);
+                [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
+                                                             body:@{@"source":@"LayerClient", @"type": @"didReceiveAuthenticationChallengeWithNonce"}];
+            }
+        }];
+    }
     
 }
 - (void)layerClient:(LYRClient *)client objectsDidChange:(NSArray *)changes;
 {
-    NSLog(@"Entro objectsDidChange");
+    NSLog(@"objectsDidChange %@", changes);
     [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                  body:@{@"source":@"LayerClient",
                                                         @"type": @"objectsDidChange",
                                                         @"data":[_jsonHelper convertChangesToArray:changes]}];
-    NSLog(@"Salio objectsDidChange");
+    //NSLog(@"Salio objectsDidChange");
 }
 - (void)layerClient:(LYRClient *)client willAttemptToConnect:(NSUInteger)attemptNumber afterDelay:(NSTimeInterval)delayInterval maximumNumberOfAttempts:(NSUInteger)attemptLimit
 {
@@ -517,13 +540,20 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
     [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                  body:@{@"source":@"LayerClient", @"type": @"layerClientDidDisconnect"}];
 }
-
+// + (void)objectsDidChange:(NSArray *)changes
+// {
+//     NSLog(@"objectsDidChange %@", changes);
+//     [bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
+//                                                  body:@{@"source":@"LayerClient",
+//                                                         @"type": @"objectsDidChange",
+//                                                         @"data":[_jsonHelper convertChangesToArray:changes]}];
+//     //NSLog(@"Salio objectsDidChange");
+// }
 + (void)initializeLayer:(LYRClient *)layerInitialized
 {
     NSLog(@"Layer Client initialize %@", layerInitialized);
     _layerClient = layerInitialized;   
 }
-
 + (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
 {
     NSLog(@"didRegisterForRemoteNotificationsWithDeviceToken Layer: %@", deviceToken);

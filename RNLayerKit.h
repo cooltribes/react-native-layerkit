@@ -9,6 +9,9 @@
 
 @interface RNLayerKit : NSObject <RCTBridgeModule>
 + (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken;
-+ (void)initializeLayer:(LYRClient *)layerInitialized;	
++ (void)initializeLayer:(LYRClient *)layerInitialized;
++ (void)objectsDidChange:(NSArray *)changes;
++ (nonnull instancetype)bridgeWithLayerAppID:(nonnull NSURL *)layerAppID;
 - (void)didReceiveTypingIndicator:(NSNotification *)notification;
+- (void)updateRemoteNotificationDeviceToken:(nullable NSData *)deviceToken;
 @end
