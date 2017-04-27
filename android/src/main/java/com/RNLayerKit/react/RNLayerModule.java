@@ -5,6 +5,8 @@ import android.util.Log;
 
 import com.RNLayerKit.listeners.AuthenticationListener;
 import com.RNLayerKit.listeners.ChangeEventListener;
+import com.RNLayerKit.listeners.IndicatorListener;
+import com.layer.sdk.listeners.LayerTypingIndicatorListener;
 import com.RNLayerKit.singleton.LayerkitSingleton;
 import com.RNLayerKit.utils.ConverterHelper;
 import com.RNLayerKit.utils.LayerUtils;
@@ -53,6 +55,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
     private AuthenticationListener authenticationListener;
     private ChangeEventListener changeEventListener;
+    private IndicatorListener layerTypingIndicatorListener;
 
     @SuppressWarnings("WeakerAccess")
     public RNLayerModule(ReactApplicationContext reactContext) {
@@ -87,6 +90,46 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     @SuppressWarnings("unused")
+    public void sendTypingBegin(String convoID, Promise promise) {
+        try {
+            Builder builder = Query.builder(Message.class);
+
+            Conversation conversation = fetchConvoWithId(convoID, layerClient);
+            
+            if (conversation != null) {                
+                conversation.send(LayerTypingIndicatorListener.TypingIndicator.STARTED);
+                promise.resolve( YES );                
+            } else  {
+                Log.v(TAG, "Error getting conversation from convo id");
+                promise.reject( new Throwable("Error getting conversation") );
+            }
+        } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+    }
+    @ReactMethod
+    @SuppressWarnings("unused")
+    public void sendTypingEnd(String convoID, Promise promise) {
+        try {
+            Builder builder = Query.builder(Message.class);
+
+            Conversation conversation = fetchConvoWithId(convoID, layerClient);
+            
+            if (conversation != null) {               
+                conversation.send(LayerTypingIndicatorListener.TypingIndicator.FINISHED);
+                promise.resolve( YES );
+                
+            } else  {
+                Log.v(TAG, "Error getting conversation from convo id");
+                promise.reject( new Throwable("Error getting conversation") );
+            }
+        } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+    }
+
+    @ReactMethod
+    @SuppressWarnings("unused")
     public void connect(
             String appIDstr,
             String deviceToken,
@@ -109,6 +152,11 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 changeEventListener = new ChangeEventListener( this );
             }
             layerClient.registerEventListener(changeEventListener);
+
+            if (layerTypingIndicatorListener == null) {
+                layerTypingIndicatorListener = new IndicatorListener( this, layerClient );
+            }
+            layerTypingIndicatorListener.onResume();
 
             layerClient.connect();
 
