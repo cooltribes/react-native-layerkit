@@ -9,43 +9,52 @@ LYRClient *_layerClient;
     NSString *_header;
 }
 
-@synthesize bridge = _bridge;
+//@synthesize bridge = _bridge;
 
-+ (nonnull instancetype)bridgeWithLayerAppID:(nonnull NSURL *)layerAppID
+// - (id)init
+// {
+//     NSLog(@"LayerBridge 1 not init");
+//     NSLog(@"self.bridge 2 %@", self.bridge);
+//     if ((self = [super init])) {
+//         NSLog(@"LayerBridge init");
+//         _jsonHelper = [JSONHelper new];
+//         [[NSNotificationCenter defaultCenter] addObserver:self
+//                                                  selector:@selector(receivedNotification:)
+//                                                      name:@"RNLayerKitNotification"
+//                                                    object:nil];
+//     }
+//     NSLog(@"self.bridge 3 %@", self.bridge);
+//     return self;
+// }
+
++ (nonnull instancetype)bridgeWithLayerAppID:(nonnull NSURL *)layerAppID bridge:(RCTBridge *)bridge
 {
     NSLog(@"bridgeWithLayerAppID");
-    return [[self alloc] initWithLayerAppID:layerAppID];
+    //_bridge = bridge;
+    return [[self alloc] initWithLayerAppID:layerAppID bridge:bridge];
 }
-- (id)initWithLayerAppID:(nonnull NSURL *)layerAppID
+
+- (id)initWithLayerAppID:(nonnull NSURL *)layerAppID bridge:(RCTBridge *)bridge
 {
     NSLog(@"initWithLayerAppID");
+
     self = [super init];
+    self.bridge = bridge;
+    NSLog(@"self.bridge 5 %@", self.bridge);
     if (self) {
+         NSLog(@"initWithLayerAppID self");
         _jsonHelper = [JSONHelper new];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(receivedNotification:)
                                                      name:@"RNLayerKitNotification"
                                                    object:nil];
-        //NSURL *appID = [NSURL URLWithString:appIDstr];
         LYRClientOptions *clientOptions = [LYRClientOptions new];
         clientOptions.synchronizationPolicy = 1;
         _layerClient = [LYRClient clientWithAppID:layerAppID delegate:self options:clientOptions];
     }
     return self;
 }
-- (id)init
-{
-    NSLog(@"LayerBridge not init");
-    if ((self = [super init])) {
-        NSLog(@"LayerBridge init");
-        _jsonHelper = [JSONHelper new];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(receivedNotification:)
-                                                     name:@"RNLayerKitNotification"
-                                                   object:nil];
-    }
-    return self;
-}
+
 
 //- (dispatch_queue_t)methodQueue
 //{
@@ -54,6 +63,10 @@ LYRClient *_layerClient;
 
 RCT_EXPORT_MODULE()
 
+- (NSArray<NSString *> *)supportedEvents
+{
+  return @[@"LayerEvent"];
+}
 
 RCT_EXPORT_METHOD(connect:(NSString*)appIDstr header:(NSString*)header
                   resolver:(RCTPromiseResolveBlock)resolve
@@ -120,6 +133,7 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
 {
     // Declares a MIME type string
     static NSString *const MIMETypeTextPlain = @"text/plain";
+    static NSString *const MIMETypeImagePNG = @"image/png";
     // Create a distinct conversation
     
     
@@ -145,12 +159,12 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
                 
                 // Creates and returns a new message object with the given conversation and array of message parts
                 NSString *pushMessage= [NSString stringWithFormat:@"%@", messageText];
-                
                 LYRPushNotificationConfiguration *defaultConfiguration = [LYRPushNotificationConfiguration new];
                 defaultConfiguration.title = [[_layerClient authenticatedUser] displayName];
                 defaultConfiguration.alert = pushMessage;
                 defaultConfiguration.category = @"category_lqs";
                 defaultConfiguration.sound = @"layerbell.caf";
+                
                 LYRMessageOptions *messageOptions = [LYRMessageOptions new];
                 messageOptions.pushNotificationConfiguration = defaultConfiguration;
                 LYRMessage *message = [_layerClient newMessageWithParts:@[messagePart] options:messageOptions error:nil];
@@ -268,11 +282,13 @@ RCT_EXPORT_METHOD(getMessages:(NSString*)convoID userIDs:(NSArray*)userIDs limit
         }
     } else {
         NSError *errorConversation = nil;
+        NSLog(@"userIDs: %@", userIDs);
         NSSet *participants = [NSSet setWithArray: userIDs];
         LYRConversationOptions *conversationOptions = [LYRConversationOptions new];
         conversationOptions.distinctByParticipants = YES;
         LYRConversation *conversation = [_layerClient newConversationWithParticipants:participants options:conversationOptions error:&errorConversation];
         NSLog(@"No conversation");
+        NSLog(@"errorConversation %@", errorConversation);
         if (errorConversation && errorConversation.code == LYRErrorDistinctConversationExists) {
             conversation = errorConversation.userInfo[LYRExistingDistinctConversationKey];
             NSLog(@"old conversation");
@@ -339,34 +355,49 @@ RCT_EXPORT_METHOD(markAllAsRead:(NSString*)convoID resolver:(RCTPromiseResolveBl
     
 }
 
-RCT_EXPORT_METHOD(sendTypingBegin:(NSString*)convoID)
+RCT_EXPORT_METHOD(sendTypingBegin:(NSString*)convoID
+                resolver:(RCTPromiseResolveBlock)resolve
+                rejecter:(RCTPromiseRejectBlock)reject)
 {
     LayerQuery *query = [LayerQuery new];
     NSError *err;
     LYRConversation *thisConvo = [query fetchConvoWithId:convoID client:_layerClient error:err];
     if(err){
-        [self sendErrorEvent:err];
+        id retErr = RCTMakeAndLogError(@"Error getting conversation on sendTypingBegin ",err,NULL);
+        NSError *error = retErr;
+        reject(@"no_events", @"Error getting conversation on sendTypingBegin", error);
     }
     else {
         [thisConvo sendTypingIndicator:LYRTypingIndicatorActionBegin];
+        NSLog(@"LYRTypingIndicatorActionBegin");
+        NSString *thingToReturn = @"YES";
+        resolve(thingToReturn);
     }
 }
 
-RCT_EXPORT_METHOD(sendTypingEnd:(NSString*)convoID)
+RCT_EXPORT_METHOD(sendTypingEnd:(NSString*)convoID 
+                resolver:(RCTPromiseResolveBlock)resolve
+                rejecter:(RCTPromiseRejectBlock)reject)
 {
     LayerQuery *query = [LayerQuery new];
     NSError *err;
     LYRConversation *thisConvo = [query fetchConvoWithId:convoID client:_layerClient error:err];
     if(err){
-        [self sendErrorEvent:err];
+        id retErr = RCTMakeAndLogError(@"Error getting conversation on sendTypingEnd ",err,NULL);
+        NSError *error = retErr;
+        reject(@"no_events", @"Error getting conversation on sendTypingEnd", error);
     }
     else {
-        [thisConvo sendTypingIndicator:LYRTypingIndicatorActionBegin];
+        [thisConvo sendTypingIndicator:LYRTypingIndicatorActionFinish];
+        NSLog(@"LYRTypingIndicatorActionFinish");
+        NSString *thingToReturn = @"YES";
+        resolve(thingToReturn);
     }
 }
 
 RCT_EXPORT_METHOD(registerForTypingEvents)
 {
+    NSLog(@"registerForTypingEvents");
     // Registers and object for typing indicator notifications.
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(didReceiveTypingIndicator:)
@@ -394,6 +425,10 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
     NSLog(@"Layer authenticated");
     [lAuth authenticateLayerWithUserID:userID header:header layerClient:_layerClient completion:^(NSError *error) {
         if (!error) {
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                         selector:@selector(didReceiveTypingIndicator:)
+                                             name:LYRConversationDidReceiveTypingIndicatorNotification
+                                           object:nil];
             LayerQuery *query = [LayerQuery new];
             NSError *queryError;
             NSInteger count = [query fetchMessagesCount:userID client:_layerClient error:queryError];
@@ -456,6 +491,10 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
 }
 - (void)layerClient:(LYRClient *)client didAuthenticateAsUserID:(NSString *)userID
 {
+    
+    NSLog(@"didAuthenticateAsUserID %@", userID);
+    NSLog(@"self.bridge.eventDispatcher %@", self.bridge.eventDispatcher);
+    NSLog(@"self.bridge %@", self.bridge);
     [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                  body:@{@"source":@"LayerClient",@"type": @"didAuthenticateAsUserID", @"data":@{@"userID":userID}}];
 }
@@ -510,11 +549,13 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
 - (void)layerClient:(LYRClient *)client objectsDidChange:(NSArray *)changes;
 {
     NSLog(@"objectsDidChange %@", changes);
+    //NSLog(@"self.bridge.eventDispatcher %@", self.bridge.eventDispatcher);
+    //NSLog(@"self.bridge %@", self.bridge);
     [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
-                                                 body:@{@"source":@"LayerClient",
-                                                        @"type": @"objectsDidChange",
-                                                        @"data":[_jsonHelper convertChangesToArray:changes]}];
-    //NSLog(@"Salio objectsDidChange");
+         body:@{@"source":@"LayerClient",
+                @"type": @"objectsDidChange",
+                @"data":[_jsonHelper convertChangesToArray:changes]}];
+    NSLog(@"Salio objectsDidChange");
 }
 - (void)layerClient:(LYRClient *)client willAttemptToConnect:(NSUInteger)attemptNumber afterDelay:(NSTimeInterval)delayInterval maximumNumberOfAttempts:(NSUInteger)attemptLimit
 {
@@ -549,24 +590,24 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
 //                                                         @"data":[_jsonHelper convertChangesToArray:changes]}];
 //     //NSLog(@"Salio objectsDidChange");
 // }
-+ (void)initializeLayer:(LYRClient *)layerInitialized
-{
-    NSLog(@"Layer Client initialize %@", layerInitialized);
-    _layerClient = layerInitialized;   
-}
-+ (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
-{
-    NSLog(@"didRegisterForRemoteNotificationsWithDeviceToken Layer: %@", deviceToken);
-    _deviceToken = deviceToken;
-    //[self updateRemoteNotificationDeviceToken:deviceToken];
-    // NSError *error;
-    // BOOL success = [LYRClient updateRemoteNotificationDeviceToken:deviceToken error:&error];
-    // if (success) {
-    // NSLog(@"Application did register for remote notifications");
-    // } else {
-    // NSLog(@"Error updating Layer device token for push:%@", error);
-    // }
-}
+// + (void)initializeLayer:(LYRClient *)layerInitialized
+// {
+//     NSLog(@"Layer Client initialize %@", layerInitialized);
+//     _layerClient = layerInitialized;   
+// }
+// + (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
+// {
+//     NSLog(@"didRegisterForRemoteNotificationsWithDeviceToken Layer: %@", deviceToken);
+//     _deviceToken = deviceToken;
+//     //[self updateRemoteNotificationDeviceToken:deviceToken];
+//     // NSError *error;
+//     // BOOL success = [LYRClient updateRemoteNotificationDeviceToken:deviceToken error:&error];
+//     // if (success) {
+//     // NSLog(@"Application did register for remote notifications");
+//     // } else {
+//     // NSLog(@"Error updating Layer device token for push:%@", error);
+//     // }
+// }
 
 // - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
 // {
@@ -584,38 +625,42 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
 #pragma mark - Typing Indicator
 - (void)didReceiveTypingIndicator:(NSNotification *)notification
 {
-    //NSString *participantID = notification.userInfo[LYRTypingIndicatorParticipantUserInfoKey];
+    NSLog(@"Typing Indicator BEGIN");
     NSString *convoID = [[notification.object valueForKey:@"identifier"] absoluteString];
-    //LYRTypingIndicator typingIndicator = [notification.userInfo[LYRTypingIndicatorValueUserInfoKey] unsignedIntegerValue];
-    NSString *participantID = notification.userInfo[LYRTypingIndicatorObjectUserInfoKey];
     LYRTypingIndicator *typingIndicator = notification.userInfo[LYRTypingIndicatorObjectUserInfoKey];
-    
-    if (typingIndicator == LYRTypingIndicatorActionBegin) {
+    LYRIdentity *sender = typingIndicator.sender;
+    NSMutableArray *participants = [NSMutableArray new]; 
+    NSMutableDictionary *participantDict = [NSMutableDictionary new];  
+    [participantDict setValue:[sender.avatarImageURL absoluteString] forKey:@"avatar_url"];
+    [participantDict setValue:sender.displayName forKey:@"fullname"];
+    [participantDict setValue:sender.userID forKey:@"id"];
+    [participants addObject:[NSDictionary dictionaryWithDictionary:participantDict]];
+    if (typingIndicator.action == LYRTypingIndicatorActionBegin) {
         NSLog(@"Typing Started");
         [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                      body:@{@"source":@"LayerClient",
                                                             @"type": @"typingIndicator",
-                                                            @"data":@{@"participantID":participantID,
-                                                                      @"event":@"LYRTypingDidBegin",
-                                                                      @"conversationID":convoID}}];
+                                                            @"participant":participants,
+                                                            @"event":@"LYRTypingDidBegin",
+                                                            @"identifier":convoID}];
     }
     else if(typingIndicator==LYRTypingIndicatorActionPause){
         NSLog(@"Typing paused");
         [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                      body:@{@"source":@"LayerClient",
                                                             @"type": @"typingIndicator",
-                                                            @"data":@{@"participantID":participantID,
-                                                                      @"event":@"LYRTypingDidPause",
-                                                                      @"conversationID":convoID}}];
+                                                            @"participant":participants,
+                                                            @"event":@"LYRTypingDidPause",
+                                                            @"identifier":convoID}];
     }
     else {
         NSLog(@"Typing Stopped");
         [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                      body:@{@"source":@"LayerClient",
                                                             @"type": @"typingIndicator",
-                                                            @"data":@{@"participantID":participantID,
-                                                                      @"event":@"LYRTypingDidEnd",
-                                                                      @"conversationID":convoID}}];
+                                                            @"participant":participants,
+                                                            @"event":@"LYRTypingDidEnd",
+                                                            @"identifier":convoID}];
     }
 }
 
