@@ -7,6 +7,7 @@ LYRClient *_layerClient;
     JSONHelper *_jsonHelper;
     NSString *_userID;
     NSString *_header;
+    NSString *_apiUrl;
 }
 
 //@synthesize bridge = _bridge;
@@ -27,19 +28,20 @@ LYRClient *_layerClient;
 //     return self;
 // }
 
-+ (nonnull instancetype)bridgeWithLayerAppID:(nonnull NSURL *)layerAppID bridge:(RCTBridge *)bridge
++ (nonnull instancetype)bridgeWithLayerAppID:(nonnull NSURL *)layerAppID bridge:(RCTBridge *)bridge apiUrl:(NSString *)apiUrl
 {
     NSLog(@"bridgeWithLayerAppID");
     //_bridge = bridge;
-    return [[self alloc] initWithLayerAppID:layerAppID bridge:bridge];
+    return [[self alloc] initWithLayerAppID:layerAppID bridge:bridge apiUrl:apiUrl];
 }
 
-- (id)initWithLayerAppID:(nonnull NSURL *)layerAppID bridge:(RCTBridge *)bridge
+- (id)initWithLayerAppID:(nonnull NSURL *)layerAppID bridge:(RCTBridge *)bridge apiUrl:(NSString *)apiUrl
 {
     NSLog(@"initWithLayerAppID");
 
     self = [super init];
     self.bridge = bridge;
+    _apiUrl = apiUrl;
     NSLog(@"self.bridge 5 %@", self.bridge);
     if (self) {
          NSLog(@"initWithLayerAppID self");
@@ -114,6 +116,14 @@ RCT_EXPORT_METHOD(connect:(NSString*)appIDstr header:(NSString*)header
 RCT_EXPORT_METHOD(disconnect)
 {
     //[_layerClient disconnect];
+    //NSError *error;
+    ////BOOL success = [_layerClient setPresenceStatus:LYRIdentityPresenceStatusOffline error:&error];
+    //if (!success) {
+    //    NSLog(@"Failed to setPresenceStatus: %@", error);
+        // handle error here
+    //} else {
+    //    NSLog(@"setPresenceStatus to Offline"); 
+   // }
     [_layerClient deauthenticateWithCompletion:^(BOOL success, NSError *error) {
         if (!success) {
             NSLog(@"Failed to deauthenticate user: %@", error);
@@ -433,6 +443,14 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
             NSError *queryError;
             NSInteger count = [query fetchMessagesCount:userID client:_layerClient error:queryError];
             NSString *thingToReturn = @"YES";
+            NSError *errorStatus;
+            BOOL success = [_layerClient setPresenceStatus:LYRIdentityPresenceStatusAvailable error:&errorStatus];
+            if (!success) {
+                NSLog(@"Failed to setPresenceStatus: %@", errorStatus);
+                // handle error here
+            } else {
+                NSLog(@"setPresenceStatus to Available"); 
+            }           
             resolve(@[thingToReturn,[NSNumber numberWithInteger:count]]);
         }
         else{
@@ -530,10 +548,18 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
     if (_layerClient.authenticatedUser)
         _userID = _layerClient.authenticatedUser.userID;
     NSLog(@"LayerUserID: %@",_userID);
-    if (_header){
+    //if (_header){
         LayerAuthenticate *lAuth = [LayerAuthenticate new];
-        [lAuth authenticationChallenge:_userID layerClient:_layerClient nonce:nonce header:_header completion:^(NSError *error) {
+        [lAuth authenticationChallenge:_userID layerClient:_layerClient nonce:nonce header:_header apiUrl:_apiUrl completion:^(NSError *error) {
             if (!error) {
+                NSError *errorStatus;
+                BOOL success = [_layerClient setPresenceStatus:LYRIdentityPresenceStatusAvailable error:&errorStatus];
+                if (!success) {
+                    NSLog(@"Failed to setPresenceStatus: %@", errorStatus);
+                    // handle error here
+                } else {
+                    NSLog(@"setPresenceStatus to Available"); 
+                }
                 [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                              body:@{@"source":@"LayerClient", @"type": @"didReceiveAuthenticationChallengeWithNonce"}];
             }
@@ -543,7 +569,7 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
                                                              body:@{@"source":@"LayerClient", @"type": @"didReceiveAuthenticationChallengeWithNonce"}];
             }
         }];
-    }
+    //}
     
 }
 - (void)layerClient:(LYRClient *)client objectsDidChange:(NSArray *)changes;
@@ -724,5 +750,28 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
         return error;
     }
 }
-
+- (void)setPresenceStatusAway
+{
+    if (_layerClient.isConnected) {
+        NSError *errorStatus;
+        BOOL success = [_layerClient setPresenceStatus:LYRIdentityPresenceStatusAway error:&errorStatus];
+        if (!success) {
+            NSLog(@"Failed to setPresenceStatus: %@", errorStatus);
+        } else {
+            NSLog(@"setPresenceStatus to Away");   
+        }
+    }
+}
+- (void)setPresenceStatusAvailable
+{
+    if (_layerClient.isConnected) {
+        NSError *errorStatus;
+        BOOL success = [_layerClient setPresenceStatus:LYRIdentityPresenceStatusAvailable error:&errorStatus];
+        if (!success) {
+            NSLog(@"Failed to setPresenceStatus: %@", errorStatus);
+        } else {
+            NSLog(@"setPresenceStatus to Available");   
+        }
+    }
+}
 @end

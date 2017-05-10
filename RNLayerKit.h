@@ -9,7 +9,9 @@
 #import "RCTEventEmitter.h"
 
 @interface RNLayerKit : RCTEventEmitter <RCTBridgeModule>
-+ (nonnull instancetype)bridgeWithLayerAppID:(nonnull NSURL *)layerAppID bridge:(RCTBridge *)bridge;
++ (nonnull instancetype)bridgeWithLayerAppID:(nonnull NSURL *)layerAppID bridge:(RCTBridge *)bridge apiUrl:(NSString *)apiUrl;
 - (void)didReceiveTypingIndicator:(NSNotification *)notification;
 - (void)updateRemoteNotificationDeviceToken:(nullable NSData *)deviceToken;
+- (void)setPresenceStatusAway;
+- (void)setPresenceStatusAvailable;
 @end

@@ -104,7 +104,7 @@
     [allChanges addObject:changeData];
     //NSLog(@"Salio Changes");
   }
-  
+  NSLog(@"allChanges: %@", allChanges);
   return allChanges;
 
 }
@@ -119,11 +119,16 @@
   [propertyDict setValue:@(convo.deliveryReceiptsEnabled) forKey:@"deliveryReceiptsEnabled"];
   [propertyDict setValue:@(convo.isDeleted) forKey:@"isDeleted"];
   [propertyDict setValue:convo.metadata forKey:@"metadata"];
-  NSMutableArray *participants = [NSMutableArray new];  
+  NSMutableArray *participants = [NSMutableArray new];
+  
   for(LYRIdentity *participant in convo.participants){
+      //NSLog(@"JSON Output participant: %@", participant);
+     //[participants addObject:participant.userID];
      [participants addObject:[self convertParticipantToDict:participant]];
   }
+  //[propertyDict setValue:[convo.participants allObjects] forKey:@"participants"];
   [propertyDict setValue:participants forKey:@"participants"];
+
   [propertyDict setValue:[self convertDateToJSON:convo.createdAt] forKey:@"createdAt"];
   [propertyDict setValue:[self convertMessageToDict:convo.lastMessage] forKey:@"lastMessage"];
 
@@ -161,7 +166,19 @@
 
 -(NSDictionary*)convertParticipantToDict:(LYRIdentity*)participant
 {
-  NSMutableDictionary *participantDict = [NSMutableDictionary new];
+  //NSLog(@"participant: %@", participant);
+  //NSLog(@"participant.presenceStatus: %@", participant.presenceStatus);
+  NSMutableDictionary *participantDict = [NSMutableDictionary new]; 
+  if (participant.presenceStatus == LYRIdentityPresenceStatusOffline)
+    [participantDict setValue:@"offline" forKey:@"status"];
+  if (participant.presenceStatus == LYRIdentityPresenceStatusAvailable)
+    [participantDict setValue:@"available" forKey:@"status"];
+  if (participant.presenceStatus == LYRIdentityPresenceStatusBusy)
+    [participantDict setValue:@"busy" forKey:@"status"];
+  if (participant.presenceStatus == LYRIdentityPresenceStatusAway)
+    [participantDict setValue:@"away" forKey:@"status"];
+  if (participant.presenceStatus == LYRIdentityPresenceStatusInvisible)
+    [participantDict setValue:@"invisible" forKey:@"status"];      
   
   [participantDict setValue:[participant.avatarImageURL absoluteString] forKey:@"avatar_url"];
   [participantDict setValue:participant.displayName forKey:@"fullname"];

@@ -67,17 +67,31 @@
   }
 
 }
-- (void)authenticationChallenge:(NSString *)userID layerClient:(LYRClient*)layerClient nonce:nonce header:header completion:(void(^)(NSError *error))completion{
+- (void)authenticationChallenge:(NSString *)userID layerClient:(LYRClient*)layerClient nonce:nonce header:header apiUrl:apiUrl completion:(void(^)(NSError *error))completion{
 
-  NSData *data = [header dataUsingEncoding:NSUTF8StringEncoding];
-  NSDictionary *headerObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+  if (header){
+    NSData *data = [header dataUsingEncoding:NSUTF8StringEncoding];
+    NSDictionary *headerObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
   
-  _accept = [headerObject valueForKey:@"accept"];
-  _client = [headerObject valueForKey:@"client"];
-  _accessToken = [headerObject valueForKey:@"access-token"];
-  _uid = [headerObject valueForKey:@"uid"];
-  _apiUrl = [headerObject valueForKey:@"apiUrl"];
-  
+    _accept = [headerObject valueForKey:@"accept"];
+    _client = [headerObject valueForKey:@"client"];
+    _accessToken = [headerObject valueForKey:@"access-token"];
+    _uid = [headerObject valueForKey:@"uid"];
+    _apiUrl = [headerObject valueForKey:@"apiUrl"];
+  } else {
+    //NSRange index = [userID rangeOfString:@"-" options:NSBackwardsSearch];
+    //if (index!=NSNotFound)
+    //NSString *result = [userID substringWithRange:index];
+    //NSString *newString = [userID substringFromIndex:[userID rangeOfString:@"-" options:NSBackwardsSearch]];
+    NSString *result = [[userID componentsSeparatedByString:@"-"] objectAtIndex:2];
+    NSLog(@"newString: %@",result);
+    _accept = @"application/vnd.proalumna.com; version=1";
+    _client = @"";
+    _accessToken = @"";
+    _uid = result;
+    //_apiUrl = @"http://test.api-qa.connexa.io/m";
+    _apiUrl = [NSString stringWithFormat:@"%@/m", apiUrl];
+  }
    /*
     * 1. Connect to your backend to generate an identity token using the provided nonce.
     */
@@ -174,25 +188,26 @@
   [request setValue:_client forHTTPHeaderField:@"Client"];
   [request setValue:_accessToken forHTTPHeaderField:@"access-token"];
   [request setValue:_uid forHTTPHeaderField:@"uid"];
-  NSDictionary *parameters = @{ @"nonce": nonce };
+  NSDictionary *parameters = @{ @"user_id": _uid, @"nonce": nonce };
   
   NSData *requestBody = [NSJSONSerialization dataWithJSONObject:parameters options:0 error:nil];
   request.HTTPBody = requestBody;
   
   NSURLSessionConfiguration *sessionConfiguration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
   NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfiguration];
+  NSLog(@"REQUEST: %@",request);
   [[session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
     if (error) {
       completion(nil, error);
       return;
     }
-    //NSLog(@"raw data: %@",data);
+    NSLog(@"raw data: %@",data);
     NSString *newStr = @"";
     //NSLog(@"string entry: %@",newStr);
     //newStr = [NSString stringWithUTF8String:[data bytes]];
     //NSLog(@"raw string: %@",newStr);
     newStr = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]; 
-    //NSLog(@"raw string: %@",newStr);
+    NSLog(@"raw string: %@",newStr);
     newStr = [newStr substringFromIndex:1];
     newStr = [newStr substringToIndex:[newStr length] - 1];
    // NSLog(@"string: %@",newStr);
@@ -216,11 +231,13 @@
     //if(![responseObject valueForKey:@"error"])
     if (data)
     {
+      NSLog(@"entro en data: %@", data);
       NSString *identityToken = newStr;
       completion(identityToken, nil);
     }
     else
     {
+      NSLog(@"ERRROR ERRRROOOO");
       NSString *domain = @"layer-identity-provider.herokuapp.com";
       //NSInteger code = [responseObject[@"status"] integerValue];
       NSInteger code = '500';
