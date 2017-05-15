@@ -67,11 +67,11 @@ public class ConverterHelper {
             }
 
             if (change.getOldValue() != null) {
-                writableMap.putString("change_from", change.getOldValue().toString());
+                writableMap.putString("changeFrom", change.getOldValue().toString());
             }
 
             if (change.getNewValue() != null) {
-                writableMap.putString("change_to", change.getNewValue().toString());
+                writableMap.putString("changeTo", change.getNewValue().toString());
             }
 
             switch (change.getChangeType()) {
