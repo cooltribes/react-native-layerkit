@@ -59,6 +59,11 @@ public class ConverterHelper {
 
             if (change.getAttributeName() != null) {
                 writableMap.putString("attribute", change.getAttributeName());
+                if(change.getAttributeName() == "presenceStatus") {
+                    Identity participant = (Identity) change.getObject();
+                    //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!result: %s", participant.getUserId().toString()));
+                    writableMap.putString("user", participant.getUserId().toString());
+                }
             }
 
             if (change.getOldValue() != null) {

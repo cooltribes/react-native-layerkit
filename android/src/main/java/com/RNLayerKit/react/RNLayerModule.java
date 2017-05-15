@@ -32,7 +32,7 @@ import com.layer.sdk.messaging.PushNotificationPayload;
 import com.layer.sdk.query.Predicate;
 import com.layer.sdk.query.Query;
 import com.layer.sdk.query.Query.Builder;
-//import com.layer.sdk.messaging.Presence;
+import com.layer.sdk.messaging.Presence;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -176,7 +176,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
         if (layerClient != null) {
             if (layerClient.isConnected()) {
                 //layerClient.setPresenceStatus(Presence.PresenceStatus.INVISIBLE);
+
                 layerClient.deauthenticate();
+                layerClient.disconnect();
             }
         }
 
@@ -196,7 +198,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             LayerkitSingleton.getInstance().setHeaderGlobal(header);
 
             layerClient.authenticate();
-            //layerClient.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
+
+            if(layerClient.isAuthenticated())
+              layerClient.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
 
             String count;
             count = getMessagesCount();
