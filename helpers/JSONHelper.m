@@ -75,24 +75,61 @@
       LYRMessage *message = changeObject;
       [changeData setValue:[self convertMessageToDict:message] forKey:@"message"];
         // Object is a message
-    }   
+    }  
+    if ([changeObject isKindOfClass:[LYRIdentity class]]) {
+      LYRIdentity *participant = changeObject;
+      [changeData setValue:participant.userID forKey:@"user"];
+        // Object is a message
+    }      
+    [changeData setValue:thisChange.property forKey:@"attribute"];
+
     //NSLog(@"PASO"); 
     //TODO: make this safer in the event they change it from NSURL in the future
     [changeData setValue:[[thisChange.object valueForKey:@"identifier"] absoluteString] forKey:@"identifier"];
-    //[changeData setValue:[thisChange.object description] forKey:@"description"];
-    if ([thisChange.beforeValue isKindOfClass:[LYRMessage class]]) {
-      //NSLog(@"Entro if");
-      //[changeData setValue:[[thisChange.beforeValue valueForKey:@"identifier"] absoluteString] forKey:@"change_from"];
-      //changeData setValue:[[thisChange.afterValue valueForKey:@"identifier"] absoluteString] forKey:@"change_to"];
-      [changeData setValue:thisChange.property forKey:@"attribute"];      
+    NSLog(@"afterValue: %@", thisChange.afterValue);
+    NSLog(@"Is of type: %@", [thisChange.afterValue class]);
+    //NSCFNumber
+    //NSNumber numberClass = [[NSNumber alloc] init];
+    if ([thisChange.afterValue isKindOfClass:[NSDate class]])
+      [changeData setValue:[self convertDateToJSON:thisChange.afterValue] forKey:@"changeTo"];
+    if ([thisChange.beforeValue isKindOfClass:[NSDate class]])
+      [changeData setValue:[self convertDateToJSON:thisChange.beforeValue] forKey:@"changeFrom"];
+    if ([thisChange.property isEqualToString:@"presenceStatus"]){
+      // NSString *presenceStatus;
+      // LYRIdentityPresenceStatus status = thisChange.afterValue;
+      // //NSLog(@"availabre %@: ", LYRIdentityPresenceStatusAvailable);
+      // if (status == LYRIdentityPresenceStatusAvailable)
+      //   presenceStatus = @"available";
+      // if (status == LYRIdentityPresenceStatusAway)
+      //   presenceStatus = @"away";
+       // if ([thisChange.afterValue isKindOfClass:[NSNumber class]])
+       //   [changeData setValue:thisChange.afterValue forKey:@"changeTo"];
+       // if ([thisChange.beforeValue isKindOfClass:[NSNumber class]])
+       //   [changeData setValue:thisChange.beforeValue forKey:@"changeFrom"];
+
+      if ([thisChange.afterValue isKindOfClass:[NSNumber class]]){
+        [changeData setValue:[self converPresenceStatusIntToString:thisChange.afterValue] forKey:@"changeTo"];
+      }
+      if ([thisChange.beforeValue isKindOfClass:[NSNumber class]]){
+        [changeData setValue:[self converPresenceStatusIntToString:thisChange.beforeValue] forKey:@"changeFrom"]; 
+      }     
+
     }
-      else {
+    //[changeData setValue:[thisChange.object description] forKey:@"description"];
+    //if ([thisChange.beforeValue isKindOfClass:[LYRMessage class]]) {
+      //NSLog(@"Entro if");
+      
+      //[changeData setValue:[[thisChange.beforeValue valueForKey:@"identifier"] absoluteString] forKey:@"change_from"];
+      //[changeData setValue:[[thisChange.afterValue valueForKey:@"identifier"] absoluteString] forKey:@"change_to"];
+     // [changeData setValue:thisChange.property forKey:@"attribute"];      
+   // }
+     // else {
         //if (thisChange.beforeValue)
         //  [changeData setObject:thisChange.beforeValue forKey:@"change_from"];
         //if (thisChange.afterValue)
         //  [changeData setObject:thisChange.afterValue forKey:@"change_to"];
-      [changeData setValue:thisChange.property forKey:@"attribute"];
-    }
+      //[changeData setValue:thisChange.property forKey:@"attribute"];
+   // }
     //NSLog(@"Salio if");
     if(thisChange.type==LYRObjectChangeTypeCreate)
       [changeData setValue:@"LYRObjectChangeTypeCreate" forKey:@"type"];
@@ -118,6 +155,8 @@
   [propertyDict setValue:@(convo.totalNumberOfUnreadMessages) forKey:@"hasUnreadMessages"];
   [propertyDict setValue:@(convo.deliveryReceiptsEnabled) forKey:@"deliveryReceiptsEnabled"];
   [propertyDict setValue:@(convo.isDeleted) forKey:@"isDeleted"];
+  NSString *title = [convo.metadata valueForKey:@"title"];
+  [propertyDict setValue:title forKey:@"title"];
   [propertyDict setValue:convo.metadata forKey:@"metadata"];
   NSMutableArray *participants = [NSMutableArray new];
   
@@ -155,6 +194,9 @@
     if([part.MIMEType isEqualToString:@"text/plain"]){
       [messageText appendString:[[NSString alloc] initWithData:part.data encoding:NSUTF8StringEncoding]];
     }
+    if([part.MIMEType isEqualToString:@"text/html"]){
+      [messageText appendString:[[NSString alloc] initWithData:part.data encoding:NSUTF8StringEncoding]];
+    }
   }
 
   [propertyDict setValue:messageParts forKey:@"parts"];
@@ -163,23 +205,53 @@
   
   return [NSDictionary dictionaryWithDictionary:propertyDict];
 }
+-(NSString*)converPresenceStatusIntToString:(NSNumber*)presenceStatus
+{
+  if ([presenceStatus intValue] == 0)
+    return @"offline";
+  if ([presenceStatus intValue] == 1)
+    return @"available";
+  if ([presenceStatus intValue] == 2)
+    return @"busy";
+  if ([presenceStatus intValue] == 3)
+    return @"away";
+  if ([presenceStatus intValue] == 4)
+    return @"invisible";  
+  return @"offline";
+}
+
+-(NSString*)converPresenceStatusToString:(LYRIdentityPresenceStatus*)presenceStatus
+{
+  if (presenceStatus == LYRIdentityPresenceStatusOffline)
+    return @"offline";
+  if (presenceStatus == LYRIdentityPresenceStatusAvailable)
+    return @"available";
+  if (presenceStatus == LYRIdentityPresenceStatusBusy)
+    return @"busy";
+  if (presenceStatus == LYRIdentityPresenceStatusAway)
+    return @"away";
+  if (presenceStatus == LYRIdentityPresenceStatusInvisible)
+    return @"invisible";  
+  return @"offline";
+}
 
 -(NSDictionary*)convertParticipantToDict:(LYRIdentity*)participant
 {
   //NSLog(@"participant: %@", participant);
   //NSLog(@"participant.presenceStatus: %@", participant.presenceStatus);
   NSMutableDictionary *participantDict = [NSMutableDictionary new]; 
-  if (participant.presenceStatus == LYRIdentityPresenceStatusOffline)
-    [participantDict setValue:@"offline" forKey:@"status"];
-  if (participant.presenceStatus == LYRIdentityPresenceStatusAvailable)
-    [participantDict setValue:@"available" forKey:@"status"];
-  if (participant.presenceStatus == LYRIdentityPresenceStatusBusy)
-    [participantDict setValue:@"busy" forKey:@"status"];
-  if (participant.presenceStatus == LYRIdentityPresenceStatusAway)
-    [participantDict setValue:@"away" forKey:@"status"];
-  if (participant.presenceStatus == LYRIdentityPresenceStatusInvisible)
-    [participantDict setValue:@"invisible" forKey:@"status"];      
-  
+
+  // if (participant.presenceStatus == LYRIdentityPresenceStatusOffline)
+  //   [participantDict setValue:@"offline" forKey:@"status"];
+  // if (participant.presenceStatus == LYRIdentityPresenceStatusAvailable)
+  //   [participantDict setValue:@"available" forKey:@"status"];
+  // if (participant.presenceStatus == LYRIdentityPresenceStatusBusy)
+  //   [participantDict setValue:@"busy" forKey:@"status"];
+  // if (participant.presenceStatus == LYRIdentityPresenceStatusAway)
+  //   [participantDict setValue:@"away" forKey:@"status"];
+  // if (participant.presenceStatus == LYRIdentityPresenceStatusInvisible)
+  //   [participantDict setValue:@"invisible" forKey:@"status"];      
+  [participantDict setValue:[self converPresenceStatusToString:participant.presenceStatus] forKey:@"status"];
   [participantDict setValue:[participant.avatarImageURL absoluteString] forKey:@"avatar_url"];
   [participantDict setValue:participant.displayName forKey:@"fullname"];
   [participantDict setValue:participant.userID forKey:@"id"];

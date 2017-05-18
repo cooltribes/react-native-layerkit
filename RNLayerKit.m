@@ -142,7 +142,7 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
     // Declares a MIME type string
-    static NSString *const MIMETypeTextPlain = @"text/plain";
+    static NSString *const MIMETypeTextPlain = @"text/html";
     static NSString *const MIMETypeImagePNG = @"image/png";
     // Create a distinct conversation
     
@@ -157,14 +157,19 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
                 NSError *errorConversation = nil;
                 NSSet *participants = [NSSet setWithArray: userIDs];
                 LYRConversationOptions *conversationOptions = [LYRConversationOptions new];
-                conversationOptions.distinctByParticipants = YES;
+                if ([userIDs count] >= 2)
+                    conversationOptions.distinctByParticipants = NO;
+                else
+                    conversationOptions.distinctByParticipants = YES;
                 LYRConversation *conversation = [_layerClient newConversationWithParticipants:participants options:conversationOptions error:&errorConversation];
                 if (errorConversation && errorConversation.code == LYRErrorDistinctConversationExists) {
                     conversation = errorConversation.userInfo[LYRExistingDistinctConversationKey];
                 }
                 
                 NSError *error = nil;
+                
                 NSData *messageData = [messageText dataUsingEncoding:NSUTF8StringEncoding];
+                
                 LYRMessagePart *messagePart = [LYRMessagePart messagePartWithMIMEType:MIMETypeTextPlain data:messageData];
                 
                 // Creates and returns a new message object with the given conversation and array of message parts
@@ -199,7 +204,10 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
         NSError *errorConversation = nil;
         NSSet *participants = [NSSet setWithArray: userIDs];
         LYRConversationOptions *conversationOptions = [LYRConversationOptions new];
-        conversationOptions.distinctByParticipants = YES;
+        if ([userIDs count] >= 2)
+            conversationOptions.distinctByParticipants = NO;
+        else
+            conversationOptions.distinctByParticipants = YES;
         LYRConversation *conversation = [_layerClient newConversationWithParticipants:participants options:conversationOptions error:&errorConversation];
         if (errorConversation && errorConversation.code == LYRErrorDistinctConversationExists) {
             conversation = errorConversation.userInfo[LYRExistingDistinctConversationKey];
@@ -260,6 +268,22 @@ RCT_EXPORT_METHOD(getConversations:(int)limit offset:(int)offset
     }
 }
 
+RCT_EXPORT_METHOD(setConversationTitle:(NSString*)convoID title:(NSString*)title
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    LayerQuery *query = [LayerQuery new];
+    NSError *err;
+    LYRConversation *conversation = [query fetchConvoWithId:convoID client:_layerClient error:err];
+    if(err){
+      reject(@"no_events", @"Error getting conversation", err);
+    } else {
+      [conversation setValue:title forMetadataAtKeyPath:@"title"];
+      NSString *thingToReturn = @"YES";
+      NSLog(@"conversation %@", conversation);
+      resolve(thingToReturn);
+    }
+}
 RCT_EXPORT_METHOD(getMessages:(NSString*)convoID userIDs:(NSArray*)userIDs limit:(int)limit offset:(int)offset
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
@@ -295,7 +319,10 @@ RCT_EXPORT_METHOD(getMessages:(NSString*)convoID userIDs:(NSArray*)userIDs limit
         NSLog(@"userIDs: %@", userIDs);
         NSSet *participants = [NSSet setWithArray: userIDs];
         LYRConversationOptions *conversationOptions = [LYRConversationOptions new];
-        conversationOptions.distinctByParticipants = YES;
+        if ([userIDs count] >= 2)
+            conversationOptions.distinctByParticipants = NO;
+        else
+            conversationOptions.distinctByParticipants = YES;
         LYRConversation *conversation = [_layerClient newConversationWithParticipants:participants options:conversationOptions error:&errorConversation];
         NSLog(@"No conversation");
         NSLog(@"errorConversation %@", errorConversation);
