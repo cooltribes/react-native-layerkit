@@ -6,6 +6,8 @@ import android.util.Log;
 import com.RNLayerKit.listeners.AuthenticationListener;
 import com.RNLayerKit.listeners.ChangeEventListener;
 import com.RNLayerKit.listeners.IndicatorListener;
+import com.RNLayerKit.listeners.ConnectionListener;
+
 import com.layer.sdk.listeners.LayerTypingIndicatorListener;
 import com.RNLayerKit.singleton.LayerkitSingleton;
 import com.RNLayerKit.utils.ConverterHelper;
@@ -32,6 +34,7 @@ import com.layer.sdk.messaging.PushNotificationPayload;
 import com.layer.sdk.query.Predicate;
 import com.layer.sdk.query.Query;
 import com.layer.sdk.query.Query.Builder;
+import com.layer.sdk.messaging.Presence;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,6 +59,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     private AuthenticationListener authenticationListener;
     private ChangeEventListener changeEventListener;
     private IndicatorListener layerTypingIndicatorListener;
+    private ConnectionListener connectionListener;
 
     @SuppressWarnings("WeakerAccess")
     public RNLayerModule(ReactApplicationContext reactContext) {
@@ -143,6 +147,11 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
             LayerUtils.setAppId(this.reactContext, appIDstr);
 
+            if (connectionListener == null) {
+                connectionListener = new ConnectionListener(this, layerClient);
+            }
+            layerClient.registerConnectionListener(connectionListener);
+
             if (authenticationListener == null) {
                 authenticationListener = new AuthenticationListener();
             }
@@ -174,7 +183,11 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
         if (layerClient != null) {
             if (layerClient.isConnected()) {
+                //layerClient.setPresenceStatus(Presence.PresenceStatus.INVISIBLE);                
                 layerClient.deauthenticate();
+                layerClient.disconnect();                
+                layerClient.unregisterConnectionListener(connectionListener);
+                
             }
         }
 
@@ -193,7 +206,11 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             LayerkitSingleton.getInstance().setUserIdGlobal(userID);
             LayerkitSingleton.getInstance().setHeaderGlobal(header);
 
-            layerClient.authenticate();
+            if(!layerClient.isAuthenticated())
+                layerClient.authenticate();
+
+            if(layerClient.isAuthenticated())
+              layerClient.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
 
             String count;
             count = getMessagesCount();

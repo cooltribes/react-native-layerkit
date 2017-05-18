@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import com.layer.sdk.messaging.Presence;
 
 public class AuthenticationListener implements LayerAuthenticationListener {
 
@@ -191,8 +192,9 @@ public class AuthenticationListener implements LayerAuthenticationListener {
     @Override
     public void onAuthenticated(LayerClient client, String userID) {
         Log.d(TAG, "On Authenticated");
-        //Start the conversation view after a successful authentication
+        //Start the conversation view after a successful authentication        
         LayerkitSingleton.getInstance().setUserIdentityGlobal(client.getAuthenticatedUser());
+        client.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
     }
 
     /**
@@ -211,7 +213,8 @@ public class AuthenticationListener implements LayerAuthenticationListener {
      */
     @Override
     public void onDeauthenticated(LayerClient client) {
-        Log.d(TAG, "User is deauthenticated.");
+        Log.d(TAG, "User is deauthenticated.");       
+        //client.setPresenceStatus(Presence.PresenceStatus.OFFLINE);
         LayerkitSingleton.deleteInstance();
     }
 }

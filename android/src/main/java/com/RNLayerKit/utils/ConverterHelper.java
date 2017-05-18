@@ -16,6 +16,7 @@ import com.layer.sdk.messaging.Identity;
 import com.layer.sdk.messaging.LayerObject;
 import com.layer.sdk.messaging.Message;
 import com.layer.sdk.messaging.MessagePart;
+import com.layer.sdk.messaging.Presence;
 
 import java.nio.charset.Charset;
 import java.text.DateFormat;
@@ -24,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
-
 
 public class ConverterHelper {
 
@@ -59,14 +59,19 @@ public class ConverterHelper {
 
             if (change.getAttributeName() != null) {
                 writableMap.putString("attribute", change.getAttributeName());
+                if(change.getAttributeName() == "presenceStatus") {
+                    Identity participant = (Identity) change.getObject();
+                    //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!result: %s", participant.getUserId().toString()));
+                    writableMap.putString("user", participant.getUserId().toString());
+                }
             }
 
             if (change.getOldValue() != null) {
-                writableMap.putString("change_from", change.getOldValue().toString());
+                writableMap.putString("changeFrom", change.getOldValue().toString());
             }
 
             if (change.getNewValue() != null) {
-                writableMap.putString("change_to", change.getNewValue().toString());
+                writableMap.putString("changeTo", change.getNewValue().toString());
             }
 
             switch (change.getChangeType()) {
@@ -127,6 +132,31 @@ public class ConverterHelper {
             participantMap.putString("id", participant.getUserId());
             participantMap.putString("fullname", participant.getDisplayName());
             participantMap.putString("avatar_url", participant.getAvatarImageUrl());
+
+            Presence.PresenceStatus status =  participant.getPresenceStatus();
+            String participantStatus = "offline";        
+            if(status != null)
+                switch (status) {
+                    case AVAILABLE:            
+                        participantStatus = "available";
+                        break;
+                    case AWAY:
+                        participantStatus = "away";
+                        break;
+                    case BUSY:
+                        participantStatus = "busy";
+                        break;
+                    case OFFLINE:
+                        participantStatus = "offline";
+                        break;
+                    case INVISIBLE:
+                        participantStatus = "invisible";
+                        break;                
+                }
+
+            //Log.d(TAG, String.format("result: %s", status.toString()));
+            participantMap.putString("status", participantStatus);
+
             writableArray.pushMap(participantMap);
         }
         conversationMap.putArray("participants", writableArray);
