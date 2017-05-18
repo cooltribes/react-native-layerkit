@@ -123,7 +123,13 @@ public class ConverterHelper {
         conversationMap.putInt("hasUnreadMessages", conversation.getTotalUnreadMessageCount());
         conversationMap.putBoolean("deliveryReceiptsEnabled", conversation.isDeliveryReceiptsEnabled());
         conversationMap.putBoolean("isDeleted", conversation.isDeleted());
-        conversationMap.putString("metadata", conversation.getMetadata().toString());
+        
+        Metadata metadata = conversation.getMetadata();
+        
+        conversationMap.putString("metadata", metadata.toString());
+        if(metadata.get("title") != null) {
+            conversationMap.putString("title", metadata.get("title").toString());            
+        }
 
         Set<Identity> participants = conversation.getParticipants();
         WritableArray writableArray = new WritableNativeArray();
@@ -153,7 +159,6 @@ public class ConverterHelper {
                         participantStatus = "invisible";
                         break;                
                 }
-
             //Log.d(TAG, String.format("result: %s", status.toString()));
             participantMap.putString("status", participantStatus);
 
