@@ -14,4 +14,5 @@
 - (void)updateRemoteNotificationDeviceToken:(nullable NSData *)deviceToken;
 - (void)setPresenceStatusAway;
 - (void)setPresenceStatusAvailable;
+@property (nonatomic) LYRConversation *conversation;
 @end
