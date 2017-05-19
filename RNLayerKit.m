@@ -135,8 +135,90 @@ RCT_EXPORT_METHOD(disconnect)
     
 }
 
+- (LYRConversation *)conversationWithParticipants:(NSSet *)participants
+{
+  NSError *errorConversation = nil;
+  LYRConversationOptions *conversationOptions = [LYRConversationOptions new];
+  conversationOptions.distinctByParticipants = participants.count < 2;
+  LYRConversation *conversation = [_layerClient newConversationWithParticipants:participants options:conversationOptions error:&errorConversation];
+  if (errorConversation){
+    if  (errorConversation.code == LYRErrorDistinctConversationExists) {
+        conversation = errorConversation.userInfo[LYRExistingDistinctConversationKey];
+        return conversation;
+    } 
+  } 
+  return conversation;
+}
+
+- (LYRConversation *)conversationWithConvoID:(NSString *)convoID
+{
+    LayerQuery *query = [LayerQuery new];
+    NSError *err;
+    LYRConversation *conversation = [query fetchConvoWithId:convoID client:_layerClient error:err];
+    if(err){
+      NSLog(@"Error conversationWithConvoID %@ ",err);
+    } 
+    return conversation;
 
 
+}
+RCT_EXPORT_METHOD(newConversation:(NSArray*)userIDs
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSSet *participants = [NSSet setWithArray: userIDs];
+  self.conversation = [self conversationWithParticipants:participants];  
+  if (self.conversation){
+    resolve(@[@"YES",[self.conversation.identifier absoluteString]]);    
+  } else {
+    NSLog(@"Error creating conversastion");
+    reject(@"no_events", @"Error creating conversastion", nil);    
+  }
+
+}
+
+
+RCT_EXPORT_METHOD(sendMessageToConvoID:(NSString*)messageText convoID:(NSString*)convoID
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    // Declares a MIME type string
+    static NSString *const MIMETypeTextPlain = @"text/html";
+    static NSString *const MIMETypeImagePNG = @"image/png";
+
+
+    if (![convoID isEqualToString:[self.conversation.identifier absoluteString]])
+      self.conversation = [self conversationWithConvoID:convoID];
+    
+    NSError *error = nil;
+    NSData *messageData = [messageText dataUsingEncoding:NSUTF8StringEncoding];      
+    LYRMessagePart *messagePart = [LYRMessagePart messagePartWithMIMEType:MIMETypeTextPlain data:messageData];
+    
+    // Creates and returns a new message object with the given conversation and array of message parts
+    NSString *pushMessage= [NSString stringWithFormat:@"%@", messageText];
+    LYRPushNotificationConfiguration *defaultConfiguration = [LYRPushNotificationConfiguration new];
+    defaultConfiguration.title = [[_layerClient authenticatedUser] displayName];
+    defaultConfiguration.alert = pushMessage;
+    defaultConfiguration.category = @"category_lqs";
+    defaultConfiguration.sound = @"layerbell.caf";
+    
+    LYRMessageOptions *messageOptions = [LYRMessageOptions new];
+    messageOptions.pushNotificationConfiguration = defaultConfiguration;
+    LYRMessage *message = [_layerClient newMessageWithParts:@[messagePart] options:messageOptions error:nil];
+    // Sends the specified message
+    BOOL success = [self.conversation sendMessage:message error:&error];
+    if(success){
+      RCTLogInfo(@"Layer Message sent to %@", convoID);
+      resolve(@"YES");
+    }
+    else {
+      id retErr = RCTMakeAndLogError(@"Error Sending Layer Message",error,NULL);
+      NSError *errorMessage = retErr;        
+      NSLog(@"Error Sending Layer Message %@", errorMessage);
+      reject(@"no_events", @"Error Sending Layer Message ", errorMessage);
+    }      
+   
+}
 RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)userIDs
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
@@ -157,7 +239,8 @@ RCT_EXPORT_METHOD(sendMessageToUserIDs:(NSString*)messageText userIDs:(NSArray*)
                 NSError *errorConversation = nil;
                 NSSet *participants = [NSSet setWithArray: userIDs];
                 LYRConversationOptions *conversationOptions = [LYRConversationOptions new];
-                if ([userIDs count] >= 2)
+                
+                if ([userIDs count] >= 3)
                     conversationOptions.distinctByParticipants = NO;
                 else
                     conversationOptions.distinctByParticipants = YES;
@@ -255,16 +338,15 @@ RCT_EXPORT_METHOD(getConversations:(int)limit offset:(int)offset
     NSError *queryError;
     id allConvos = [query fetchConvosForClient:_layerClient limit:limit offset:offset error:queryError];
     if(queryError){
-        id retErr = RCTMakeAndLogError(@"Error getting Layer conversations",queryError,NULL);
-        NSError *error = retErr;
-        reject(@"no_events", @"Error creating conversastion", error);
-        //callback(@[retErr,[NSNull null]]);
+      id retErr = RCTMakeAndLogError(@"Error getting Layer conversations",queryError,NULL);
+      NSError *error = retErr;
+      reject(@"no_events", @"Error creating conversastion", error);
     }
     else{
-        JSONHelper *helper = [JSONHelper new];
-        NSArray *retData = [helper convertConvosToArray:allConvos];
-        NSString *thingToReturn = @"YES";
-        resolve(@[thingToReturn,retData]);
+      JSONHelper *helper = [JSONHelper new];
+      NSArray *retData = [helper convertConvosToArray:allConvos];
+      NSString *thingToReturn = @"YES";
+      resolve(@[thingToReturn,retData]);
     }
 }
 
@@ -272,17 +354,15 @@ RCT_EXPORT_METHOD(setConversationTitle:(NSString*)convoID title:(NSString*)title
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    LayerQuery *query = [LayerQuery new];
-    NSError *err;
-    LYRConversation *conversation = [query fetchConvoWithId:convoID client:_layerClient error:err];
-    if(err){
-      reject(@"no_events", @"Error getting conversation", err);
+    if (![convoID isEqualToString:[self.conversation.identifier absoluteString]])
+      self.conversation = [self conversationWithConvoID:convoID];
+    if (self.conversation){
+      [self.conversation setValue:title forMetadataAtKeyPath:@"title"];
+      resolve(@"YES");
     } else {
-      [conversation setValue:title forMetadataAtKeyPath:@"title"];
-      NSString *thingToReturn = @"YES";
-      NSLog(@"conversation %@", conversation);
-      resolve(thingToReturn);
+      reject(@"no_events", @"Error setting metadata", nil);
     }
+    
 }
 RCT_EXPORT_METHOD(getMessages:(NSString*)convoID userIDs:(NSArray*)userIDs limit:(int)limit offset:(int)offset
                   resolver:(RCTPromiseResolveBlock)resolve
@@ -801,4 +881,6 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
         }
     }
 }
+
+
 @end
