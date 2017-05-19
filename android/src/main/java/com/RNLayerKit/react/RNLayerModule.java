@@ -96,9 +96,12 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     @SuppressWarnings("unused")
     public void sendTypingBegin(String convoID, Promise promise) {
         try {
-            Builder builder = Query.builder(Message.class);
 
-            Conversation conversation = fetchConvoWithId(convoID, layerClient);
+            Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
+
+            if(!conversation.getId().toString().equals(convoID)) {                 
+                conversation = fetchConvoWithId(convoID, layerClient);
+            }         
             
             if (conversation != null) {                
                 conversation.send(LayerTypingIndicatorListener.TypingIndicator.STARTED);
@@ -115,9 +118,12 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     @SuppressWarnings("unused")
     public void sendTypingEnd(String convoID, Promise promise) {
         try {
-            Builder builder = Query.builder(Message.class);
 
-            Conversation conversation = fetchConvoWithId(convoID, layerClient);
+            Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
+
+            if(!conversation.getId().toString().equals(convoID)) {                 
+                conversation = fetchConvoWithId(convoID, layerClient);
+            }   
             
             if (conversation != null) {               
                 conversation.send(LayerTypingIndicatorListener.TypingIndicator.FINISHED);
@@ -182,12 +188,10 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     public void disconnect() {
 
         if (layerClient != null) {
-            if (layerClient.isConnected()) {
-                //layerClient.setPresenceStatus(Presence.PresenceStatus.INVISIBLE);                
+            if (layerClient.isConnected()) {              
                 layerClient.deauthenticate();
                 layerClient.disconnect();                
                 layerClient.unregisterConnectionListener(connectionListener);
-                
             }
         }
 
@@ -274,8 +278,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 writableArray.pushArray(ConverterHelper.conversationsToWritableArray(results));
                 promise.resolve(writableArray);
             } else {
-                Log.v(TAG, "Error creating conversations");
-                promise.reject( new Throwable("Error creating conversations") );
+                Log.v(TAG, "Error get conversations");
+                promise.reject( new Throwable("Error get conversations") );
             }
 
         } catch (IllegalViewOperationException e) {
@@ -293,7 +297,11 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
         try {
             Builder builder = Query.builder(Message.class);
 
-            Conversation conversation = fetchConvoWithId(convoID, layerClient);
+            Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
+
+            if(!conversation.getId().toString().equals(convoID)) {               
+                conversation = fetchConvoWithId(convoID, layerClient);
+            }            
 
             if (conversation != null) {
 
@@ -346,9 +354,16 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
         if (convoID != null) {
             try {
+
+                Conversation conversation = fetchConvoWithId(convoID, layerClient);
+
+                if (conversation != null) {
+                    LayerkitSingleton.getInstance().setConversationGlobal(conversation);            //// set conversation global
+                }
+
                 Builder builder = Query.builder(Message.class);
                 builder.predicate(new Predicate(Message.Property.CONVERSATION, Predicate
-                        .Operator.EQUAL_TO, this.fetchConvoWithId(convoID, layerClient)));
+                        .Operator.EQUAL_TO, conversation));
                 if (limit != 0) {
                     builder.limit(limit);
                 }
@@ -398,6 +413,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             }
 
             Conversation conversation = fetchLayerConversationWithParticipants(userIDs, layerClient);
+            LayerkitSingleton.getInstance().setConversationGlobal(conversation);                     //// set conversation global
 
             writableArray.pushString(YES);
             writableArray.pushString(conversation.getId().toString());  
@@ -422,7 +438,11 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 layerClient.connect();
             }
 
-            Conversation conversation = fetchConvoWithId(convoID, layerClient);
+            Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
+
+            if(!conversation.getId().toString().equals(convoID)) {               
+                conversation = fetchConvoWithId(convoID, layerClient);
+            }
 
             MessagePart messagePart = layerClient.newMessagePart(messageText);
 
