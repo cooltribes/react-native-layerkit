@@ -386,6 +386,81 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     @SuppressWarnings({"unchecked", "unused"})
+    public void newConversation(            
+            ReadableArray userIDs,
+            Promise promise) {
+
+        try {
+            WritableArray writableArray = new WritableNativeArray();
+
+            if (!layerClient.isConnected()) {
+                layerClient.connect();
+            }
+
+            Conversation conversation = fetchLayerConversationWithParticipants(userIDs, layerClient);
+
+            writableArray.pushString(YES);
+            writableArray.pushString(conversation.getId().toString());  
+            promise.resolve(writableArray);
+
+        } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+
+    }
+
+    @ReactMethod
+    @SuppressWarnings({"unchecked", "unused"})
+    public void sendMessageToConvoID(
+            String messageText,
+            String convoID,
+            Promise promise) {
+
+        try {
+
+            if (!layerClient.isConnected()) {
+                layerClient.connect();
+            }
+
+            Conversation conversation = fetchConvoWithId(convoID, layerClient);
+
+            MessagePart messagePart = layerClient.newMessagePart(messageText);
+
+            Map<String, String> data = new HashMap();
+
+            if (LayerkitSingleton.getInstance().getUserIdGlobal() == null) {
+                Log.v(TAG, "User id is null");
+                return;
+            }
+
+            data.put("user_id", LayerkitSingleton.getInstance().getUserIdGlobal());
+
+            Identity identity = layerClient.getAuthenticatedUser();
+            String title = identity != null ? identity.getDisplayName() : "New Message";
+
+            MessageOptions options = new MessageOptions();
+            PushNotificationPayload payload = new PushNotificationPayload.Builder()
+                    .text(messageText)
+                    .title(title)
+                    .data(data)
+                    .build();
+
+
+            options.defaultPushNotificationPayload(payload);
+
+            Message message = layerClient.newMessage(options, Collections.singletonList(messagePart));
+
+            conversation.send(message);
+            promise.resolve(YES);
+
+        } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+
+    }
+/*
+    @ReactMethod
+    @SuppressWarnings({"unchecked", "unused"})
     public void sendMessageToUserIDs(
             String messageText,
             ReadableArray userIDs,
@@ -433,7 +508,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
         }
 
     }
-
+*/
     /* ***************************************************************************** */
     /*                                                                               */
     /* BUSINESS METHODS                                                              */
