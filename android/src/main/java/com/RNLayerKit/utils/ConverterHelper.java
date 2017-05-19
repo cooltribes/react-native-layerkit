@@ -17,6 +17,7 @@ import com.layer.sdk.messaging.LayerObject;
 import com.layer.sdk.messaging.Message;
 import com.layer.sdk.messaging.MessagePart;
 import com.layer.sdk.messaging.Presence;
+import com.layer.sdk.messaging.Metadata;
 
 import java.nio.charset.Charset;
 import java.text.DateFormat;
