@@ -412,8 +412,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 layerClient.connect();
             }
 
-            Conversation conversation = fetchLayerConversationWithParticipants(userIDs, layerClient);
-            LayerkitSingleton.getInstance().setConversationGlobal(conversation);                     //// set conversation global
+            //Conversation conversation = fetchLayerConversationWithParticipants(userIDs, layerClient);
+            //LayerkitSingleton.getInstance().setConversationGlobal(conversation);                     //// set conversation global
 
             writableArray.pushString(YES);
             writableArray.pushString(conversation.getId().toString());  

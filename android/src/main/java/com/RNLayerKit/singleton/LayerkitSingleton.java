@@ -25,7 +25,6 @@ public final class LayerkitSingleton {
         if ( instance == null ) {
             instance = new LayerkitSingleton();
         }
-
         return instance;
     }
 
