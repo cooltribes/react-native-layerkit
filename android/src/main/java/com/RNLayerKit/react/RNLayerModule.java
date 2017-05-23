@@ -424,6 +424,36 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
         }
 
     }
+    @ReactMethod
+    @SuppressWarnings({"unchecked", "unused"})
+    public void setConversationTitle(    
+            String convoID,        
+            String title,
+            Promise promise) {
+
+        try {
+            WritableArray writableArray = new WritableNativeArray();
+
+            if (!layerClient.isConnected()) {
+                layerClient.connect();
+            }
+
+            Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
+
+            if(!conversation.getId().toString().equals(convoID) || conversation == null ) {               
+                conversation = fetchConvoWithId(convoID, layerClient);
+            }
+
+            conversation.putMetadataAtKeyPath("title", title);
+
+            writableArray.pushString(YES);
+            promise.resolve(writableArray);
+
+        } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+
+    }
 
     @ReactMethod
     @SuppressWarnings({"unchecked", "unused"})
