@@ -379,6 +379,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             }
         } else {
             Conversation conversation = fetchLayerConversationWithParticipants(userIDs, layerClient);
+            if (conversation != null) {
+                LayerkitSingleton.getInstance().setConversationGlobal(conversation);            //// set conversation global
+            }
             try {
                 Builder builder = Query.builder(Message.class);
                 builder.predicate(new Predicate(Message.Property.CONVERSATION, Predicate
