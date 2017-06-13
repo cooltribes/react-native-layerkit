@@ -1,6 +1,7 @@
 #import "RCTBridgeModule.h"
 #import <LayerKit/LayerKit.h>
 #import "JSONHelper.h"
+#import "MessageParts.h"
 #import "LayerAuthenticate.h"
 #import "LayerQuery.h"
 #import "RCTLog.h"

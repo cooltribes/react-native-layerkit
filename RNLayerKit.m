@@ -1,10 +1,12 @@
 #import "RNLayerKit.h"
+#import <AssetsLibrary/AssetsLibrary.h>
 NSData *_deviceToken;
 LYRClient *_layerClient;
 
 @implementation RNLayerKit{
     NSString *_appID;
     JSONHelper *_jsonHelper;
+    MessageParts *_messageParts;
     NSString *_userID;
     NSString *_header;
     NSString *_apiUrl;
@@ -46,6 +48,7 @@ LYRClient *_layerClient;
     if (self) {
          NSLog(@"initWithLayerAppID self");
         _jsonHelper = [JSONHelper new];
+        _messageParts = [MessageParts new];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(receivedNotification:)
                                                      name:@"RNLayerKitNotification"
@@ -162,6 +165,8 @@ RCT_EXPORT_METHOD(disconnect)
 
 
 }
+
+
 RCT_EXPORT_METHOD(newConversation:(NSArray*)userIDs
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
@@ -178,22 +183,37 @@ RCT_EXPORT_METHOD(newConversation:(NSArray*)userIDs
 }
 
 
-RCT_EXPORT_METHOD(sendMessageToConvoID:(NSString*)messageText convoID:(NSString*)convoID
+RCT_EXPORT_METHOD(sendMessageToConvoID:(NSArray*)parts convoID:(NSString*)convoID
+//RCT_EXPORT_METHOD(sendMessageToConvoID:(NSString*)messageText convoID:(NSString*)convoID
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-    // Declares a MIME type string
-    static NSString *const MIMETypeTextPlain = @"text/html";
-    static NSString *const MIMETypeImagePNG = @"image/png";
 
-
+    
+    NSLog(@"parts: %@", parts);
+    MessageParts *messagePartsHelper = [MessageParts new];
+    NSString *messageText = @"";
+    NSMutableArray* arrayMessageParts = [[NSMutableArray alloc] init];
+    for (NSDictionary *part in parts) {
+      if ([@"plain" isEqualToString:part[@"type"]]){
+        NSLog(@"ENTRO PLAIN");
+        messageText = part[@"message"];
+        LYRMessagePart *messagePart = [messagePartsHelper createMessagePartTextPlain:messageText];
+        [arrayMessageParts addObject: messagePart];
+      }
+      if ([@"jpg" isEqualToString:part[@"type"]]){
+        NSLog(@"ENTRO JPG");
+        LYRMessagePart *messagePart = [messagePartsHelper createMessagePartImageJpg:part[@"message"]];
+        NSLog(@"********MESSAGE PARTS: %@", messagePart);
+        [arrayMessageParts addObject: messagePart];
+      }      
+    }
+    NSLog(@"*******SALIO IF********** %@", arrayMessageParts);
     if (![convoID isEqualToString:[self.conversation.identifier absoluteString]])
       self.conversation = [self conversationWithConvoID:convoID];
     
     NSError *error = nil;
-    NSData *messageData = [messageText dataUsingEncoding:NSUTF8StringEncoding];      
-    LYRMessagePart *messagePart = [LYRMessagePart messagePartWithMIMEType:MIMETypeTextPlain data:messageData];
-    
+
     // Creates and returns a new message object with the given conversation and array of message parts
     NSString *pushMessage= [NSString stringWithFormat:@"%@", messageText];
     LYRPushNotificationConfiguration *defaultConfiguration = [LYRPushNotificationConfiguration new];
@@ -204,7 +224,10 @@ RCT_EXPORT_METHOD(sendMessageToConvoID:(NSString*)messageText convoID:(NSString*
     
     LYRMessageOptions *messageOptions = [LYRMessageOptions new];
     messageOptions.pushNotificationConfiguration = defaultConfiguration;
-    LYRMessage *message = [_layerClient newMessageWithParts:@[messagePart] options:messageOptions error:nil];
+    
+    //LYRMessagePart *messagePart = [self createMessagePartTextPlain:messageText];
+    //LYRMessage *message = [_layerClient newMessageWithParts:@[messagePart] options:messageOptions error:nil];
+    LYRMessage *message = [_layerClient newMessageWithParts:arrayMessageParts options:messageOptions error:nil];
     // Sends the specified message
     BOOL success = [self.conversation sendMessage:message error:&error];
     if(success){
@@ -635,8 +658,17 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
 }
 - (void)layerClient:(LYRClient *)client didFinishContentTransfer:(LYRContentTransferType)contentTransferType ofObject:(id)object
 {
+   // NSLog(@"****didFinishContentTransfer: %@",contentTransferType);
+    if (contentTransferType == LYRContentTransferTypeUpload)
+        NSLog(@"UPLOAD");
+    if (contentTransferType == LYRContentTransferTypeUpload)
+        NSLog(@"UPLOAD");    
+    NSLog(@"****Object: %@",object);
+    JSONHelper *helper = [JSONHelper new];
     [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
-                                                 body:@{@"source":@"LayerClient", @"type": @"didFinishContentTransfer"}];
+                                                 body:@{@"source":@"LayerClient", 
+                                                 @"type": @"didFinishContentTransfer",
+                                                @"data":[_jsonHelper convertMessagePartToDict:object]}];
 }
 - (void)layerClient:(LYRClient *)client didFinishSynchronizationWithChanges:(NSArray *)changes
 {
