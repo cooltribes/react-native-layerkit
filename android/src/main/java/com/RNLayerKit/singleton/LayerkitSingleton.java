@@ -4,6 +4,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.layer.sdk.messaging.Identity;
+import com.layer.sdk.messaging.Conversation;
 
 public final class LayerkitSingleton {
 
@@ -15,6 +16,8 @@ public final class LayerkitSingleton {
     private String headerGlobal;
     @Nullable
     private Identity userIdentityGlobal;
+    @Nullable
+    private Conversation conversationGlobal;
 
     @NonNull
     public static LayerkitSingleton getInstance () {
@@ -22,7 +25,6 @@ public final class LayerkitSingleton {
         if ( instance == null ) {
             instance = new LayerkitSingleton();
         }
-
         return instance;
     }
 
@@ -55,5 +57,13 @@ public final class LayerkitSingleton {
 
     public void setUserIdentityGlobal(@Nullable Identity userIdentityGlobal) {
         this.userIdentityGlobal = userIdentityGlobal;
+    }
+    @Nullable
+    public Conversation getConversationGlobal() {
+        return conversationGlobal;
+    }
+
+    public void setConversationGlobal(@Nullable Conversation conversationGlobal) {
+        this.conversationGlobal = conversationGlobal;
     }
 }
