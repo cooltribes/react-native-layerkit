@@ -195,13 +195,13 @@ RCT_EXPORT_METHOD(sendMessageToConvoID:(NSArray*)parts convoID:(NSString*)convoI
     NSString *messageText = @"";
     NSMutableArray* arrayMessageParts = [[NSMutableArray alloc] init];
     for (NSDictionary *part in parts) {
-      if ([@"plain" isEqualToString:part[@"type"]]){
+      if ([@"text/plain" isEqualToString:part[@"type"]]){
         NSLog(@"ENTRO PLAIN");
         messageText = part[@"message"];
         LYRMessagePart *messagePart = [messagePartsHelper createMessagePartTextPlain:messageText];
         [arrayMessageParts addObject: messagePart];
       }
-      if ([@"jpg" isEqualToString:part[@"type"]]){
+      if ([@"image/jpg" isEqualToString:part[@"type"]]){
         NSLog(@"ENTRO JPG");
         LYRMessagePart *messagePart = [messagePartsHelper createMessagePartImageJpg:part[@"message"]];
         NSLog(@"********MESSAGE PARTS: %@", messagePart);
