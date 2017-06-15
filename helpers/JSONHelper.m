@@ -197,6 +197,16 @@
     if([part.MIMEType isEqualToString:@"text/html"]){
       [messageText appendString:[[NSString alloc] initWithData:part.data encoding:NSUTF8StringEncoding]];
     }
+    if([part.MIMEType isEqualToString:@"image/jpg"]){
+      //[messageText appendString:[[NSString alloc] initWithData:part.data encoding:NSUTF8StringEncoding]];
+      //[messageText appendString:@"*IMAGE*"];
+
+      NSError *error;
+      LYRProgress *progress = [part downloadContent:&error];
+      if (error) {
+          NSLog(@"Content failed download with error %@", error);
+      }      
+    }    
   }
 
   [propertyDict setValue:messageParts forKey:@"parts"];
@@ -266,8 +276,21 @@
   [propertyDict setValue:msgPart.MIMEType forKey:@"MIMEType"];
   [propertyDict setValue:@(msgPart.size) forKey:@"size"];
   [propertyDict setValue:@(msgPart.transferStatus) forKey:@"transferStatus"];
-  [propertyDict setValue: [[NSString alloc] initWithData:msgPart.data encoding:NSUTF8StringEncoding] forKey:@"data"];
-
+  NSLog(@"****MESSAGEDATA %@", msgPart.data);
+  if([msgPart.MIMEType isEqualToString:@"image/jpg"]){
+    NSURL *tmpDirURL = [NSURL fileURLWithPath:NSTemporaryDirectory() isDirectory:YES];
+    NSURL *fileURL = [[tmpDirURL URLByAppendingPathComponent:@"pkm"] URLByAppendingPathExtension:@"jpg"];
+    NSLog(@"fileURL: %@", [fileURL path]);  
+    NSString *path = [fileURL path];
+    NSData *data = msgPart.data;
+    NSError *error = nil;
+    [data writeToFile:path options:NSDataWritingAtomic error:&error];
+    NSLog(@"Write returned error: %@", [error localizedDescription]); 
+    [propertyDict setValue:path forKey:@"data"];
+  } 
+  if([msgPart.MIMEType isEqualToString:@"text/plain"]){
+    [propertyDict setValue: [[NSString alloc] initWithData:msgPart.data encoding:NSUTF8StringEncoding] forKey:@"data"];
+  }
   return [NSDictionary dictionaryWithDictionary:propertyDict];
 }
 
