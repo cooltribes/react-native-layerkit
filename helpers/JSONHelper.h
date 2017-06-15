@@ -18,5 +18,5 @@
 -(NSDictionary*)convertErrorToDictionary:(NSError*)error;
 -(NSArray*)convertMessagesToArray:(NSOrderedSet*)allMessages;
 -(NSArray*)convertChangesToArray:(NSArray*)changes;
-
+-(NSDictionary*)convertMessagePartToDict:(LYRMessagePart*)msgPart;
 @end
