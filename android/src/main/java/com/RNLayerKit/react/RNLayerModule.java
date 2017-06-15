@@ -461,7 +461,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     @ReactMethod
     @SuppressWarnings({"unchecked", "unused"})
     public void sendMessageToConvoID(
-            String messageText,
+            ReadableArray parts,
             String convoID,
             Promise promise) {
 
@@ -477,7 +477,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 conversation = fetchConvoWithId(convoID, layerClient);
             }
 
-            MessagePart messagePart = layerClient.newMessagePart(messageText);
+            //Log.v(TAG, parts.getMap(0).getString("message").toString());
+            //MessagePart messagePart = layerClient.newMessagePart(messageText);
+            MessagePart messagePart = layerClient.newMessagePart(parts.getMap(0).getString("type"), parts.getMap(0).getString("message").getBytes());          
 
             Map<String, String> data = new HashMap();
 
@@ -493,7 +495,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
             MessageOptions options = new MessageOptions();
             PushNotificationPayload payload = new PushNotificationPayload.Builder()
-                    .text(messageText)
+                    .text(parts.getMap(0).getString("message"))
                     .title(title)
                     .data(data)
                     .build();
