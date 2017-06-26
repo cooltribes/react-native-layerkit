@@ -210,6 +210,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             LayerkitSingleton.getInstance().setUserIdGlobal(userID);
             LayerkitSingleton.getInstance().setHeaderGlobal(header);
 
+            if (!layerClient.isConnected())  
+                layerClient.connect();
+            
             if(!layerClient.isAuthenticated())
                 layerClient.authenticate();
 
