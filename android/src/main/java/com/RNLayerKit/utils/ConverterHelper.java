@@ -55,8 +55,7 @@ public class ConverterHelper {
                 Message message = (Message) change.getObject();
                 writableMap.putString("identifier", message.getId().toString());
                 writableMap.putMap("message", messageToWritableMap(message));
-                Conversation conversation = (Conversation) change.getObject();
-                writableMap.putMap("conversation", conversationToWritableMap(conversation));
+                writableMap.putMap("conversation", conversationToWritableMap(message.getConversation()));
             }
 
 
