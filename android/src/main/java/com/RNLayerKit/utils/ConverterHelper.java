@@ -55,6 +55,7 @@ public class ConverterHelper {
                 Message message = (Message) change.getObject();
                 writableMap.putString("identifier", message.getId().toString());
                 writableMap.putMap("message", messageToWritableMap(message));
+                writableMap.putMap("conversation", conversationToWritableMap(message.getConversation()));
             }
 
 
@@ -227,7 +228,7 @@ public class ConverterHelper {
             messageMap.putString("sentAt", simpleDateFormat.format(message.getSentAt()));
         }
 
-        messageMap.putArray("part", messagePartsToWritableMap(message.getMessageParts()));
+        messageMap.putArray("parts", messagePartsToWritableMap(message.getMessageParts()));
         Identity identity = message.getSender();
         if (identity != null) {
             messageMap.putString("sender", identity.getUserId());
