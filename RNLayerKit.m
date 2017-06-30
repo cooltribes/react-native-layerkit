@@ -182,7 +182,16 @@ RCT_EXPORT_METHOD(newConversation:(NSArray*)userIDs
 
 }
 
+// RCT_EXPORT_METHOD(sendMessageToConvoID:(NSArray*)parts convoID:(NSString*)convoID
 
+//                   resolver:(RCTPromiseResolveBlock)resolve
+//                   rejecter:(RCTPromiseRejectBlock)reject)
+// {
+//     if (@"ts")
+//         resolve(@"YES");
+//     else
+//         reject(@"no_events", @"Error Sending Layer Message ", nil);
+// }
 RCT_EXPORT_METHOD(sendMessageToConvoID:(NSArray*)parts convoID:(NSString*)convoID
 //RCT_EXPORT_METHOD(sendMessageToConvoID:(NSString*)messageText convoID:(NSString*)convoID
                   resolver:(RCTPromiseResolveBlock)resolve
@@ -190,25 +199,25 @@ RCT_EXPORT_METHOD(sendMessageToConvoID:(NSArray*)parts convoID:(NSString*)convoI
 {
 
     
-    NSLog(@"parts: %@", parts);
+    //NSLog(@"parts: %@", parts);
     MessageParts *messagePartsHelper = [MessageParts new];
     NSString *messageText = @"";
     NSMutableArray* arrayMessageParts = [[NSMutableArray alloc] init];
     for (NSDictionary *part in parts) {
       if ([@"text/plain" isEqualToString:part[@"type"]]){
-        NSLog(@"ENTRO PLAIN");
+        //NSLog(@"ENTRO PLAIN");
         messageText = part[@"message"];
         LYRMessagePart *messagePart = [messagePartsHelper createMessagePartTextPlain:messageText];
         [arrayMessageParts addObject: messagePart];
       }
       if ([@"image/jpg" isEqualToString:part[@"type"]]){
-        NSLog(@"ENTRO JPG");
+        //NSLog(@"ENTRO JPG");
         LYRMessagePart *messagePart = [messagePartsHelper createMessagePartImageJpg:part[@"message"]];
-        NSLog(@"********MESSAGE PARTS: %@", messagePart);
+        //NSLog(@"********MESSAGE PARTS: %@", messagePart);
         [arrayMessageParts addObject: messagePart];
       }      
     }
-    NSLog(@"*******SALIO IF********** %@", arrayMessageParts);
+    //NSLog(@"*******SALIO IF********** %@", arrayMessageParts);
     if (![convoID isEqualToString:[self.conversation.identifier absoluteString]])
       self.conversation = [self conversationWithConvoID:convoID];
     
@@ -235,7 +244,7 @@ RCT_EXPORT_METHOD(sendMessageToConvoID:(NSArray*)parts convoID:(NSString*)convoI
       resolve(@"YES");
     }
     else {
-      id retErr = RCTMakeAndLogError(@"Error Sending Layer Message",error,NULL);
+      id retErr = RCTMakeAndLogError(@"Error Sending Layer Message",error,nil);
       NSError *errorMessage = retErr;        
       NSLog(@"Error Sending Layer Message %@", errorMessage);
       reject(@"no_events", @"Error Sending Layer Message ", errorMessage);

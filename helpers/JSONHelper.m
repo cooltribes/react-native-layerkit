@@ -58,7 +58,7 @@
 
 -(NSArray*)convertChangesToArray:(NSArray*)changes
 {
-  //NSLog(@"Entro Changes");
+  NSLog(@"Entro Changes %@", changes);
   NSMutableArray *allChanges = [NSMutableArray new];
   for(LYRObjectChange *thisChange in changes){
 
@@ -74,11 +74,13 @@
     if ([changeObject isKindOfClass:[LYRMessage class]]) {
       LYRMessage *message = changeObject;
       [changeData setValue:[self convertMessageToDict:message] forKey:@"message"];
+      [changeData setValue:[self convertConvoToDictionary:message.conversation] forKey:@"conversation"];
         // Object is a message
     }  
     if ([changeObject isKindOfClass:[LYRIdentity class]]) {
       LYRIdentity *participant = changeObject;
       [changeData setValue:participant.userID forKey:@"user"];
+
         // Object is a message
     }      
     [changeData setValue:thisChange.property forKey:@"attribute"];
@@ -182,6 +184,7 @@
   [propertyDict setValue:@(msg.isDeleted) forKey:@"isDeleted"];
   [propertyDict setValue:@(msg.isUnread) forKey:@"isUnread"];
   [propertyDict setValue:msg.sender.userID forKey:@"sender"];
+  [propertyDict setValue:[self convertParticipantToUser:msg.sender] forKey:@"user"];
   [propertyDict setValue:[self convertDateToJSON:msg.sentAt] forKey:@"sentAt"];
   [propertyDict setValue:[self convertDateToJSON:msg.receivedAt] forKey:@"receivedAt"];
   
@@ -243,6 +246,17 @@
   if (presenceStatus == LYRIdentityPresenceStatusInvisible)
     return @"invisible";  
   return @"offline";
+}
+
+-(NSDictionary*)convertParticipantToUser:(LYRIdentity*)participant
+{
+  NSMutableDictionary *participantDict = [NSMutableDictionary new];     
+  [participantDict setValue:[self converPresenceStatusToString:participant.presenceStatus] forKey:@"status"];
+  [participantDict setValue:[participant.avatarImageURL absoluteString] forKey:@"avatar"];
+  [participantDict setValue:participant.displayName forKey:@"name"];
+  [participantDict setValue:participant.userID forKey:@"_id"];
+
+  return [NSDictionary dictionaryWithDictionary:participantDict];
 }
 
 -(NSDictionary*)convertParticipantToDict:(LYRIdentity*)participant
