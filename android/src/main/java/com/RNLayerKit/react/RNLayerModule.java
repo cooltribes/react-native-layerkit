@@ -42,7 +42,15 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
+import java.io.InputStream;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import java.io.ByteArrayOutputStream;
+import android.net.Uri;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
 
+import javax.annotation.Nullable;
 
 public class RNLayerModule extends ReactContextBaseJavaModule {
 
@@ -510,9 +518,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                     partes.add(i,messagePart);
                 }                
             }
-            //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!parts: %s", partes.toString()));
-            //MessagePart messagePart = layerClient.newMessagePart(parts.getMap(0).getString("type"), parts.getMap(0).getString("message").getBytes());       
-
+ 
             Map<String, String> data = new HashMap();
 
             if (LayerkitSingleton.getInstance().getUserIdGlobal() == null) {

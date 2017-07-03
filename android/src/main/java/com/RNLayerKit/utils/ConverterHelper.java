@@ -28,6 +28,11 @@ import java.util.Set;
 import java.util.TimeZone;
 
 import com.facebook.react.bridge.ReactApplicationContext;
+import android.graphics.BitmapFactory;
+import android.graphics.Bitmap;
+import java.io.ByteArrayOutputStream;
+import android.net.Uri;
+import android.provider.MediaStore;;
 
 public class ConverterHelper {
 
