@@ -49,6 +49,7 @@ import java.io.ByteArrayOutputStream;
 import android.net.Uri;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.annotation.Nullable;
 
@@ -234,6 +235,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             WritableArray writableArray = new WritableNativeArray();
             writableArray.pushString(YES);
             writableArray.pushInt(Integer.parseInt(count));
+
+            layerClient.setAutoDownloadSizeThreshold(1024 * 100);
+            layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/jpg"));
 
             promise.resolve(writableArray);
         } catch (IllegalViewOperationException e) {
@@ -513,7 +517,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                         Log.d(TAG, String.format("Error load image: %s", ex.toString()));
                     }
                 } else {
-                    Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!texto: %s", parts.getMap(i).getString("type").toString()));
+                    //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!texto: %s", parts.getMap(i).getString("type").toString()));
                     messagePart = layerClient.newMessagePart(parts.getMap(i).getString("type"), parts.getMap(i).getString("message").getBytes());                    
                     partes.add(i,messagePart);
                 }                

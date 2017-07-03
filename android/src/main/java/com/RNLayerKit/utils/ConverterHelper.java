@@ -288,12 +288,10 @@ public class ConverterHelper {
                 image = BitmapFactory.decodeByteArray(myData, 0, myData.length);            
             
                 if(image != null) {
-                    Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!image != null: %s", image.toString()));
-
+                    //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!image != null: %s", image.toString()));
                     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                     image.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
-                    String path = MediaStore.Images.Media.insertImage(reactContext.getContentResolver(), image, "", null);
-                    
+                    String path = MediaStore.Images.Media.insertImage(reactContext.getContentResolver(), image, "", null);                    
                     //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!URI: %s", Uri.parse(path).toString()));
                     messagePartMap.putString("data", Uri.parse(path).toString());
                 }
