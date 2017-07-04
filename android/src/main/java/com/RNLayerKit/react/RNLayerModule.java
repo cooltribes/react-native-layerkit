@@ -226,7 +226,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             if(!layerClient.isAuthenticated())
                 layerClient.authenticate();
 
-            if(layerClient.isAuthenticated())
+            if(layerClient.isAuthenticated() && layerClient.isConnected())
               layerClient.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
 
             String count;
