@@ -240,6 +240,38 @@ public class ConverterHelper {
         Identity identity = message.getSender();
         if (identity != null) {
             messageMap.putString("sender", identity.getUserId());
+            
+            ///////////////////User for Message //////////////////////////
+            WritableMap userMap = new WritableNativeMap();
+            userMap.putString("_id", identity.getUserId());
+            userMap.putString("name", identity.getDisplayName());
+            userMap.putString("avatar", identity.getAvatarImageUrl());
+
+            Presence.PresenceStatus status =  identity.getPresenceStatus();
+            String participantStatus = "offline";        
+            if(status != null)
+                switch (status) {
+                    case AVAILABLE:            
+                        participantStatus = "available";
+                        break;
+                    case AWAY:
+                        participantStatus = "away";
+                        break;
+                    case BUSY:
+                        participantStatus = "busy";
+                        break;
+                    case OFFLINE:
+                        participantStatus = "offline";
+                        break;
+                    case INVISIBLE:
+                        participantStatus = "invisible";
+                        break;                
+                }
+            //Log.d(TAG, String.format("result: %s", status.toString()));
+            userMap.putString("status", participantStatus);
+
+            messageMap.putMap("user",userMap);
+            /////////////////////////////////////////////
         }
 
         if (message.getMessageParts().get(0).getMimeType().equals("text/plain")) {
