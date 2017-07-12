@@ -27,11 +27,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
+import com.facebook.react.bridge.ReactApplicationContext;
+import android.graphics.BitmapFactory;
+import android.graphics.Bitmap;
+import java.io.ByteArrayOutputStream;
+import android.net.Uri;
+import android.provider.MediaStore;;
+
 public class ConverterHelper {
 
     private final static String TAG = ConverterHelper.class.getSimpleName();
     private final static String DATE_FORMAT_NOW = "yyyy-MM-dd'T'HH:mm'Z'";
     private final static Charset UTF8_CHARSET = Charset.forName("UTF-8");
+    public static ReactApplicationContext reactContext;
 
     public static WritableMap convertChangesToArray(LayerChangeEvent event) {
 
@@ -232,6 +240,38 @@ public class ConverterHelper {
         Identity identity = message.getSender();
         if (identity != null) {
             messageMap.putString("sender", identity.getUserId());
+            
+            ///////////////////User for Message //////////////////////////
+            WritableMap userMap = new WritableNativeMap();
+            userMap.putString("_id", identity.getUserId());
+            userMap.putString("name", identity.getDisplayName());
+            userMap.putString("avatar", identity.getAvatarImageUrl());
+
+            Presence.PresenceStatus status =  identity.getPresenceStatus();
+            String participantStatus = "offline";        
+            if(status != null)
+                switch (status) {
+                    case AVAILABLE:            
+                        participantStatus = "available";
+                        break;
+                    case AWAY:
+                        participantStatus = "away";
+                        break;
+                    case BUSY:
+                        participantStatus = "busy";
+                        break;
+                    case OFFLINE:
+                        participantStatus = "offline";
+                        break;
+                    case INVISIBLE:
+                        participantStatus = "invisible";
+                        break;                
+                }
+            //Log.d(TAG, String.format("result: %s", status.toString()));
+            userMap.putString("status", participantStatus);
+
+            messageMap.putMap("user",userMap);
+            /////////////////////////////////////////////
         }
 
         if (message.getMessageParts().get(0).getMimeType().equals("text/plain")) {
@@ -266,12 +306,36 @@ public class ConverterHelper {
         messagePartMap.putString("MIMEType", messagePart.getMimeType());
 
         if (messagePart.getMimeType().equals("text/plain")) {
+            //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!txt messagePart: %s", messagePart.toString()));
             String s = new String(messagePart.getData(), UTF8_CHARSET);
             messagePartMap.putString("data", s);
+        }
+        if (messagePart.getMimeType().equals("image/jpg")) {            
+
+            //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!image messagePart: %s", messagePart.toString()));
+            Bitmap image;
+            byte[] myData = messagePart.getData();
+
+            if(myData != null) {
+                image = BitmapFactory.decodeByteArray(myData, 0, myData.length);            
+            
+                if(image != null) {
+                    //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!image != null: %s", image.toString()));
+                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    image.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+                    String path = MediaStore.Images.Media.insertImage(reactContext.getContentResolver(), image, "", null);                    
+                    //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!URI: %s", Uri.parse(path).toString()));
+                    messagePartMap.putString("data", Uri.parse(path).toString());
+                }
+            }
         }
         messagePartMap.putDouble("size", messagePart.getSize());
         messagePartMap.putInt("transferStatus", messagePart.getTransferStatus().getValue());
 
         return messagePartMap;
+    }
+
+    public static void setContext(ReactApplicationContext context) {
+        reactContext = context;
     }
 }

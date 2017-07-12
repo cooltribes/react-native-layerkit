@@ -42,7 +42,16 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nullable;
+import java.io.InputStream;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import java.io.ByteArrayOutputStream;
+import android.net.Uri;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
+import javax.annotation.Nullable;
 
 public class RNLayerModule extends ReactContextBaseJavaModule {
 
@@ -65,6 +74,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     public RNLayerModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
+        ConverterHelper.setContext(reactContext);   // add context helper
     }
 
     /* ***************************************************************************** */
@@ -216,7 +226,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             if(!layerClient.isAuthenticated())
                 layerClient.authenticate();
 
-            if(layerClient.isAuthenticated())
+            if(layerClient.isAuthenticated() && layerClient.isConnected())
               layerClient.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
 
             String count;
@@ -225,6 +235,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             WritableArray writableArray = new WritableNativeArray();
             writableArray.pushString(YES);
             writableArray.pushInt(Integer.parseInt(count));
+
+            layerClient.setAutoDownloadSizeThreshold(1024 * 100);
+            layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/jpg"));
 
             promise.resolve(writableArray);
         } catch (IllegalViewOperationException e) {
@@ -480,10 +493,36 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 conversation = fetchConvoWithId(convoID, layerClient);
             }
 
-            //Log.v(TAG, parts.getMap(0).getString("message").toString());
-            //MessagePart messagePart = layerClient.newMessagePart(messageText);
-            MessagePart messagePart = layerClient.newMessagePart(parts.getMap(0).getString("type"), parts.getMap(0).getString("message").getBytes());          
+            List<MessagePart> partes = new ArrayList<MessagePart>();
 
+            MessagePart messagePart;
+            for (int i = 0; i < parts.size(); i++) {
+                
+                if(parts.getMap(i).getString("type").equals("image/jpg")) {
+
+                    Uri uri = Uri.parse(parts.getMap(i).getString("message"));
+
+                    try {
+                        //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!imagen: %s", parts.getMap(i).getString("type").toString()));
+                        InputStream imageStream = this.reactContext.getContentResolver().openInputStream(uri);
+                        Bitmap bm = BitmapFactory.decodeStream(imageStream);
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        bm.compress(Bitmap.CompressFormat.JPEG, 100, baos); //bm is the bitmap object
+                        byte[] decodedBytes = baos.toByteArray();
+                      
+                        messagePart = layerClient.newMessagePart("image/jpg", decodedBytes);                        
+                        partes.add(i,messagePart);
+                    }
+                    catch (FileNotFoundException ex) {
+                        Log.d(TAG, String.format("Error load image: %s", ex.toString()));
+                    }
+                } else {
+                    //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!texto: %s", parts.getMap(i).getString("type").toString()));
+                    messagePart = layerClient.newMessagePart(parts.getMap(i).getString("type"), parts.getMap(i).getString("message").getBytes());                    
+                    partes.add(i,messagePart);
+                }                
+            }
+ 
             Map<String, String> data = new HashMap();
 
             if (LayerkitSingleton.getInstance().getUserIdGlobal() == null) {
@@ -506,7 +545,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
             options.defaultPushNotificationPayload(payload);
 
-            Message message = layerClient.newMessage(options, Collections.singletonList(messagePart));
+            Message message = layerClient.newMessage(options, partes);
 
             conversation.send(message);
             promise.resolve(YES);
