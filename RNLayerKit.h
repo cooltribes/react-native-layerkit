@@ -7,7 +7,8 @@
 #import "RCTLog.h"
 #import "RCTUtils.h"
 #import "RCTEventDispatcher.h"
-#import "RCTEventEmitter.h"
+//#import "RCTEventEmitter.h"
+#import <React/RCTEventEmitter.h>
 
 @interface RNLayerKit : RCTEventEmitter <RCTBridgeModule>
 + (nonnull instancetype)bridgeWithLayerAppID:(nonnull NSURL *)layerAppID bridge:(RCTBridge *)bridge apiUrl:(NSString *)apiUrl;
