@@ -220,7 +220,9 @@ public class ConverterHelper {
         Map<Identity, Message.RecipientStatus> recipientStatus = message.getRecipientStatus();
         WritableNativeMap mapRecipientStatus = new WritableNativeMap();
         for (Map.Entry<Identity, Message.RecipientStatus> recipient : recipientStatus.entrySet()) {
-            mapRecipientStatus.putString(recipient.getKey().getUserId(), recipient.getValue().toString());
+            if(recipient.getValue() != null) {
+                mapRecipientStatus.putString(recipient.getKey().getUserId(), recipient.getValue().toString());
+            }
         }
         messageMap.putMap("recipientStatus", mapRecipientStatus);
 
