@@ -142,6 +142,11 @@ public class ConverterHelper {
         }
 
         Set<Identity> participants = conversation.getParticipants();
+
+        if(participants.size() == 0) {             // Participants vacio
+            return null;
+        }
+
         WritableArray writableArray = new WritableNativeArray();
         for (Identity participant : participants) {
             WritableMap participantMap = new WritableNativeMap();
