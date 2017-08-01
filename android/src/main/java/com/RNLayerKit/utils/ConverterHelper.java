@@ -26,13 +26,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.Date;
 
 import com.facebook.react.bridge.ReactApplicationContext;
 import android.graphics.BitmapFactory;
 import android.graphics.Bitmap;
 import java.io.ByteArrayOutputStream;
 import android.net.Uri;
-import android.provider.MediaStore;;
+import android.provider.MediaStore;
 
 public class ConverterHelper {
 
@@ -234,9 +235,13 @@ public class ConverterHelper {
         DateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT_NOW);
         TimeZone timeZone = TimeZone.getTimeZone("UTC");
         simpleDateFormat.setTimeZone(timeZone);
+        Date date_now = new Date();                                     // now()
 
         if (message.getReceivedAt() != null) {
             messageMap.putString("receivedAt", simpleDateFormat.format(message.getReceivedAt()));
+            
+        } else {
+            messageMap.putString("receivedAt", simpleDateFormat.format(date_now));
         }
 
         if (message.getSentAt() != null) {
