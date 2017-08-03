@@ -116,7 +116,10 @@ public class ConverterHelper {
             return null;
         }
         for (int i = 0; i < conversations.size(); i++) {
-            conversationsArray.pushMap(conversationToWritableMap(conversations.get(i)));
+            WritableMap conversationMap = conversationToWritableMap(conversations.get(i)); 
+            if(conversationMap != null) {
+                conversationsArray.pushMap(conversationMap);
+            }
         }
 
         return conversationsArray;
@@ -220,7 +223,11 @@ public class ConverterHelper {
 
         if (LayerkitSingleton.getInstance().getUserIdentityGlobal() != null) {
             Message.RecipientStatus recipientStatus = message.getRecipientStatus(LayerkitSingleton.getInstance().getUserIdentityGlobal());
-            messageMap.putString("Status", recipientStatus.toString());
+            if(recipientStatus != null) {
+                messageMap.putString("Status", recipientStatus.toString());
+            } else {
+                messageMap.putString("Status", null);
+            }
         }
 
         Map<Identity, Message.RecipientStatus> recipientStatus = message.getRecipientStatus();
@@ -238,8 +245,7 @@ public class ConverterHelper {
         Date date_now = new Date();                                     // now()
 
         if (message.getReceivedAt() != null) {
-            messageMap.putString("receivedAt", simpleDateFormat.format(message.getReceivedAt()));
-            
+            messageMap.putString("receivedAt", simpleDateFormat.format(message.getReceivedAt()));   
         } else {
             messageMap.putString("receivedAt", simpleDateFormat.format(date_now));
         }
