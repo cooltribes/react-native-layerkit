@@ -1,6 +1,5 @@
 package com.RNLayerKit.react;
 
-
 import android.util.Log;
 
 import com.RNLayerKit.listeners.AuthenticationListener;
@@ -35,6 +34,8 @@ import com.layer.sdk.query.Predicate;
 import com.layer.sdk.query.Query;
 import com.layer.sdk.query.Query.Builder;
 import com.layer.sdk.messaging.Presence;
+import com.layer.sdk.query.SortDescriptor;
+import java.lang.Long;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -229,12 +230,12 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             if(layerClient.isAuthenticated() && layerClient.isConnected())
               layerClient.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
 
-            String count;
+            int count;
             count = getMessagesCount();
 
             WritableArray writableArray = new WritableNativeArray();
             writableArray.pushString(YES);
-            writableArray.pushInt(Integer.parseInt(count));
+            writableArray.pushInt(count);
 
             layerClient.setAutoDownloadSizeThreshold(1024 * 100);
             layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/jpg"));
@@ -247,25 +248,24 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     }
 
     @SuppressWarnings("unchecked")
-    private String getMessagesCount() {
+    private int getMessagesCount() {
 
         try {
 
             Query query = Query.builder(Message.class)
-                    .predicate(new Predicate(Message.Property.IS_UNREAD, Predicate
-                            .Operator.EQUAL_TO, true))
-                    .build();
+                .predicate(new Predicate(Message.Property.IS_UNREAD, Predicate.Operator.EQUAL_TO, true))
+                .build();
 
-            List results = layerClient.executeQuery(query, Query.ResultType.COUNT);
+            Long results = layerClient.executeQueryForCount(query);
 
-            if (results != null && results.size() > 0) {
-                return String.valueOf(results.get(0));
+            if (results != null) {
+                return (int) (results + 0);
             }
 
         } catch (IllegalViewOperationException ignored) {
         }
 
-        return ZERO;
+        return 0;
 
     }
 
@@ -279,14 +279,14 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
         try {
             WritableArray writableArray = new WritableNativeArray();
 
-            Builder builder = Query.builder(Conversation.class);
+            Builder builder = Query.builder(Conversation.class)
+                .sortDescriptor(new SortDescriptor(Conversation.Property.LAST_MESSAGE_RECEIVED_AT, SortDescriptor.Order.DESCENDING));
 
             if (limit != 0) {
                 builder.limit(limit);
             }
 
             Query query = builder.build();
-
             List results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
 
             if (results != null) {
@@ -338,8 +338,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                     }
 
                     WritableArray writableArray = new WritableNativeArray();
-                    String count = getMessagesCount();
-                    writableArray.pushInt(Integer.parseInt(count));
+                    int count = getMessagesCount();
+                    writableArray.pushInt(count);
                     writableArray.pushString(YES);
                     promise.resolve(writableArray);
 
@@ -377,9 +377,10 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                     LayerkitSingleton.getInstance().setConversationGlobal(conversation);            //// set conversation global
                 }
 
-                Builder builder = Query.builder(Message.class);
-                builder.predicate(new Predicate(Message.Property.CONVERSATION, Predicate
-                        .Operator.EQUAL_TO, conversation));
+                Builder builder = Query.builder(Message.class)
+                    .predicate(new Predicate(Message.Property.CONVERSATION, Predicate.Operator.EQUAL_TO, conversation))
+                    .sortDescriptor(new SortDescriptor(Message.Property.POSITION, SortDescriptor.Order.DESCENDING));
+                
                 if (limit != 0) {
                     builder.limit(limit);
                 }
@@ -399,11 +400,13 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 LayerkitSingleton.getInstance().setConversationGlobal(conversation);            //// set conversation global
             }
             try {
-                Builder builder = Query.builder(Message.class);
-                builder.predicate(new Predicate(Message.Property.CONVERSATION, Predicate
-                        .Operator.EQUAL_TO, conversation));
-                if (limit != 0)
+                Builder builder = Query.builder(Message.class)
+                    .predicate(new Predicate(Message.Property.CONVERSATION, Predicate.Operator.EQUAL_TO, conversation))
+                    .sortDescriptor(new SortDescriptor(Message.Property.POSITION, SortDescriptor.Order.DESCENDING));
+
+                if (limit != 0) {
                     builder.limit(limit);
+                }
                 Query query = builder.build();
                 List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
                 if (results != null) {
