@@ -379,11 +379,13 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
                 Builder builder = Query.builder(Message.class)
                     .predicate(new Predicate(Message.Property.CONVERSATION, Predicate.Operator.EQUAL_TO, conversation))
-                    .sortDescriptor(new SortDescriptor(Message.Property.POSITION, SortDescriptor.Order.ASCENDING));
+                    .sortDescriptor(new SortDescriptor(Message.Property.POSITION, SortDescriptor.Order.ASCENDING))
+                    .limit(limit)
+                    .offset(offset);
                 
-                if (limit != 0) {
+                /*if (limit != 0) {
                     builder.limit(limit);
-                }
+                }*/
                 Query query = builder.build();
                 List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
                 if (results != null) {
@@ -402,11 +404,13 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             try {
                 Builder builder = Query.builder(Message.class)
                     .predicate(new Predicate(Message.Property.CONVERSATION, Predicate.Operator.EQUAL_TO, conversation))
-                    .sortDescriptor(new SortDescriptor(Message.Property.POSITION, SortDescriptor.Order.ASCENDING));
+                    .sortDescriptor(new SortDescriptor(Message.Property.POSITION, SortDescriptor.Order.ASCENDING))
+                    .limit(limit)
+                    .offset(offset);
 
-                if (limit != 0) {
+                /*if (limit != 0) {
                     builder.limit(limit);
-                }
+                }*/
                 Query query = builder.build();
                 List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
                 if (results != null) {
