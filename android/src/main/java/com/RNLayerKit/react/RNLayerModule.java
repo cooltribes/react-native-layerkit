@@ -379,7 +379,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
                 Builder builder = Query.builder(Message.class)
                     .predicate(new Predicate(Message.Property.CONVERSATION, Predicate.Operator.EQUAL_TO, conversation))
-                    .sortDescriptor(new SortDescriptor(Message.Property.POSITION, SortDescriptor.Order.ASCENDING))
+                    .sortDescriptor(new SortDescriptor(Message.Property.POSITION, SortDescriptor.Order.DESCENDING))
                     .limit(limit)
                     .offset(offset);
                 
@@ -404,7 +404,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             try {
                 Builder builder = Query.builder(Message.class)
                     .predicate(new Predicate(Message.Property.CONVERSATION, Predicate.Operator.EQUAL_TO, conversation))
-                    .sortDescriptor(new SortDescriptor(Message.Property.POSITION, SortDescriptor.Order.ASCENDING))
+                    .sortDescriptor(new SortDescriptor(Message.Property.POSITION, SortDescriptor.Order.DESCENDING))
                     .limit(limit)
                     .offset(offset);
 
