@@ -70,7 +70,7 @@
   // Fetches all messages for a given conversation
   LYRQuery *query = [LYRQuery queryWithQueryableClass:[LYRMessage class]];
   query.predicate = [LYRPredicate predicateWithProperty:@"conversation" predicateOperator:LYRPredicateOperatorIsEqualTo value:thisConvo];
-  query.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"position" ascending:YES]];
+  query.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"position" ascending:NO]];
   if(limit>0)
     query.limit=limit;
   query.offset=offset;
