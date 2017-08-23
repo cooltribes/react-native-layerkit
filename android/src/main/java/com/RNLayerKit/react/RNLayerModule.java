@@ -35,12 +35,14 @@ import com.layer.sdk.query.Query;
 import com.layer.sdk.query.Query.Builder;
 import com.layer.sdk.messaging.Presence;
 import com.layer.sdk.query.SortDescriptor;
-import java.lang.Long;
+import com.layer.sdk.messaging.Metadata;
 
+import java.lang.Long;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import java.io.InputStream;
@@ -529,28 +531,47 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                     partes.add(i,messagePart);
                 }                
             }
- 
-            Map<String, String> data = new HashMap();
 
-            if (LayerkitSingleton.getInstance().getUserIdGlobal() == null) {
-                Log.v(TAG, "User id is null");
-                return;
+            ////////////////////////////////////////////////////////
+
+            Metadata metadata = conversation.getMetadata(); 
+            Map<String, String> data = new HashMap();       
+            String title = "";
+            String type;
+
+            Identity identity = null;
+            identity = layerClient.getAuthenticatedUser();
+
+            Set<Identity> participants = conversation.getParticipants();        
+
+            if(participants.size() > 2) {
+                type = "group";
+                if(metadata.get("title") != null) {
+                    title = metadata.get("title").toString();            
+                } else {                
+                    for (Identity participant : participants) {
+                        title = title + participant.getDisplayName() + ", ";
+                    }
+                } 
+            }  else {
+                type = "chat";
+                title = identity != null ? identity.getDisplayName() : "New Message";
             }
 
-            data.put("user_id", LayerkitSingleton.getInstance().getUserIdGlobal());
-
-            Identity identity = layerClient.getAuthenticatedUser();
-            String title = identity != null ? identity.getDisplayName() : "New Message";
+            data.put("name", identity.getDisplayName().toString());
+            data.put("type", type.toString());
 
             MessageOptions options = new MessageOptions();
             PushNotificationPayload payload = new PushNotificationPayload.Builder()
-                    .text(parts.getMap(0).getString("message"))
-                    .title(title)
-                    .data(data)
-                    .build();
+                .text(parts.getMap(0).getString("message"))
+                .title(title)
+                .data(data)
+                .build();
 
 
             options.defaultPushNotificationPayload(payload);
+
+            //////////////////////////////////////////////////////////
 
             Message message = layerClient.newMessage(options, partes);
 
