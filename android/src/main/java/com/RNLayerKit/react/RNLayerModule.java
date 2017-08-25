@@ -561,9 +561,14 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             data.put("name", identity.getDisplayName().toString());
             data.put("type", type.toString());
 
+            String texto =  parts.getMap(0).getString("message");
+            if(participants.size() > 2) {
+                texto = identity.getDisplayName() + ": " + texto;
+            }
+
             MessageOptions options = new MessageOptions();
             PushNotificationPayload payload = new PushNotificationPayload.Builder()
-                .text(parts.getMap(0).getString("message"))
+                .text(texto)
                 .title(title)
                 .data(data)
                 .build();
