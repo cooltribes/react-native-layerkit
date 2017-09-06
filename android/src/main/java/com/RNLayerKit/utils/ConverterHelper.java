@@ -293,7 +293,9 @@ public class ConverterHelper {
         }
 
         if (message.getMessageParts().get(0).getMimeType().equals("text/plain")) {
-            messageMap.putString("text", new String(message.getMessageParts().get(0).getData(), UTF8_CHARSET));
+            if(message.getMessageParts().get(0).getData() != null) {
+                messageMap.putString("text", new String(message.getMessageParts().get(0).getData(), UTF8_CHARSET));
+            }
         }
 
         return messageMap;
@@ -325,8 +327,10 @@ public class ConverterHelper {
 
         if (messagePart.getMimeType().equals("text/plain")) {
             //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!txt messagePart: %s", messagePart.toString()));
-            String s = new String(messagePart.getData(), UTF8_CHARSET);
-            messagePartMap.putString("data", s);
+            if(messagePart.getData() != null) {
+                String s = new String(messagePart.getData(), UTF8_CHARSET);
+                messagePartMap.putString("data", s);
+            }
         }
         if (messagePart.getMimeType().equals("image/jpg")) {            
 
