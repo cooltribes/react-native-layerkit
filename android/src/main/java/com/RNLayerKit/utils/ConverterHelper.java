@@ -57,6 +57,13 @@ public class ConverterHelper {
                 Conversation conversation = (Conversation) change.getObject();
                 writableMap.putString("identifier", conversation.getId().toString());
                 writableMap.putMap("conversation", conversationToWritableMap(conversation));
+                writableMap.putString("historicSyncStatus", conversation.getHistoricSyncStatus().toString());
+
+                // Sync More Init Sync 
+                if(change.getChangeType() == LayerChange.Type.INSERT) {
+                    conversation.syncMoreHistoricMessages(24);
+                    //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!ojoooooooooooooo: %s", conversation.toString()));
+                }
             }
 
             if (change.getObjectType() == LayerObject.Type.MESSAGE) {
@@ -137,6 +144,7 @@ public class ConverterHelper {
         conversationMap.putInt("hasUnreadMessages", conversation.getTotalUnreadMessageCount());
         conversationMap.putBoolean("deliveryReceiptsEnabled", conversation.isDeliveryReceiptsEnabled());
         conversationMap.putBoolean("isDeleted", conversation.isDeleted());
+        conversationMap.putString("historicSyncStatus", conversation.getHistoricSyncStatus().toString());
         
         Metadata metadata = conversation.getMetadata();
         
@@ -220,6 +228,7 @@ public class ConverterHelper {
         messageMap.putString("identifier", message.getId().toString());
         messageMap.putBoolean("isDeleted", message.isDeleted());
         messageMap.putBoolean("isSent", message.isSent());
+        messageMap.putDouble("position",(double)  message.getPosition());
 
         if (LayerkitSingleton.getInstance().getUserIdentityGlobal() != null) {
             Message.RecipientStatus recipientStatus = message.getRecipientStatus(LayerkitSingleton.getInstance().getUserIdentityGlobal());

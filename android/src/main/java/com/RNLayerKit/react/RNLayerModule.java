@@ -6,6 +6,7 @@ import com.RNLayerKit.listeners.AuthenticationListener;
 import com.RNLayerKit.listeners.ChangeEventListener;
 import com.RNLayerKit.listeners.IndicatorListener;
 import com.RNLayerKit.listeners.ConnectionListener;
+import com.RNLayerKit.listeners.SyncListener;
 
 import com.layer.sdk.listeners.LayerTypingIndicatorListener;
 import com.RNLayerKit.singleton.LayerkitSingleton;
@@ -72,6 +73,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     private ChangeEventListener changeEventListener;
     private IndicatorListener layerTypingIndicatorListener;
     private ConnectionListener connectionListener;
+    private SyncListener layerSyncListener;
 
     @SuppressWarnings("WeakerAccess")
     public RNLayerModule(ReactApplicationContext reactContext) {
@@ -160,7 +162,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
         try {
             LayerClient.Options options = new LayerClient.Options();
-            options.historicSyncPolicy(LayerClient.Options.HistoricSyncPolicy.ALL_MESSAGES);
+            options.historicSyncPolicy(LayerClient.Options.HistoricSyncPolicy.FROM_LAST_MESSAGE);
             options.useFirebaseCloudMessaging(true);
             layerClient = LayerClient.newInstance(this.reactContext, appIDstr, options);
 
@@ -185,6 +187,11 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 layerTypingIndicatorListener = new IndicatorListener( this, layerClient );
             }
             layerTypingIndicatorListener.onResume();
+
+            if (layerSyncListener == null) {
+                layerSyncListener = new SyncListener(this, layerClient);
+            }
+            layerClient.registerSyncListener(layerSyncListener);  
 
             layerClient.connect();
 
@@ -390,6 +397,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 }*/
                 Query query = builder.build();
                 List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
+                conversation.syncMoreHistoricMessages(25);
                 if (results != null) {
                     writableArray.pushString(YES);
                     writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
@@ -415,6 +423,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 }*/
                 Query query = builder.build();
                 List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
+                conversation.syncMoreHistoricMessages(25);
                 if (results != null) {
                     writableArray.pushString(YES);
                     writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
