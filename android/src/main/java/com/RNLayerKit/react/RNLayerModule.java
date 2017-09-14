@@ -397,7 +397,10 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 }*/
                 Query query = builder.build();
                 List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
-                conversation.syncMoreHistoricMessages(25);
+                
+                if(conversation != null && conversation.getHistoricSyncStatus().toString().equals("MORE_AVAILABLE")) {
+                    conversation.syncMoreHistoricMessages(limit);
+                }
                 if (results != null) {
                     writableArray.pushString(YES);
                     writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
@@ -423,7 +426,10 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 }*/
                 Query query = builder.build();
                 List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
-                conversation.syncMoreHistoricMessages(25);
+                
+                if(conversation != null && conversation.getHistoricSyncStatus().toString().equals("MORE_AVAILABLE")) {
+                    conversation.syncMoreHistoricMessages(limit);
+                }
                 if (results != null) {
                     writableArray.pushString(YES);
                     writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
