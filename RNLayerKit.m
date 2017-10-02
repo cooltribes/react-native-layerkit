@@ -54,7 +54,7 @@ LYRClient *_layerClient;
                                                      name:@"RNLayerKitNotification"
                                                    object:nil];
         LYRClientOptions *clientOptions = [LYRClientOptions new];
-        clientOptions.synchronizationPolicy = 1;
+        clientOptions.synchronizationPolicy = 3;
         _layerClient = [LYRClient clientWithAppID:layerAppID delegate:self options:clientOptions];
     }
     return self;
