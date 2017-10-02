@@ -57,6 +57,13 @@ public class ConverterHelper {
                 Conversation conversation = (Conversation) change.getObject();
                 writableMap.putString("identifier", conversation.getId().toString());
                 writableMap.putMap("conversation", conversationToWritableMap(conversation));
+                writableMap.putString("historicSyncStatus", conversation.getHistoricSyncStatus().toString());
+
+                // Sync More Init Sync 
+                if(change.getChangeType() == LayerChange.Type.INSERT) {
+                    conversation.syncMoreHistoricMessages(24);
+                    //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!ojoooooooooooooo: %s", conversation.toString()));
+                }
             }
 
             if (change.getObjectType() == LayerObject.Type.MESSAGE) {
@@ -137,6 +144,7 @@ public class ConverterHelper {
         conversationMap.putInt("hasUnreadMessages", conversation.getTotalUnreadMessageCount());
         conversationMap.putBoolean("deliveryReceiptsEnabled", conversation.isDeliveryReceiptsEnabled());
         conversationMap.putBoolean("isDeleted", conversation.isDeleted());
+        conversationMap.putString("historicSyncStatus", conversation.getHistoricSyncStatus().toString());
         
         Metadata metadata = conversation.getMetadata();
         
@@ -220,6 +228,7 @@ public class ConverterHelper {
         messageMap.putString("identifier", message.getId().toString());
         messageMap.putBoolean("isDeleted", message.isDeleted());
         messageMap.putBoolean("isSent", message.isSent());
+        messageMap.putDouble("position",(double)  message.getPosition());
 
         if (LayerkitSingleton.getInstance().getUserIdentityGlobal() != null) {
             Message.RecipientStatus recipientStatus = message.getRecipientStatus(LayerkitSingleton.getInstance().getUserIdentityGlobal());
@@ -293,7 +302,9 @@ public class ConverterHelper {
         }
 
         if (message.getMessageParts().get(0).getMimeType().equals("text/plain")) {
-            messageMap.putString("text", new String(message.getMessageParts().get(0).getData(), UTF8_CHARSET));
+            if(message.getMessageParts().get(0).getData() != null) {
+                messageMap.putString("text", new String(message.getMessageParts().get(0).getData(), UTF8_CHARSET));
+            }
         }
 
         return messageMap;
@@ -325,8 +336,10 @@ public class ConverterHelper {
 
         if (messagePart.getMimeType().equals("text/plain")) {
             //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!txt messagePart: %s", messagePart.toString()));
-            String s = new String(messagePart.getData(), UTF8_CHARSET);
-            messagePartMap.putString("data", s);
+            if(messagePart.getData() != null) {
+                String s = new String(messagePart.getData(), UTF8_CHARSET);
+                messagePartMap.putString("data", s);
+            }
         }
         if (messagePart.getMimeType().equals("image/jpg")) {            
 
