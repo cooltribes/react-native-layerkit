@@ -184,9 +184,11 @@
   [propertyDict setValue:@(msg.isDeleted) forKey:@"isDeleted"];
   [propertyDict setValue:@(msg.isUnread) forKey:@"isUnread"];
   [propertyDict setValue:msg.sender.userID forKey:@"sender"];
+  [propertyDict setValue:@(msg.position) forKey:@"position"];
   [propertyDict setValue:[self convertParticipantToUser:msg.sender] forKey:@"user"];
   [propertyDict setValue:[self convertDateToJSON:msg.sentAt] forKey:@"sentAt"];
   [propertyDict setValue:[self convertDateToJSON:msg.receivedAt] forKey:@"receivedAt"];
+
   
   [propertyDict setValue:[msg.identifier absoluteString] forKey:@"identifier"];
   [propertyDict setValue:msg.recipientStatusByUserID forKey:@"recipientStatus"];
