@@ -293,9 +293,17 @@
   [propertyDict setValue:@(msgPart.size) forKey:@"size"];
   [propertyDict setValue:@(msgPart.transferStatus) forKey:@"transferStatus"];
   NSLog(@"****MESSAGEDATA %@", msgPart.data);
-  if([msgPart.MIMEType isEqualToString:@"image/jpg"]){
+  if([msgPart.MIMEType isEqualToString:@"image/jpg"] || [msgPart.MIMEType isEqualToString:@"image/jpeg"]){
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setTimeZone:[NSTimeZone timeZoneWithName:@"UTC"]];
+    [formatter setDateFormat:@"yyyyMMdd'T'HHmmssSSSSSS"];
+    NSString *stringDate = [formatter stringFromDate:[NSDate date]];
     NSURL *tmpDirURL = [NSURL fileURLWithPath:NSTemporaryDirectory() isDirectory:YES];
-    NSURL *fileURL = [[tmpDirURL URLByAppendingPathComponent:@"pkm"] URLByAppendingPathExtension:@"jpg"];
+    NSString *stringType = @"jpg";
+    if([msgPart.MIMEType isEqualToString:@"image/jpeg"])
+      stringType = @"jpeg";
+    NSURL *fileURL = [[tmpDirURL URLByAppendingPathComponent:stringDate] URLByAppendingPathExtension:stringType];
+    
     NSLog(@"fileURL: %@", [fileURL path]);  
     NSString *path = [fileURL path];
     NSData *data = msgPart.data;

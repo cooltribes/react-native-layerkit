@@ -48,14 +48,16 @@ LYRClient *_layerClient;
     if (self) {
          NSLog(@"initWithLayerAppID self");
         _jsonHelper = [JSONHelper new];
+        LYRClientOptions *clientOptions = [LYRClientOptions new];
+        //clientOptions.synchronizationPolicy = 3;
+        clientOptions.synchronizationPolicy = LYRClientSynchronizationPolicyPartialHistory;
+        clientOptions.partialHistoryMessageCount = 15;
+        _layerClient = [LYRClient clientWithAppID:layerAppID delegate:self options:clientOptions];
         _messageParts = [MessageParts new];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(receivedNotification:)
                                                      name:@"RNLayerKitNotification"
-                                                   object:nil];
-        LYRClientOptions *clientOptions = [LYRClientOptions new];
-        clientOptions.synchronizationPolicy = 3;
-        _layerClient = [LYRClient clientWithAppID:layerAppID delegate:self options:clientOptions];
+                                                   object:_layerClient];        
     }
     return self;
 }
@@ -210,7 +212,7 @@ RCT_EXPORT_METHOD(sendMessageToConvoID:(NSArray*)parts convoID:(NSString*)convoI
         LYRMessagePart *messagePart = [messagePartsHelper createMessagePartTextPlain:messageText];
         [arrayMessageParts addObject: messagePart];
       }
-      if ([@"image/jpg" isEqualToString:part[@"type"]]){
+      if ([@"image/jpg" isEqualToString:part[@"type"]] || [@"image/jpeg" isEqualToString:part[@"type"]]){
         //NSLog(@"ENTRO JPG");
         LYRMessagePart *messagePart = [messagePartsHelper createMessagePartImageJpg:part[@"message"]];
         //NSLog(@"********MESSAGE PARTS: %@", messagePart);
