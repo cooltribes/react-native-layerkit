@@ -398,6 +398,23 @@ RCT_EXPORT_METHOD(setConversationTitle:(NSString*)convoID title:(NSString*)title
     }
     
 }
+RCT_EXPORT_METHOD(syncMessages:(NSString*)convoID userIDs:(NSArray*)userIDs limit:(int)limit                  
+                resolver:(RCTPromiseResolveBlock)resolve
+                rejecter:(RCTPromiseRejectBlock)reject)
+{
+    if (![convoID isEqualToString:[self.conversation.identifier absoluteString]])
+      self.conversation = [self conversationWithConvoID:convoID];
+    if (self.conversation){
+        NSError *error;
+        [self.conversation synchronizeMoreMessages:limit error:&error]; 
+        if (error){
+            reject(@"no_events", @"Error synchronizeMoreMessages", error);
+        } else {
+            NSString *thingToReturn = @"YES";
+            resolve(@[thingToReturn]);
+        }
+    }     
+}
 RCT_EXPORT_METHOD(getMessages:(NSString*)convoID userIDs:(NSArray*)userIDs limit:(int)limit offset:(int)offset
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
@@ -415,6 +432,12 @@ RCT_EXPORT_METHOD(getMessages:(NSString*)convoID userIDs:(NSArray*)userIDs limit
             JSONHelper *helper = [JSONHelper new];
             NSArray *retData = [helper convertMessagesToArray:convoMessages];
             NSString *thingToReturn = @"YES";
+            if (![convoID isEqualToString:[self.conversation.identifier absoluteString]])
+              self.conversation = [self conversationWithConvoID:convoID];
+            if (self.conversation){
+                NSError *error;
+                [self.conversation synchronizeMoreMessages:15 error:&error]; 
+            }   
             // NSLog(@"entro en mensajes de conversation")
             // for (LYRMessage *msg in convoMessages) {
             //     NSError *errorMsg = nil;
@@ -458,6 +481,7 @@ RCT_EXPORT_METHOD(getMessages:(NSString*)convoID userIDs:(NSArray*)userIDs limit
                 JSONHelper *helper = [JSONHelper new];
                 NSArray *retData = [helper convertMessagesToArray:convoMessages];
                 NSString *thingToReturn = @"YES";
+                //[self.conversation synchronizeMoreMessages:numberOfMessagesToSynchronize error:&error];
                 // for (LYRMessage *msg in convoMessages) {
                 //     NSError *errorMsg = nil;
                 //     NSLog(@"mensaje no conversation: %@",msg);
