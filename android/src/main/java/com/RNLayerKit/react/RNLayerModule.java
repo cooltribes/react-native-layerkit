@@ -475,7 +475,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             Promise promise) {
 
         try {
-            WritableArray writableArray = new WritableNativeArray();
+            //WritableArray writableArray = new WritableNativeArray();
 
             if (!layerClient.isConnected()) {
                 layerClient.connect();
@@ -489,8 +489,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
             conversation.putMetadataAtKeyPath("title", title);
 
-            writableArray.pushString(YES);
-            promise.resolve(writableArray);
+            //writableArray.pushString(YES);
+            //promise.resolve(writableArray);
+            promise.resolve(YES);
 
         } catch (IllegalViewOperationException e) {
             promise.reject(e);
