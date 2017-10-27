@@ -59,11 +59,11 @@ public class ConverterHelper {
                 writableMap.putMap("conversation", conversationToWritableMap(conversation));
                 writableMap.putString("historicSyncStatus", conversation.getHistoricSyncStatus().toString());
 
-                // Sync More Init Sync 
+                /*// Sync More Init Sync 
                 if(change.getChangeType() == LayerChange.Type.INSERT) {
                     conversation.syncMoreHistoricMessages(24);
                     //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!ojoooooooooooooo: %s", conversation.toString()));
-                }
+                }*/
             }
 
             if (change.getObjectType() == LayerObject.Type.MESSAGE) {

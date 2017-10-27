@@ -368,6 +368,56 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     @SuppressWarnings({"unchecked", "UnusedParameters", "unused"})
+    public void syncMessages(
+            String convoID,
+            ReadableArray userIDs,
+            int limit,
+            Promise promise) {
+
+        WritableArray writableArray = new WritableNativeArray();
+
+        if (convoID != null) {
+            try {
+
+                Conversation conversation = fetchConvoWithId(convoID, layerClient);
+
+                if (conversation != null) {
+                    LayerkitSingleton.getInstance().setConversationGlobal(conversation);            //// set conversation global
+                }
+
+                if(conversation != null && conversation.getHistoricSyncStatus().toString().equals("MORE_AVAILABLE")) {
+                    conversation.syncMoreHistoricMessages(limit);
+                }
+               
+                writableArray.pushString(YES);
+                promise.resolve(writableArray);
+
+            } catch (IllegalViewOperationException e) {
+                promise.reject(e);
+            }
+        } else {
+            Conversation conversation = fetchLayerConversationWithParticipants(userIDs, layerClient);
+
+            if (conversation != null) {
+                LayerkitSingleton.getInstance().setConversationGlobal(conversation);            //// set conversation global
+            }
+            try {
+                
+                if(conversation != null && conversation.getHistoricSyncStatus().toString().equals("MORE_AVAILABLE")) {
+                    conversation.syncMoreHistoricMessages(limit);
+                }
+                
+                writableArray.pushString(YES);
+                promise.resolve(writableArray);
+
+            } catch (IllegalViewOperationException e) {
+                promise.reject(e);
+            }
+        }
+    }
+    
+    @ReactMethod
+    @SuppressWarnings({"unchecked", "UnusedParameters", "unused"})
     public void getMessages(
             String convoID,
             ReadableArray userIDs,
