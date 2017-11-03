@@ -18,6 +18,10 @@ public final class LayerkitSingleton {
     private Identity userIdentityGlobal;
     @Nullable
     private Conversation conversationGlobal;
+    @Nullable
+    private Conversation conversationSync;
+    @Nullable
+    private int limit;
 
     @NonNull
     public static LayerkitSingleton getInstance () {
@@ -65,5 +69,23 @@ public final class LayerkitSingleton {
 
     public void setConversationGlobal(@Nullable Conversation conversationGlobal) {
         this.conversationGlobal = conversationGlobal;
+    }
+
+    @Nullable
+    public Conversation getConversationSync() {
+        return conversationSync;
+    }
+
+    public void setConversationSync(@Nullable Conversation conversationSync) {
+        this.conversationSync = conversationSync;
+    }
+
+    @Nullable
+    public int getLimit() {
+        return limit;
+    }
+
+    public void setLimit(@Nullable int limit) {
+        this.limit = limit;
     }
 }
