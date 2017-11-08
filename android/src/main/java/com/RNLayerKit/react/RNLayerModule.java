@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.annotation.Nullable;
+import com.facebook.react.bridge.WritableArray;
 
 public class RNLayerModule extends ReactContextBaseJavaModule {
 
@@ -100,6 +101,46 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit(eventName, params);
     }
+
+    /* ******************** Get Messages after Sync********************  */
+
+    public WritableArray get_messages_layer(
+            String convoID,
+            int limit,
+            int offset) {        
+
+        Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
+
+        // Set conersation Sync
+        LayerkitSingleton.getInstance().setConversationSync(null);
+        LayerkitSingleton.getInstance().setLimit(0); 
+        
+        if(conversation != null) {
+            
+            Log.v(TAG, "-----------------  get_messages_layer  -----");
+
+            Builder builder = Query.builder(Message.class)
+                .predicate(new Predicate(Message.Property.CONVERSATION, Predicate.Operator.EQUAL_TO, conversation))
+                .sortDescriptor(new SortDescriptor(Message.Property.POSITION, SortDescriptor.Order.DESCENDING))
+                .limit(limit)
+                .offset(offset);
+            
+            Query query = builder.build();
+            List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
+
+            if (results != null) {
+                if(conversation.getHistoricSyncStatus().toString().equals("MORE_AVAILABLE")) {
+                    conversation.syncMoreHistoricMessages(limit);
+                    Log.v(TAG, "-----------------Sync more messages after sync init");
+                }
+                return ConverterHelper.messagesToWritableArray(results);
+            }
+        } 
+        return null;
+    }
+
+    /* ***************************************** */
+
 
     /* ***************************************************************************** */
     /*                                                                               */
@@ -210,13 +251,17 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
         if (layerClient != null) {
             if (layerClient.isConnected()) {              
                 layerClient.deauthenticate();
-                layerClient.disconnect();                
+                layerClient.disconnect();
+                // Unregister Events
+                layerClient.unregisterAuthenticationListener(authenticationListener);                
                 layerClient.unregisterConnectionListener(connectionListener);
+                layerClient.unregisterEventListener(changeEventListener);
+                layerClient.unregisterSyncListener(layerSyncListener);
+                layerClient.unregisterTypingIndicator(layerTypingIndicatorListener);
             }
         }
 
     }
-
 
     @ReactMethod
     @SuppressWarnings("unused")
@@ -365,7 +410,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             promise.reject(e);
         }
     }
-
+    
     @ReactMethod
     @SuppressWarnings({"unchecked", "UnusedParameters", "unused"})
     public void getMessages(
@@ -377,13 +422,17 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
         WritableArray writableArray = new WritableNativeArray();
 
+        //Count messages sync
+        Long count_m;
+
         if (convoID != null) {
             try {
 
                 Conversation conversation = fetchConvoWithId(convoID, layerClient);
 
                 if (conversation != null) {
-                    LayerkitSingleton.getInstance().setConversationGlobal(conversation);            //// set conversation global
+                    // Set conversation global
+                    LayerkitSingleton.getInstance().setConversationGlobal(conversation);            
                 }
 
                 Builder builder = Query.builder(Message.class)
@@ -392,15 +441,29 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                     .limit(limit)
                     .offset(offset);
                 
-                /*if (limit != 0) {
-                    builder.limit(limit);
-                }*/
                 Query query = builder.build();
-                List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
-                
+                List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);         
+
+                Query<Message> localCountQuery = Query.builder(Message.class)
+                    .predicate(new Predicate(Message.Property.CONVERSATION, Predicate.Operator.EQUAL_TO, conversation))
+                    .build();
+
+                count_m = layerClient.executeQueryForCount(localCountQuery);
+
                 if(conversation != null && conversation.getHistoricSyncStatus().toString().equals("MORE_AVAILABLE")) {
-                    conversation.syncMoreHistoricMessages(limit);
+                    if(count_m < limit) {
+                        Log.v(TAG, "Sync init -> " + count_m.toString());
+                        conversation.syncMoreHistoricMessages(limit);
+                        LayerkitSingleton.getInstance().setConversationSync(conversation);  
+                        LayerkitSingleton.getInstance().setLimit(limit);
+                    } else {
+                        if(count_m <= (limit * 2) + offset) {
+                            Log.v(TAG, "Sync more -> " + count_m.toString());
+                            conversation.syncMoreHistoricMessages(limit);
+                        }
+                    }
                 }
+
                 if (results != null) {
                     writableArray.pushString(YES);
                     writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
@@ -412,7 +475,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
         } else {
             Conversation conversation = fetchLayerConversationWithParticipants(userIDs, layerClient);
             if (conversation != null) {
-                LayerkitSingleton.getInstance().setConversationGlobal(conversation);            //// set conversation global
+                // Set conversation global
+                LayerkitSingleton.getInstance().setConversationGlobal(conversation);
             }
             try {
                 Builder builder = Query.builder(Message.class)
@@ -421,15 +485,29 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                     .limit(limit)
                     .offset(offset);
 
-                /*if (limit != 0) {
-                    builder.limit(limit);
-                }*/
                 Query query = builder.build();
                 List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
                 
+                Query<Message> localCountQuery = Query.builder(Message.class)
+                    .predicate(new Predicate(Message.Property.CONVERSATION, Predicate.Operator.EQUAL_TO, conversation))
+                    .build();
+                    
+                count_m = layerClient.executeQueryForCount(localCountQuery);
+
                 if(conversation != null && conversation.getHistoricSyncStatus().toString().equals("MORE_AVAILABLE")) {
-                    conversation.syncMoreHistoricMessages(limit);
+                    if(count_m < limit) {
+                        Log.v(TAG, "Sync init -> " + count_m.toString());
+                        conversation.syncMoreHistoricMessages(limit);
+                        LayerkitSingleton.getInstance().setConversationSync(conversation);  
+                        LayerkitSingleton.getInstance().setLimit(limit);
+                    } else {
+                        if(count_m <= (limit * 2) + offset) {
+                            Log.v(TAG, "Sync more -> " + count_m.toString());
+                            conversation.syncMoreHistoricMessages(limit);
+                        }
+                    }
                 }
+
                 if (results != null) {
                     writableArray.pushString(YES);
                     writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
