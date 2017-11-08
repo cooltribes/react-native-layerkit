@@ -23,7 +23,7 @@
   NSError *writeError = nil;
   NSData *jsonData = [NSJSONSerialization dataWithJSONObject:[self convertCovoToDict:convo] options:NSJSONWritingPrettyPrinted error:&writeError];
   NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-  NSLog(@"JSON Output: %@", jsonString);
+  //NSLog(@"JSON Output: %@", jsonString);
   
   return [self convertCovoToDict:convo];
 }
@@ -55,95 +55,149 @@
 {
   return @{@"code":@(error.code),@"domain":error.domain,@"description":[error localizedDescription]};
 }
+-(NSArray*)convertChangeToArray:(LYRObjectChange*)thisChange
+{
+  //NSLog(@"Entro Changes %@", changes);
+  NSMutableArray *allChanges = [NSMutableArray new];
 
+  id changeObject = thisChange.object;  
+  NSMutableDictionary *changeData = [NSMutableDictionary new];
+  [changeData setValue:NSStringFromClass([thisChange.object class]) forKey:@"object"];      
+  if ([changeObject isKindOfClass:[LYRConversation class]]) {
+    LYRConversation *conversation = changeObject;
+    [changeData setValue:[self convertCovoToDict:conversation] forKey:@"conversation"];
+    // Object is a conversation
+  }
+
+  if ([changeObject isKindOfClass:[LYRMessage class]]) {
+    LYRMessage *message = changeObject;
+    [changeData setValue:[self convertMessageToDict:message] forKey:@"message"];
+    [changeData setValue:[self convertConvoToDictionary:message.conversation] forKey:@"conversation"];
+      // Object is a message
+  }  
+  if ([changeObject isKindOfClass:[LYRIdentity class]]) {
+    LYRIdentity *participant = changeObject;
+    [changeData setValue:participant.userID forKey:@"user"];
+      // Object is a Identity
+  }      
+  [changeData setValue:thisChange.property forKey:@"attribute"];
+
+  //NSLog(@"PASO"); 
+  //TODO: make this safer in the event they change it from NSURL in the future
+  [changeData setValue:[[thisChange.object valueForKey:@"identifier"] absoluteString] forKey:@"identifier"];
+
+  if ([thisChange.afterValue isKindOfClass:[NSDate class]])
+    [changeData setValue:[self convertDateToJSON:thisChange.afterValue] forKey:@"changeTo"];
+  if ([thisChange.beforeValue isKindOfClass:[NSDate class]])
+    [changeData setValue:[self convertDateToJSON:thisChange.beforeValue] forKey:@"changeFrom"];
+  if ([thisChange.property isEqualToString:@"presenceStatus"]){
+    if ([thisChange.afterValue isKindOfClass:[NSNumber class]]){
+      [changeData setValue:[self converPresenceStatusIntToString:thisChange.afterValue] forKey:@"changeTo"];
+    }
+    if ([thisChange.beforeValue isKindOfClass:[NSNumber class]]){
+      [changeData setValue:[self converPresenceStatusIntToString:thisChange.beforeValue] forKey:@"changeFrom"]; 
+    }     
+  }
+  if(thisChange.type==LYRObjectChangeTypeCreate)
+    [changeData setValue:@"LYRObjectChangeTypeCreate" forKey:@"type"];
+  else if(thisChange.type==LYRObjectChangeTypeDelete)
+    [changeData setValue:@"LYRObjectChangeTypeDelete" forKey:@"type"];
+  else if(thisChange.type==LYRObjectChangeTypeUpdate)
+    [changeData setValue:@"LYRObjectChangeTypeUpdate" forKey:@"type"];
+
+  [allChanges addObject:changeData];
+  return allChanges;
+
+}
 -(NSArray*)convertChangesToArray:(NSArray*)changes
 {
-  NSLog(@"Entro Changes %@", changes);
+  //NSLog(@"Entro Changes %@", changes);
   NSMutableArray *allChanges = [NSMutableArray new];
   for(LYRObjectChange *thisChange in changes){
-
-    NSMutableDictionary *changeData = [NSMutableDictionary new];
-    [changeData setValue:NSStringFromClass([thisChange.object class]) forKey:@"object"];
     id changeObject = thisChange.object;
-    if ([changeObject isKindOfClass:[LYRConversation class]]) {
-      LYRConversation *conversation = changeObject;
-      [changeData setValue:[self convertCovoToDict:conversation] forKey:@"conversation"];
-      // Object is a conversation
-    }
-
-    if ([changeObject isKindOfClass:[LYRMessage class]]) {
-      LYRMessage *message = changeObject;
-      [changeData setValue:[self convertMessageToDict:message] forKey:@"message"];
-      [changeData setValue:[self convertConvoToDictionary:message.conversation] forKey:@"conversation"];
-        // Object is a message
-    }  
-    if ([changeObject isKindOfClass:[LYRIdentity class]]) {
-      LYRIdentity *participant = changeObject;
-      [changeData setValue:participant.userID forKey:@"user"];
-
-        // Object is a message
-    }      
-    [changeData setValue:thisChange.property forKey:@"attribute"];
-
-    //NSLog(@"PASO"); 
-    //TODO: make this safer in the event they change it from NSURL in the future
-    [changeData setValue:[[thisChange.object valueForKey:@"identifier"] absoluteString] forKey:@"identifier"];
-    NSLog(@"afterValue: %@", thisChange.afterValue);
-    NSLog(@"Is of type: %@", [thisChange.afterValue class]);
-    //NSCFNumber
-    //NSNumber numberClass = [[NSNumber alloc] init];
-    if ([thisChange.afterValue isKindOfClass:[NSDate class]])
-      [changeData setValue:[self convertDateToJSON:thisChange.afterValue] forKey:@"changeTo"];
-    if ([thisChange.beforeValue isKindOfClass:[NSDate class]])
-      [changeData setValue:[self convertDateToJSON:thisChange.beforeValue] forKey:@"changeFrom"];
-    if ([thisChange.property isEqualToString:@"presenceStatus"]){
-      // NSString *presenceStatus;
-      // LYRIdentityPresenceStatus status = thisChange.afterValue;
-      // //NSLog(@"availabre %@: ", LYRIdentityPresenceStatusAvailable);
-      // if (status == LYRIdentityPresenceStatusAvailable)
-      //   presenceStatus = @"available";
-      // if (status == LYRIdentityPresenceStatusAway)
-      //   presenceStatus = @"away";
-       // if ([thisChange.afterValue isKindOfClass:[NSNumber class]])
-       //   [changeData setValue:thisChange.afterValue forKey:@"changeTo"];
-       // if ([thisChange.beforeValue isKindOfClass:[NSNumber class]])
-       //   [changeData setValue:thisChange.beforeValue forKey:@"changeFrom"];
-
-      if ([thisChange.afterValue isKindOfClass:[NSNumber class]]){
-        [changeData setValue:[self converPresenceStatusIntToString:thisChange.afterValue] forKey:@"changeTo"];
-      }
-      if ([thisChange.beforeValue isKindOfClass:[NSNumber class]]){
-        [changeData setValue:[self converPresenceStatusIntToString:thisChange.beforeValue] forKey:@"changeFrom"]; 
-      }     
-
-    }
-    //[changeData setValue:[thisChange.object description] forKey:@"description"];
-    //if ([thisChange.beforeValue isKindOfClass:[LYRMessage class]]) {
-      //NSLog(@"Entro if");
+    if ([changeObject isKindOfClass:[LYRMessage class]] || [changeObject isKindOfClass:[LYRConversation class]] || [changeObject isKindOfClass:[LYRIdentity class]]){
       
-      //[changeData setValue:[[thisChange.beforeValue valueForKey:@"identifier"] absoluteString] forKey:@"change_from"];
-      //[changeData setValue:[[thisChange.afterValue valueForKey:@"identifier"] absoluteString] forKey:@"change_to"];
-     // [changeData setValue:thisChange.property forKey:@"attribute"];      
-   // }
-     // else {
-        //if (thisChange.beforeValue)
-        //  [changeData setObject:thisChange.beforeValue forKey:@"change_from"];
-        //if (thisChange.afterValue)
-        //  [changeData setObject:thisChange.afterValue forKey:@"change_to"];
-      //[changeData setValue:thisChange.property forKey:@"attribute"];
-   // }
-    //NSLog(@"Salio if");
-    if(thisChange.type==LYRObjectChangeTypeCreate)
-      [changeData setValue:@"LYRObjectChangeTypeCreate" forKey:@"type"];
-    else if(thisChange.type==LYRObjectChangeTypeDelete)
-      [changeData setValue:@"LYRObjectChangeTypeDelete" forKey:@"type"];
-    else if(thisChange.type==LYRObjectChangeTypeUpdate)
-      [changeData setValue:@"LYRObjectChangeTypeUpdate" forKey:@"type"];
+      NSMutableDictionary *changeData = [NSMutableDictionary new];
+      [changeData setValue:NSStringFromClass([thisChange.object class]) forKey:@"object"];      
+      if ([changeObject isKindOfClass:[LYRConversation class]]) {
+        LYRConversation *conversation = changeObject;
+        [changeData setValue:[self convertCovoToDict:conversation] forKey:@"conversation"];
+        // Object is a conversation
+      }
 
-    [allChanges addObject:changeData];
-    //NSLog(@"Salio Changes");
+      if ([changeObject isKindOfClass:[LYRMessage class]]) {
+        LYRMessage *message = changeObject;
+        [changeData setValue:[self convertMessageToDict:message] forKey:@"message"];
+        [changeData setValue:[self convertConvoToDictionary:message.conversation] forKey:@"conversation"];
+          // Object is a message
+      }  
+      if ([changeObject isKindOfClass:[LYRIdentity class]]) {
+        LYRIdentity *participant = changeObject;
+        [changeData setValue:participant.userID forKey:@"user"];
+          // Object is a Identity
+      }      
+      [changeData setValue:thisChange.property forKey:@"attribute"];
+
+      //NSLog(@"PASO"); 
+      //TODO: make this safer in the event they change it from NSURL in the future
+      [changeData setValue:[[thisChange.object valueForKey:@"identifier"] absoluteString] forKey:@"identifier"];
+      //NSLog(@"afterValue: %@", thisChange.afterValue);
+      //NSLog(@"Is of type: %@", [thisChange.afterValue class]);
+      //NSCFNumber
+      //NSNumber numberClass = [[NSNumber alloc] init];
+      if ([thisChange.afterValue isKindOfClass:[NSDate class]])
+        [changeData setValue:[self convertDateToJSON:thisChange.afterValue] forKey:@"changeTo"];
+      if ([thisChange.beforeValue isKindOfClass:[NSDate class]])
+        [changeData setValue:[self convertDateToJSON:thisChange.beforeValue] forKey:@"changeFrom"];
+      if ([thisChange.property isEqualToString:@"presenceStatus"]){
+        // NSString *presenceStatus;
+        // LYRIdentityPresenceStatus status = thisChange.afterValue;
+        // //NSLog(@"availabre %@: ", LYRIdentityPresenceStatusAvailable);
+        // if (status == LYRIdentityPresenceStatusAvailable)
+        //   presenceStatus = @"available";
+        // if (status == LYRIdentityPresenceStatusAway)
+        //   presenceStatus = @"away";
+         // if ([thisChange.afterValue isKindOfClass:[NSNumber class]])
+         //   [changeData setValue:thisChange.afterValue forKey:@"changeTo"];
+         // if ([thisChange.beforeValue isKindOfClass:[NSNumber class]])
+         //   [changeData setValue:thisChange.beforeValue forKey:@"changeFrom"];
+
+        if ([thisChange.afterValue isKindOfClass:[NSNumber class]]){
+          [changeData setValue:[self converPresenceStatusIntToString:thisChange.afterValue] forKey:@"changeTo"];
+        }
+        if ([thisChange.beforeValue isKindOfClass:[NSNumber class]]){
+          [changeData setValue:[self converPresenceStatusIntToString:thisChange.beforeValue] forKey:@"changeFrom"]; 
+        }     
+
+      }
+      //[changeData setValue:[thisChange.object description] forKey:@"description"];
+      //if ([thisChange.beforeValue isKindOfClass:[LYRMessage class]]) {
+        //NSLog(@"Entro if");
+        
+        //[changeData setValue:[[thisChange.beforeValue valueForKey:@"identifier"] absoluteString] forKey:@"change_from"];
+        //[changeData setValue:[[thisChange.afterValue valueForKey:@"identifier"] absoluteString] forKey:@"change_to"];
+       // [changeData setValue:thisChange.property forKey:@"attribute"];      
+     // }
+       // else {
+          //if (thisChange.beforeValue)
+          //  [changeData setObject:thisChange.beforeValue forKey:@"change_from"];
+          //if (thisChange.afterValue)
+          //  [changeData setObject:thisChange.afterValue forKey:@"change_to"];
+        //[changeData setValue:thisChange.property forKey:@"attribute"];
+     // }
+      //NSLog(@"Salio if");
+      if(thisChange.type==LYRObjectChangeTypeCreate)
+        [changeData setValue:@"LYRObjectChangeTypeCreate" forKey:@"type"];
+      else if(thisChange.type==LYRObjectChangeTypeDelete)
+        [changeData setValue:@"LYRObjectChangeTypeDelete" forKey:@"type"];
+      else if(thisChange.type==LYRObjectChangeTypeUpdate)
+        [changeData setValue:@"LYRObjectChangeTypeUpdate" forKey:@"type"];
+
+      [allChanges addObject:changeData];
+      //NSLog(@"Salio Changes");
+    }
   }
-  NSLog(@"allChanges: %@", allChanges);
+  //NSLog(@"allChanges: %@", allChanges);
   return allChanges;
 
 }
@@ -202,7 +256,7 @@
     if([part.MIMEType isEqualToString:@"text/html"]){
       [messageText appendString:[[NSString alloc] initWithData:part.data encoding:NSUTF8StringEncoding]];
     }
-    if([part.MIMEType isEqualToString:@"image/jpg"]){
+    if([part.MIMEType isEqualToString:@"image/jpg"] || [part.MIMEType isEqualToString:@"image/jpeg"] || [part.MIMEType isEqualToString:@"image/png"]){
       //[messageText appendString:[[NSString alloc] initWithData:part.data encoding:NSUTF8StringEncoding]];
       //[messageText appendString:@"*IMAGE*"];
 
@@ -292,8 +346,8 @@
   [propertyDict setValue:msgPart.MIMEType forKey:@"MIMEType"];
   [propertyDict setValue:@(msgPart.size) forKey:@"size"];
   [propertyDict setValue:@(msgPart.transferStatus) forKey:@"transferStatus"];
-  NSLog(@"****MESSAGEDATA %@", msgPart.data);
-  if([msgPart.MIMEType isEqualToString:@"image/jpg"] || [msgPart.MIMEType isEqualToString:@"image/jpeg"]){
+  //NSLog(@"****MESSAGEDATA %@", msgPart.data);
+  if([msgPart.MIMEType isEqualToString:@"image/jpg"] || [msgPart.MIMEType isEqualToString:@"image/jpeg"] || [msgPart.MIMEType isEqualToString:@"image/png"]){
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
     [formatter setTimeZone:[NSTimeZone timeZoneWithName:@"UTC"]];
     [formatter setDateFormat:@"yyyyMMdd'T'HHmmssSSSSSS"];
@@ -302,14 +356,16 @@
     NSString *stringType = @"jpg";
     if([msgPart.MIMEType isEqualToString:@"image/jpeg"])
       stringType = @"jpeg";
+    if([msgPart.MIMEType isEqualToString:@"image/png"])
+      stringType = @"png";
     NSURL *fileURL = [[tmpDirURL URLByAppendingPathComponent:stringDate] URLByAppendingPathExtension:stringType];
     
-    NSLog(@"fileURL: %@", [fileURL path]);  
+    //NSLog(@"fileURL: %@", [fileURL path]);  
     NSString *path = [fileURL path];
     NSData *data = msgPart.data;
     NSError *error = nil;
     [data writeToFile:path options:NSDataWritingAtomic error:&error];
-    NSLog(@"Write returned error: %@", [error localizedDescription]); 
+    //NSLog(@"Write returned error: %@", [error localizedDescription]); 
     [propertyDict setValue:path forKey:@"data"];
   } 
   if([msgPart.MIMEType isEqualToString:@"text/plain"]){

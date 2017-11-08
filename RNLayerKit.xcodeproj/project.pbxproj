@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		13BE3DEE1AC21097009241FE /* RNLayerKit.m in Sources */ = {isa = PBXBuildFile; fileRef = 13BE3DED1AC21097009241FE /* RNLayerKit.m */; };
+		1AB7E7B61FA6A71D00F354F0 /* LayerConversation.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AB7E7B51FA6A71C00F354F0 /* LayerConversation.m */; };
 		1AE0EE1E1EE9E6E600AE4562 /* MessageParts.m in Sources */ = {isa = PBXBuildFile; fileRef = 1AE0EE1D1EE9E6E600AE4562 /* MessageParts.m */; };
 		7762145A1B6BC0AE0068576B /* JSONHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 776214551B6BC0AE0068576B /* JSONHelper.m */; };
 		7762145B1B6BC0AE0068576B /* LayerAuthenticate.m in Sources */ = {isa = PBXBuildFile; fileRef = 776214571B6BC0AE0068576B /* LayerAuthenticate.m */; };
@@ -30,6 +31,8 @@
 		134814201AA4EA6300B7C361 /* libRNLayerKit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNLayerKit.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		13BE3DEC1AC21097009241FE /* RNLayerKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RNLayerKit.h; sourceTree = "<group>"; };
 		13BE3DED1AC21097009241FE /* RNLayerKit.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RNLayerKit.m; sourceTree = "<group>"; };
+		1AB7E7B51FA6A71C00F354F0 /* LayerConversation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LayerConversation.m; sourceTree = "<group>"; };
+		1AB7E7B71FA6A72400F354F0 /* LayerConversation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LayerConversation.h; sourceTree = "<group>"; };
 		1AE0EE1D1EE9E6E600AE4562 /* MessageParts.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MessageParts.m; sourceTree = "<group>"; };
 		1AE0EE1F1EE9E6F100AE4562 /* MessageParts.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MessageParts.h; sourceTree = "<group>"; };
 		776214541B6BC0AE0068576B /* JSONHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSONHelper.h; sourceTree = "<group>"; };
@@ -72,6 +75,8 @@
 		776214471B6BBC200068576B /* helpers */ = {
 			isa = PBXGroup;
 			children = (
+				1AB7E7B71FA6A72400F354F0 /* LayerConversation.h */,
+				1AB7E7B51FA6A71C00F354F0 /* LayerConversation.m */,
 				1AE0EE1F1EE9E6F100AE4562 /* MessageParts.h */,
 				1AE0EE1D1EE9E6E600AE4562 /* MessageParts.m */,
 				776214541B6BC0AE0068576B /* JSONHelper.h */,
@@ -142,6 +147,7 @@
 			files = (
 				13BE3DEE1AC21097009241FE /* RNLayerKit.m in Sources */,
 				7762145B1B6BC0AE0068576B /* LayerAuthenticate.m in Sources */,
+				1AB7E7B61FA6A71D00F354F0 /* LayerConversation.m in Sources */,
 				1AE0EE1E1EE9E6E600AE4562 /* MessageParts.m in Sources */,
 				7762145C1B6BC0AE0068576B /* LayerQuery.m in Sources */,
 				7762145A1B6BC0AE0068576B /* JSONHelper.m in Sources */,

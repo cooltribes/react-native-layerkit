@@ -6,6 +6,7 @@
 #import "LayerQuery.h"
 #import "RCTLog.h"
 #import "RCTUtils.h"
+#import "LayerConversation.h"
 #import <React/RCTEventDispatcher.h>
 //#import "RCTEventEmitter.h"
 #import <React/RCTEventEmitter.h>
