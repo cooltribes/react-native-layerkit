@@ -302,7 +302,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     }
 
     @SuppressWarnings("unchecked")
-    private int getMessagesCount() {
+    public int getMessagesCount() {
 
         try {
 
