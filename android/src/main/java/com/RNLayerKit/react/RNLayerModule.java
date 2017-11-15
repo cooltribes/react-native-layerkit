@@ -579,6 +579,67 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     @SuppressWarnings({"unchecked", "unused"})
+    public void addParticipants(    
+            String convoID,        
+            String idParticipant,
+            Promise promise) {
+
+        try {
+            Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
+
+            if(!conversation.getId().toString().equals(convoID) || conversation == null ) {               
+                conversation = fetchConvoWithId(convoID, layerClient);
+            }
+
+            conversation.addParticipantsByIds(idParticipant);
+            promise.resolve(YES);
+
+        } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+
+    }
+
+    @ReactMethod
+    @SuppressWarnings({"unchecked", "unused"})
+    public void removeParticipants(    
+            String convoID,        
+            String idParticipant,
+            Promise promise) {
+
+        try {
+            Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
+
+            if(!conversation.getId().toString().equals(convoID) || conversation == null ) {               
+                conversation = fetchConvoWithId(convoID, layerClient);
+            }
+
+            Set<Identity> participants = conversation.getParticipants();
+            Identity Removeparticipant = null;
+
+            for (Identity participant : participants) {
+            
+                if(participant.getUserId().equals(idParticipant)) {
+                    Removeparticipant = participant;
+                    break; 
+                }
+            }
+
+            if(Removeparticipant != null) {
+                conversation.removeParticipants(Removeparticipant);
+                promise.resolve(YES);
+            } else {
+                promise.resolve(ZERO);
+            }
+
+        } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+
+    }
+
+    @ReactMethod
+    @SuppressWarnings({"unchecked", "unused"})
     public void sendMessageToConvoID(
             ReadableArray parts,
             String convoID,
