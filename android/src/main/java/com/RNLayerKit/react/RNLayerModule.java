@@ -129,6 +129,16 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
 
             if (results != null) {
+
+                // Mark like read  
+                for (int i = 0; i < results.size(); i++) {
+                    Message message = (Message) results.get(i);
+                    Identity sender = message.getSender();
+                    if (sender != null && !sender.getUserId().equals(LayerkitSingleton.getInstance().getUserIdGlobal())) {
+                        message.markAsRead();
+                    }
+                }
+
                 if(conversation.getHistoricSyncStatus().toString().equals("MORE_AVAILABLE")) {
                     conversation.syncMoreHistoricMessages(limit);
                     Log.v(TAG, "-----------------Sync more messages after sync init");
@@ -358,7 +368,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
     }
 
-    @ReactMethod
+    /*@ReactMethod
     @SuppressWarnings({"unchecked", "unused"})
     public void markAllAsRead (
             String convoID,
@@ -409,7 +419,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
         } catch (IllegalViewOperationException e) {
             promise.reject(e);
         }
-    }
+    }*/
     
     @ReactMethod
     @SuppressWarnings({"unchecked", "UnusedParameters", "unused"})
@@ -442,7 +452,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                     .offset(offset);
                 
                 Query query = builder.build();
-                List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);         
+                List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);      
 
                 Query<Message> localCountQuery = Query.builder(Message.class)
                     .predicate(new Predicate(Message.Property.CONVERSATION, Predicate.Operator.EQUAL_TO, conversation))
@@ -465,6 +475,16 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 }
 
                 if (results != null) {
+
+                    // Mark like read  
+                    for (int i = 0; i < results.size(); i++) {
+                        Message message = (Message) results.get(i);
+                        Identity sender = message.getSender();
+                        if (sender != null && !sender.getUserId().equals(LayerkitSingleton.getInstance().getUserIdGlobal())) {
+                            message.markAsRead();
+                        }
+                    }
+
                     writableArray.pushString(YES);
                     writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
                     promise.resolve(writableArray);
@@ -509,6 +529,16 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 }
 
                 if (results != null) {
+
+                    // Mark like read  
+                    for (int i = 0; i < results.size(); i++) {
+                        Message message = (Message) results.get(i);
+                        Identity sender = message.getSender();
+                        if (sender != null && !sender.getUserId().equals(LayerkitSingleton.getInstance().getUserIdGlobal())) {
+                            message.markAsRead();
+                        }
+                    }
+                    
                     writableArray.pushString(YES);
                     writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
                     writableArray.pushString(conversation.getId().toString());
