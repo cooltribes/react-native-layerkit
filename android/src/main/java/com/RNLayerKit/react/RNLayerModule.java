@@ -37,6 +37,7 @@ import com.layer.sdk.query.Query.Builder;
 import com.layer.sdk.messaging.Presence;
 import com.layer.sdk.query.SortDescriptor;
 import com.layer.sdk.messaging.Metadata;
+import com.layer.sdk.LayerClient.DeletionMode;
 
 import java.lang.Long;
 import java.util.Collections;
@@ -360,6 +361,38 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             } else {
                 Log.v(TAG, "Error get conversations");
                 promise.reject( new Throwable("Error get conversations") );
+            }
+
+        } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+
+    }
+
+    @ReactMethod
+    @SuppressWarnings({"unchecked", "UnusedParameters", "unused"})
+    public void deleteMessage(
+            String messageID,
+            Promise promise) {
+
+        try {
+            WritableArray writableArray = new WritableNativeArray();
+
+           Query query = Query.builder(Message.class)
+                .predicate(new Predicate(Message.Property.ID, Predicate.Operator.EQUAL_TO, messageID))
+                .build();
+
+            List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
+
+            if (results != null) {
+                Message del = results.get(0);
+                del.delete(DeletionMode.ALL_PARTICIPANTS);
+                writableArray.pushString(YES);
+                //writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
+                promise.resolve(writableArray);
+            } else {
+                Log.v(TAG, "Error delete message");
+                promise.reject( new Throwable("Error delete message") );
             }
 
         } catch (IllegalViewOperationException e) {
