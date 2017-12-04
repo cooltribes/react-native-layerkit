@@ -304,6 +304,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
             layerClient.setAutoDownloadSizeThreshold(1024 * 100);
             layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/jpg"));
+            layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/jpeg"));
+            layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/png"));
 
             promise.resolve(writableArray);
         } catch (IllegalViewOperationException e) {

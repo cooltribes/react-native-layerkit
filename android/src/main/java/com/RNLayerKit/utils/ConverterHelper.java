@@ -340,7 +340,7 @@ public class ConverterHelper {
                 messagePartMap.putString("data", s);
             }
         }
-        if (messagePart.getMimeType().equals("image/jpg")) {            
+        if (messagePart.getMimeType().equals("image/jpg") || messagePart.getMimeType().equals("image/jpeg") || messagePart.getMimeType().equals("image/png")) {            
 
             //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!image messagePart: %s", messagePart.toString()));
             Bitmap image;
@@ -360,7 +360,7 @@ public class ConverterHelper {
             }
         }
         messagePartMap.putDouble("size", messagePart.getSize());
-        messagePartMap.putInt("transferStatus", messagePart.getTransferStatus().getValue());
+        messagePartMap.putString("transferStatus", messagePart.getTransferStatus().toString());
 
         return messagePartMap;
     }
