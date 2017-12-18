@@ -512,13 +512,14 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 if (results != null) {
 
                     // Mark like read  
-                    for (int i = 0; i < results.size(); i++) {
+                    conversation.markAllMessagesAsRead();
+                    /*for (int i = 0; i < results.size(); i++) {
                         Message message = (Message) results.get(i);
                         Identity sender = message.getSender();
                         if (sender != null && !sender.getUserId().equals(LayerkitSingleton.getInstance().getUserIdGlobal())) {
                             message.markAsRead();
                         }
-                    }
+                    }*/
 
                     writableArray.pushString(YES);
                     writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
@@ -565,14 +566,15 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
                 if (results != null) {
 
-                    // Mark like read  
-                    for (int i = 0; i < results.size(); i++) {
+                    // Mark like read
+                    conversation.markAllMessagesAsRead();
+                    /*for (int i = 0; i < results.size(); i++) {
                         Message message = (Message) results.get(i);
                         Identity sender = message.getSender();
                         if (sender != null && !sender.getUserId().equals(LayerkitSingleton.getInstance().getUserIdGlobal())) {
                             message.markAsRead();
                         }
-                    }
+                    }*/
                     
                     writableArray.pushString(YES);
                     writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
