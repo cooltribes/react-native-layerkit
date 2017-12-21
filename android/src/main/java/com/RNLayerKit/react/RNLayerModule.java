@@ -38,6 +38,10 @@ import com.layer.sdk.messaging.Presence;
 import com.layer.sdk.query.SortDescriptor;
 import com.layer.sdk.messaging.Metadata;
 import com.layer.sdk.LayerClient.DeletionMode;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.layer.sdk.services.LayerFcmInstanceIdService;
+import com.google.firebase.iid.FirebaseInstanceIdService;
+import java.io.IOException;
 
 import java.lang.Long;
 import java.util.Collections;
@@ -272,6 +276,21 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             }
         }
 
+    }
+
+    @ReactMethod
+    @SuppressWarnings("unused")
+    public void refreshToken(String token) {
+
+        String refreshedToken = FirebaseInstanceId.getInstance().getToken();
+        Log.v(TAG, " ------\n--------\n------\n------refreshedToken: " + refreshedToken);
+        Log.v(TAG, " ------\n--------\n------\n------refreshedToken: ");
+        /*try {
+            FirebaseInstanceId.getInstance().deleteInstanceId();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+       LayerFcmInstanceIdService.handleTokenRefresh(this.reactContext);
     }
 
     @ReactMethod
