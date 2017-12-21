@@ -226,6 +226,8 @@
 
   [propertyDict setValue:[self convertDateToJSON:convo.createdAt] forKey:@"createdAt"];
   [propertyDict setValue:[self convertMessageToDict:convo.lastMessage] forKey:@"lastMessage"];
+  [propertyDict setValue:[NSMutableArray new] forKey:@"messages"];
+  //[propertyDict setValue:@[@""] forKey:@"messages"];
 
   return [NSDictionary dictionaryWithDictionary:propertyDict];
 }

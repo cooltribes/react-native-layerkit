@@ -10,8 +10,9 @@
 #import <React/RCTEventDispatcher.h>
 //#import "RCTEventEmitter.h"
 #import <React/RCTEventEmitter.h>
+@import UserNotifications;
 
-@interface RNLayerKit : RCTEventEmitter <RCTBridgeModule>
+@interface RNLayerKit : RCTEventEmitter <RCTBridgeModule, UNUserNotificationCenterDelegate>
 + (nonnull instancetype)bridgeWithLayerAppID:(nonnull NSURL *)layerAppID bridge:(RCTBridge *)bridge apiUrl:(NSString *)apiUrl;
 - (void)didReceiveTypingIndicator:(NSNotification *)notification;
 - (void)updateRemoteNotificationDeviceToken:(nullable NSData *)deviceToken;
