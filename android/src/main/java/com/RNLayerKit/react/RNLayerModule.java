@@ -37,6 +37,7 @@ import com.layer.sdk.query.Query.Builder;
 import com.layer.sdk.messaging.Presence;
 import com.layer.sdk.query.SortDescriptor;
 import com.layer.sdk.messaging.Metadata;
+import com.layer.sdk.LayerClient.DeletionMode;
 
 import java.lang.Long;
 import java.util.Collections;
@@ -129,6 +130,16 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
 
             if (results != null) {
+
+                // Mark like read  
+                for (int i = 0; i < results.size(); i++) {
+                    Message message = (Message) results.get(i);
+                    Identity sender = message.getSender();
+                    if (sender != null && !sender.getUserId().equals(LayerkitSingleton.getInstance().getUserIdGlobal())) {
+                        message.markAsRead();
+                    }
+                }
+
                 if(conversation.getHistoricSyncStatus().toString().equals("MORE_AVAILABLE")) {
                     conversation.syncMoreHistoricMessages(limit);
                     Log.v(TAG, "-----------------Sync more messages after sync init");
@@ -293,6 +304,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
             layerClient.setAutoDownloadSizeThreshold(1024 * 100);
             layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/jpg"));
+            layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/jpeg"));
+            layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/png"));
 
             promise.resolve(writableArray);
         } catch (IllegalViewOperationException e) {
@@ -302,7 +315,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     }
 
     @SuppressWarnings("unchecked")
-    private int getMessagesCount() {
+    public int getMessagesCount() {
 
         try {
 
@@ -359,6 +372,38 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    @SuppressWarnings({"unchecked", "UnusedParameters", "unused"})
+    public void deleteMessage(
+            String messageID,
+            Promise promise) {
+
+        try {
+            WritableArray writableArray = new WritableNativeArray();
+
+           Query query = Query.builder(Message.class)
+                .predicate(new Predicate(Message.Property.ID, Predicate.Operator.EQUAL_TO, messageID))
+                .build();
+
+            List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
+
+            if (results != null) {
+                Message del = results.get(0);
+                del.delete(DeletionMode.ALL_PARTICIPANTS);
+                writableArray.pushString(YES);
+                //writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
+                promise.resolve(writableArray);
+            } else {
+                Log.v(TAG, "Error delete message");
+                promise.reject( new Throwable("Error delete message") );
+            }
+
+        } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+
+    }
+
+    /*@ReactMethod
     @SuppressWarnings({"unchecked", "unused"})
     public void markAllAsRead (
             String convoID,
@@ -409,7 +454,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
         } catch (IllegalViewOperationException e) {
             promise.reject(e);
         }
-    }
+    }*/
     
     @ReactMethod
     @SuppressWarnings({"unchecked", "UnusedParameters", "unused"})
@@ -442,7 +487,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                     .offset(offset);
                 
                 Query query = builder.build();
-                List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);         
+                List<Message> results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);      
 
                 Query<Message> localCountQuery = Query.builder(Message.class)
                     .predicate(new Predicate(Message.Property.CONVERSATION, Predicate.Operator.EQUAL_TO, conversation))
@@ -465,6 +510,16 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 }
 
                 if (results != null) {
+
+                    // Mark like read  
+                    for (int i = 0; i < results.size(); i++) {
+                        Message message = (Message) results.get(i);
+                        Identity sender = message.getSender();
+                        if (sender != null && !sender.getUserId().equals(LayerkitSingleton.getInstance().getUserIdGlobal())) {
+                            message.markAsRead();
+                        }
+                    }
+
                     writableArray.pushString(YES);
                     writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
                     promise.resolve(writableArray);
@@ -509,6 +564,16 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 }
 
                 if (results != null) {
+
+                    // Mark like read  
+                    for (int i = 0; i < results.size(); i++) {
+                        Message message = (Message) results.get(i);
+                        Identity sender = message.getSender();
+                        if (sender != null && !sender.getUserId().equals(LayerkitSingleton.getInstance().getUserIdGlobal())) {
+                            message.markAsRead();
+                        }
+                    }
+                    
                     writableArray.pushString(YES);
                     writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
                     writableArray.pushString(conversation.getId().toString());
@@ -570,6 +635,67 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             //writableArray.pushString(YES);
             //promise.resolve(writableArray);
             promise.resolve(YES);
+
+        } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+
+    }
+
+    @ReactMethod
+    @SuppressWarnings({"unchecked", "unused"})
+    public void addParticipants(    
+            String convoID,        
+            String idParticipant,
+            Promise promise) {
+
+        try {
+            Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
+
+            if(!conversation.getId().toString().equals(convoID) || conversation == null ) {               
+                conversation = fetchConvoWithId(convoID, layerClient);
+            }
+
+            conversation.addParticipantsByIds(idParticipant);
+            promise.resolve(YES);
+
+        } catch (IllegalViewOperationException e) {
+            promise.reject(e);
+        }
+
+    }
+
+    @ReactMethod
+    @SuppressWarnings({"unchecked", "unused"})
+    public void removeParticipants(    
+            String convoID,        
+            String idParticipant,
+            Promise promise) {
+
+        try {
+            Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
+
+            if(!conversation.getId().toString().equals(convoID) || conversation == null ) {               
+                conversation = fetchConvoWithId(convoID, layerClient);
+            }
+
+            Set<Identity> participants = conversation.getParticipants();
+            Identity Removeparticipant = null;
+
+            for (Identity participant : participants) {
+            
+                if(participant.getUserId().equals(idParticipant)) {
+                    Removeparticipant = participant;
+                    break; 
+                }
+            }
+
+            if(Removeparticipant != null) {
+                conversation.removeParticipants(Removeparticipant);
+                promise.resolve(YES);
+            } else {
+                promise.resolve(ZERO);
+            }
 
         } catch (IllegalViewOperationException e) {
             promise.reject(e);

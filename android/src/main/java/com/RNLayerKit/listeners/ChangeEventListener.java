@@ -17,7 +17,7 @@ public class ChangeEventListener implements LayerChangeEventListener {
     @Override
     public void onChangeEvent(LayerChangeEvent event) {
 
-        WritableMap params = ConverterHelper.convertChangesToArray(event);
+        WritableMap params = ConverterHelper.convertChangesToArray(event, mRNLayerModule);
         mRNLayerModule.sendEvent(mRNLayerModule.getReactContext(), "LayerEvent", params);
 
     }

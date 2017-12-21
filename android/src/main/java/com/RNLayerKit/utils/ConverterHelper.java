@@ -35,6 +35,8 @@ import java.io.ByteArrayOutputStream;
 import android.net.Uri;
 import android.provider.MediaStore;
 
+import com.RNLayerKit.react.RNLayerModule;
+
 public class ConverterHelper {
 
     private final static String TAG = ConverterHelper.class.getSimpleName();
@@ -42,10 +44,11 @@ public class ConverterHelper {
     private final static Charset UTF8_CHARSET = Charset.forName("UTF-8");
     public static ReactApplicationContext reactContext;
 
-    public static WritableMap convertChangesToArray(LayerChangeEvent event) {
+    public static WritableMap convertChangesToArray(LayerChangeEvent event, RNLayerModule mRNLayerModule) {
 
         List<LayerChange> changes = event.getChanges();
         WritableArray writableArray = new WritableNativeArray();
+        WritableMap params = Arguments.createMap();
 
         for (int i = 0; i < changes.size(); i++) {
             LayerChange change = changes.get(i);
@@ -58,12 +61,6 @@ public class ConverterHelper {
                 writableMap.putString("identifier", conversation.getId().toString());
                 writableMap.putMap("conversation", conversationToWritableMap(conversation));
                 writableMap.putString("historicSyncStatus", conversation.getHistoricSyncStatus().toString());
-
-                /*// Sync More Init Sync 
-                if(change.getChangeType() == LayerChange.Type.INSERT) {
-                    conversation.syncMoreHistoricMessages(24);
-                    //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!ojoooooooooooooo: %s", conversation.toString()));
-                }*/
             }
 
             if (change.getObjectType() == LayerObject.Type.MESSAGE) {
@@ -81,6 +78,9 @@ public class ConverterHelper {
                     Identity participant = (Identity) change.getObject();
                     //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!result: %s", participant.getUserId().toString()));
                     writableMap.putString("user", participant.getUserId().toString());
+                }
+                if(change.getAttributeName() == "totalUnreadMessageCount") {
+                    params.putInt("badge", mRNLayerModule.getMessagesCount());
                 }
             }
 
@@ -107,7 +107,6 @@ public class ConverterHelper {
             writableArray.pushMap(writableMap);
         }
 
-        WritableMap params = Arguments.createMap();
         params.putString("source", "LayerClient");
         params.putString("type", "objectsDidChange");
         params.putArray("data", writableArray);
@@ -341,7 +340,7 @@ public class ConverterHelper {
                 messagePartMap.putString("data", s);
             }
         }
-        if (messagePart.getMimeType().equals("image/jpg")) {            
+        if (messagePart.getMimeType().equals("image/jpg") || messagePart.getMimeType().equals("image/jpeg") || messagePart.getMimeType().equals("image/png")) {            
 
             //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!image messagePart: %s", messagePart.toString()));
             Bitmap image;
@@ -361,7 +360,7 @@ public class ConverterHelper {
             }
         }
         messagePartMap.putDouble("size", messagePart.getSize());
-        messagePartMap.putInt("transferStatus", messagePart.getTransferStatus().getValue());
+        messagePartMap.putString("transferStatus", messagePart.getTransferStatus().toString());
 
         return messagePartMap;
     }
