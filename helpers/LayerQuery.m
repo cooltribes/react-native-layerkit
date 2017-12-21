@@ -28,7 +28,23 @@
     return nil;
   }
 }
+-(NSInteger*)fetchUnReadMessagesCount:(LYRClient*)client error:(NSError*)err
+{
+  // Fetches the count of all unread messages for the authenticated user
+  LYRQuery *query = [LYRQuery queryWithQueryableClass:[LYRMessage class]];
 
+  // Messages must be unread
+  LYRPredicate *unreadPredicate =[LYRPredicate predicateWithProperty:@"isUnread" predicateOperator:LYRPredicateOperatorIsEqualTo value:@(YES)];
+
+  // Messages must not be sent by the authenticated user
+  LYRPredicate *userPredicate = [LYRPredicate predicateWithProperty:@"sender.userID" predicateOperator:LYRPredicateOperatorIsNotEqualTo value:client.authenticatedUser.userID];
+
+  query.predicate = [LYRCompoundPredicate compoundPredicateWithType:LYRCompoundPredicateTypeAnd subpredicates:@[unreadPredicate, userPredicate]];
+  query.resultType = LYRQueryResultTypeCount;
+  NSError *error = nil;
+  return [client countForQuery:query error:&error];
+
+}
 -(NSInteger*)fetchMessagesCount:(NSString*)userID client:(LYRClient*)client error:(NSError*)err
 {
   // Fetches all unread messages
@@ -57,6 +73,16 @@
   LYRConversation *conversation = [[client executeQuery:query error:&error] firstObject];
   
   return conversation;
+}
+
+-(LYRMessage*)fetchMessageWithId:(NSString*)messageID client:(LYRClient*)client error:(NSError*)error
+{
+  // Fetches conversation with a specific identifier
+  LYRQuery *query = [LYRQuery queryWithQueryableClass:[LYRMessage class]];
+  query.predicate = [LYRPredicate predicateWithProperty:@"identifier" predicateOperator:LYRPredicateOperatorIsEqualTo value:messageID];
+  LYRConversation *message = [[client executeQuery:query error:&error] firstObject];
+  
+  return message;
 }
 
 -(NSOrderedSet*)fetchMessagesForConvoId:(NSString*)convoID client:(LYRClient*)client limit:(int)limit offset:(int)offset error:(NSError*)error

@@ -31,9 +31,9 @@
   // Check to see if the layerClient is already authenticated.
   if (layerClient.authenticatedUser) {
     // If the layerClient is authenticated with the requested userID, complete the authentication process.
-    NSLog(@"Layer is authenticated");
+    NSLog(@"authenticateLayerWithUserID, Layer is authenticated");
     if ([layerClient.authenticatedUser.userID isEqualToString:userID]){
-      NSLog(@"Layer is same userID");
+      NSLog(@"authenticateLayerWithUserID, Layer is same userID");
       completion(nil);
     } else {
       //If the authenticated userID is different, then deauthenticate the current client and re-authenticate with the new userID.

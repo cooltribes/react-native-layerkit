@@ -37,6 +37,51 @@
     return self;
 }
 
+- (BOOL)addParticipants:(NSArray*)userIDs error:(NSError*)error
+{
+  NSSet *participants = [NSSet setWithArray: userIDs];
+  return [self.conversation addParticipants:participants error:&error];
+}
+
+- (BOOL)removeParticipants:(NSArray*)userIDs error:(NSError*)error
+{
+  NSSet *participants = [NSSet setWithArray: userIDs];
+  return [self.conversation removeParticipants:participants error:&error];
+}
+- (BOOL)markAllMessagesAsRead
+{
+  NSError *error;
+        //NSLog(@"conversation on mark all as read: %@",thisConvo);
+  BOOL success = [self.conversation markAllMessagesAsRead:&error];
+  if(success){
+    //RCTLogInfo(@"Layer Messages marked as read");
+    NSLog(@"Layer Messages marked as read");
+  }
+  else {
+    //id retErr = RCTMakeAndLogError(@"Error marking messages as read ",error,NULL);
+    NSLog(@"Error marking messages as read ");
+  }
+  return success;
+}
+// - (NSUInteger)messagesUnRead
+// {
+//   LYRQuery *query = [LYRQuery queryWithQueryableClass:[LYRMessage class]];
+//   query.predicate = [LYRPredicate predicateWithProperty:@"conversation" predicateOperator:LYRPredicateOperatorIsEqualTo value:self.conversation];
+//   query.predicate = [LYRPredicate predicateWithProperty:@"isUnread" predicateOperator:LYRPredicateOperatorIsEqualTo value:@(YES)];
+//     // Messages must be unread
+//   LYRPredicate *unreadPredicate =[LYRPredicate predicateWithProperty:@"isUnread" predicateOperator:LYRPredicateOperatorIsEqualTo value:@(YES)];
+
+//   // Messages must not be sent by the authenticated user
+//   LYRPredicate *userPredicate = [LYRPredicate predicateWithProperty:@"sender.userID" predicateOperator:LYRPredicateOperatorIsNotEqualTo value:self.layerClient.authenticatedUser.userID];
+//   LYRPredicate *conversationPredicate = [LYRPredicate predicateWithProperty:@"conversation" predicateOperator:LYRPredicateOperatorIsEqualTo value:self.conversation];
+//   query.predicate = [LYRCompoundPredicate compoundPredicateWithType:LYRCompoundPredicateTypeAnd subpredicates:@[unreadPredicate, userPredicate, conversationPredicate]];
+  
+//   query.resultType = LYRQueryResultTypeCount;
+//   NSError *error = nil;
+//   NSUInteger locallyMessageCount = [self.layerClient countForQuery:query error:&error];
+//     return locallyMessageCount;
+// }
+
 - (NSUInteger)messagesAvailableLocally
 {
     LYRQuery *query = [LYRQuery queryWithQueryableClass:[LYRMessage class]];
@@ -93,11 +138,12 @@
         if (observer) {
             [[NSNotificationCenter defaultCenter] removeObserver:observer];
         }
-
+        [weakSelf markAllMessagesAsRead];
         weakSelf.shouldSynchronizeRemoteMessages = YES;
         NSLog(@"Synchronizing Finish");
         NSLog(@"conversation messagesAvailableLocally: %lu", weakSelf.messagesAvailableLocally);
-        NSLog(@"conversation messagesAvailableLocally: %lu", self.messagesAvailableLocally);
+        NSLog(@"conversation totalNumberOfUnreadMessages: %lu", weakSelf.conversation.totalNumberOfUnreadMessages);
+        NSLog(@"conversation self totalNumberOfUnreadMessages: %lu", self.conversation.totalNumberOfUnreadMessages);
     		if (weakSendEvent){
     			NSError *error;
     			NSOrderedSet *convoMessages = [weakSelf fetchMessages:weakSelf.limit offset:weakSelf.offset error:error];

@@ -11,6 +11,9 @@
 -(NSUInteger)messagesAvailableLocally;
 -(NSOrderedSet*)fetchMessages:(int)limit offset:(int)offset error:(NSError*)error;
 @property (nonatomic, readonly) LYRConversation *conversation;
+- (BOOL)removeParticipants:(NSArray*)userIDs error:(NSError*)error;
+- (BOOL)addParticipants:(NSArray*)userIDs error:(NSError*)error;
+- (BOOL)markAllMessagesAsRead;
 //-(NSOrderedSet*)fetchConvosForClient:(LYRClient*)client limit:(int)limit offset:(int)offset error:(NSError*)error;
 //-(NSInteger*)fetchMessagesCount:(NSString*)userID client:(LYRClient*)client error:(NSError*)error;
 //-(LYRConversation*)fetchConvoWithId:(NSString*)convoID client:(LYRClient*)client error:(NSError*)error;
