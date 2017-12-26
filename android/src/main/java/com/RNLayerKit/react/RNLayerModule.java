@@ -314,17 +314,14 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             if(layerClient.isAuthenticated() && layerClient.isConnected())
               layerClient.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
 
-            int count;
-            count = getMessagesCount();
-
-            WritableArray writableArray = new WritableNativeArray();
-            writableArray.pushString(YES);
-            writableArray.pushInt(count);
-
             layerClient.setAutoDownloadSizeThreshold(1024 * 100);
             layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/jpg"));
             layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/jpeg"));
             layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/png"));
+
+            WritableArray writableArray = new WritableNativeArray();
+            writableArray.pushString(YES);
+            writableArray.pushInt(getMessagesCount());
 
             promise.resolve(writableArray);
         } catch (IllegalViewOperationException e) {
@@ -342,16 +339,13 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 .predicate(new Predicate(Message.Property.IS_UNREAD, Predicate.Operator.EQUAL_TO, true))
                 .build();
 
-            Long results = layerClient.executeQueryForCount(query);
+            Long count = layerClient.executeQueryForCount(query);
+            
+            return count.intValue();
 
-            if (results != null) {
-                return (int) (results + 0);
-            }
-
-        } catch (IllegalViewOperationException ignored) {
+        } catch (IllegalViewOperationException e) {
+           Log.v(TAG, "Error get MessagesCount"); 
         }
-
-        return 0;
 
     }
 
