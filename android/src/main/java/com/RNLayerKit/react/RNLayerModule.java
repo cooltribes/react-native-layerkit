@@ -345,6 +345,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
         } catch (IllegalViewOperationException e) {
            Log.v(TAG, "Error get MessagesCount"); 
+           return 0;
         }
 
     }
