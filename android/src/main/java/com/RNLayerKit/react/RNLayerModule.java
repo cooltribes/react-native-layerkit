@@ -526,7 +526,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 if (results != null) {
 
                     // Mark like read  
-                    conversation.markAllMessagesAsRead();
+                    if(conversation != null) {
+                        conversation.markAllMessagesAsRead();
+                    }
                     /*for (int i = 0; i < results.size(); i++) {
                         Message message = (Message) results.get(i);
                         Identity sender = message.getSender();
@@ -581,7 +583,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 if (results != null) {
 
                     // Mark like read
-                    conversation.markAllMessagesAsRead();
+                    if(conversation != null) {
+                        conversation.markAllMessagesAsRead();
+                    }
                     /*for (int i = 0; i < results.size(); i++) {
                         Message message = (Message) results.get(i);
                         Identity sender = message.getSender();
