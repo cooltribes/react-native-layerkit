@@ -38,6 +38,10 @@ import com.layer.sdk.messaging.Presence;
 import com.layer.sdk.query.SortDescriptor;
 import com.layer.sdk.messaging.Metadata;
 import com.layer.sdk.LayerClient.DeletionMode;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.layer.sdk.services.LayerFcmInstanceIdService;
+import com.google.firebase.iid.FirebaseInstanceIdService;
+import java.io.IOException;
 
 import java.lang.Long;
 import java.util.Collections;
@@ -276,6 +280,21 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     @SuppressWarnings("unused")
+    public void refreshToken(String token) {
+
+        String refreshedToken = FirebaseInstanceId.getInstance().getToken();
+        Log.v(TAG, " ------\n--------\n------\n------refreshedToken: " + refreshedToken);
+        Log.v(TAG, " ------\n--------\n------\n------refreshedToken: ");
+        /*try {
+            FirebaseInstanceId.getInstance().deleteInstanceId();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+       LayerFcmInstanceIdService.handleTokenRefresh(this.reactContext);
+    }
+
+    @ReactMethod
+    @SuppressWarnings("unused")
     public void authenticateLayerWithUserID(
             String userID,
             String header,
@@ -295,17 +314,14 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             if(layerClient.isAuthenticated() && layerClient.isConnected())
               layerClient.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
 
-            int count;
-            count = getMessagesCount();
-
-            WritableArray writableArray = new WritableNativeArray();
-            writableArray.pushString(YES);
-            writableArray.pushInt(count);
-
             layerClient.setAutoDownloadSizeThreshold(1024 * 100);
             layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/jpg"));
             layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/jpeg"));
             layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/png"));
+
+            WritableArray writableArray = new WritableNativeArray();
+            writableArray.pushString(YES);
+            writableArray.pushInt(getMessagesCount());
 
             promise.resolve(writableArray);
         } catch (IllegalViewOperationException e) {
@@ -323,16 +339,14 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 .predicate(new Predicate(Message.Property.IS_UNREAD, Predicate.Operator.EQUAL_TO, true))
                 .build();
 
-            Long results = layerClient.executeQueryForCount(query);
+            Long count = layerClient.executeQueryForCount(query);
+            
+            return count.intValue();
 
-            if (results != null) {
-                return (int) (results + 0);
-            }
-
-        } catch (IllegalViewOperationException ignored) {
+        } catch (IllegalViewOperationException e) {
+           Log.v(TAG, "Error get MessagesCount"); 
+           return 0;
         }
-
-        return 0;
 
     }
 
@@ -512,13 +526,16 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 if (results != null) {
 
                     // Mark like read  
-                    for (int i = 0; i < results.size(); i++) {
+                    if(conversation != null) {
+                        conversation.markAllMessagesAsRead();
+                    }
+                    /*for (int i = 0; i < results.size(); i++) {
                         Message message = (Message) results.get(i);
                         Identity sender = message.getSender();
                         if (sender != null && !sender.getUserId().equals(LayerkitSingleton.getInstance().getUserIdGlobal())) {
                             message.markAsRead();
                         }
-                    }
+                    }*/
 
                     writableArray.pushString(YES);
                     writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
@@ -565,14 +582,17 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
                 if (results != null) {
 
-                    // Mark like read  
-                    for (int i = 0; i < results.size(); i++) {
+                    // Mark like read
+                    if(conversation != null) {
+                        conversation.markAllMessagesAsRead();
+                    }
+                    /*for (int i = 0; i < results.size(); i++) {
                         Message message = (Message) results.get(i);
                         Identity sender = message.getSender();
                         if (sender != null && !sender.getUserId().equals(LayerkitSingleton.getInstance().getUserIdGlobal())) {
                             message.markAsRead();
                         }
-                    }
+                    }*/
                     
                     writableArray.pushString(YES);
                     writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));

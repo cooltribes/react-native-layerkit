@@ -144,6 +144,7 @@ public class ConverterHelper {
         conversationMap.putBoolean("deliveryReceiptsEnabled", conversation.isDeliveryReceiptsEnabled());
         conversationMap.putBoolean("isDeleted", conversation.isDeleted());
         conversationMap.putString("historicSyncStatus", conversation.getHistoricSyncStatus().toString());
+        conversationMap.putArray("messages", new WritableNativeArray() );
         
         Metadata metadata = conversation.getMetadata();
         
