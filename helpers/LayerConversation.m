@@ -10,14 +10,54 @@
 
 @implementation LayerConversation
 
+
++ (instancetype)conversationWithParticipants:(LYRClient *)layerClient bridge:(RCTBridge *)bridge userIDs:(NSArray*)userIDs
+{    
+    return [[self alloc] initWithLayerClientParticipants:layerClient bridge:bridge userIDs:userIDs];
+}
+
 + (instancetype)conversationWithConvoID:(LYRClient *)layerClient bridge:(RCTBridge *)bridge convoID:(NSString*)convoID
 {
     return [[self alloc] initWithLayerClient:layerClient bridge:bridge convoID:convoID];
 }
 
+
+
 - (NSArray<NSString *> *)supportedEvents
 {
   return @[@"LayerEvent"];
+}
+
+- (id)initWithLayerClientParticipants:(LYRClient *)layerClient bridge:(RCTBridge *)bridge userIDs:(NSArray*)userIDs
+{
+    self = [super init];
+
+    if (self) {
+      self.bridge = bridge;
+      NSSet *participants = [NSSet setWithArray: userIDs]; 
+      //LYRConversation *conversation = [self createConversationWithParticipants:participants];      
+      //NSError *error = nil;
+      //LYRQuery *query = [LYRQuery queryWithQueryableClass:[LYRConversation class]];
+      //query.predicate = [LYRPredicate predicateWithProperty:@"identifier" predicateOperator:LYRPredicateOperatorIsEqualTo value:convoID];
+      NSError *errorConversation = nil;
+      LYRConversationOptions *conversationOptions = [LYRConversationOptions new];
+      conversationOptions.distinctByParticipants = participants.count < 2;
+      NSLog(@"createConversationWithParticipants: %@",participants);
+      LYRConversation *conversation = [layerClient newConversationWithParticipants:participants options:conversationOptions error:&errorConversation];
+      if (errorConversation){
+        if  (errorConversation.code == LYRErrorDistinctConversationExists) {
+            conversation = errorConversation.userInfo[LYRExistingDistinctConversationKey];
+        } else {
+            NSLog(@"createConversationWithParticipants Error %@", errorConversation);
+        }
+      }  
+      self.conversation = conversation; 
+      NSLog(@"Salio createConversationWithParticipants %@", self.conversation);            
+      _shouldSynchronizeRemoteMessages = YES;
+      _layerClient = layerClient;
+
+    }
+    return self;
 }
 
 - (id)initWithLayerClient:(LYRClient *)layerClient bridge:(RCTBridge *)bridge convoID:(NSString*)convoID
@@ -35,6 +75,24 @@
 
     }
     return self;
+}
+
+- (LYRConversation *)createConversationWithParticipants:(NSSet *)participants
+{
+  NSError *errorConversation = nil;
+  LYRConversationOptions *conversationOptions = [LYRConversationOptions new];
+  conversationOptions.distinctByParticipants = participants.count < 2;
+    NSLog(@"createConversationWithParticipants: %@",participants);
+  LYRConversation *conversation = [self.layerClient newConversationWithParticipants:participants options:conversationOptions error:&errorConversation];
+  if (errorConversation){
+    if  (errorConversation.code == LYRErrorDistinctConversationExists) {
+        conversation = errorConversation.userInfo[LYRExistingDistinctConversationKey];
+        return conversation;
+    } else {
+        NSLog(@"createConversationWithParticipants Error %@", errorConversation);
+    }
+  } 
+  return conversation;
 }
 
 - (BOOL)addParticipants:(NSArray*)userIDs error:(NSError*)error

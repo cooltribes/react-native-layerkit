@@ -28,8 +28,9 @@
   _accessToken = [headerObject valueForKey:@"access-token"];
   _uid = [headerObject valueForKey:@"uid"];
   _apiUrl = [headerObject valueForKey:@"apiUrl"];
+  
   // Check to see if the layerClient is already authenticated.
-  if (layerClient.authenticatedUser) {
+  if (layerClient.currentSession.state == LYRSessionStateAuthenticated) { 
     // If the layerClient is authenticated with the requested userID, complete the authentication process.
     NSLog(@"authenticateLayerWithUserID, Layer is authenticated");
     if ([layerClient.authenticatedUser.userID isEqualToString:userID]){
@@ -53,9 +54,27 @@
         }
       }];
     }
+  } else if (layerClient.currentSession.state == LYRSessionStateChallenged) { 
+      NSLog(@"Layer LYRSessionStateChallenged");
+      [layerClient deauthenticateWithCompletion:^(BOOL success, NSError *deError) {
+        if (!deError){
+          [self authenticationTokenWithUserId:userID lyrClient:layerClient completion:^(BOOL success, NSError *aError) {
+            if(aError){
+              completion(aError);
+            }
+            else{
+              completion(nil);
+            }
+            
+          }];
+        } else {
+          completion(deError);
+        }
+      }];
   } else {
     // If the layerClient isn't already authenticated, then authenticate.
     NSLog(@"Layer is not authenticated");
+
     [self authenticationTokenWithUserId:userID lyrClient:layerClient completion:^(BOOL success, NSError *error) {
       if(error){
         completion(error);

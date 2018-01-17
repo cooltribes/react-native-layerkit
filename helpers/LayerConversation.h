@@ -8,6 +8,7 @@
 @interface LayerConversation : RCTEventEmitter <RCTBridgeModule>
 
 +(instancetype)conversationWithConvoID:(LYRClient *)layerClient bridge:(RCTBridge *)bridge convoID:(NSString*)convoID;
++(instancetype)conversationWithParticipants:(LYRClient *)layerClient bridge:(RCTBridge *)bridge userIDs:(NSArray*)userIDs;
 -(NSUInteger)messagesAvailableLocally;
 -(NSOrderedSet*)fetchMessages:(int)limit offset:(int)offset error:(NSError*)error;
 @property (nonatomic, readonly) LYRConversation *conversation;
