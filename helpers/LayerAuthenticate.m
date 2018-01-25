@@ -19,7 +19,7 @@
 
 -(void)authenticateLayerWithUserID:(NSString *)userID header:(NSString *)header layerClient:(LYRClient*)layerClient completion:(void(^)(NSError *error))completion;
 {
-  NSLog(@"Header: %@", header);
+  //NSLog(@"Header: %@", header);
   NSData *data = [header dataUsingEncoding:NSUTF8StringEncoding];
   NSDictionary *headerObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
   
@@ -32,9 +32,9 @@
   // Check to see if the layerClient is already authenticated.
   if (layerClient.currentSession.state == LYRSessionStateAuthenticated) { 
     // If the layerClient is authenticated with the requested userID, complete the authentication process.
-    NSLog(@"authenticateLayerWithUserID, Layer is authenticated");
+    //NSLog(@"authenticateLayerWithUserID, Layer is authenticated");
     if ([layerClient.authenticatedUser.userID isEqualToString:userID]){
-      NSLog(@"authenticateLayerWithUserID, Layer is same userID");
+     //NSLog(@"authenticateLayerWithUserID, Layer is same userID");
       completion(nil);
     } else {
       //If the authenticated userID is different, then deauthenticate the current client and re-authenticate with the new userID.
@@ -55,7 +55,7 @@
       }];
     }
   } else if (layerClient.currentSession.state == LYRSessionStateChallenged) { 
-      NSLog(@"Layer LYRSessionStateChallenged");
+      //NSLog(@"Layer LYRSessionStateChallenged");
       [layerClient deauthenticateWithCompletion:^(BOOL success, NSError *deError) {
         if (!deError){
           [self authenticationTokenWithUserId:userID lyrClient:layerClient completion:^(BOOL success, NSError *aError) {
@@ -73,7 +73,7 @@
       }];
   } else {
     // If the layerClient isn't already authenticated, then authenticate.
-    NSLog(@"Layer is not authenticated");
+    //NSLog(@"Layer is not authenticated");
 
     [self authenticationTokenWithUserId:userID lyrClient:layerClient completion:^(BOOL success, NSError *error) {
       if(error){
@@ -103,7 +103,7 @@
     //NSString *result = [userID substringWithRange:index];
     //NSString *newString = [userID substringFromIndex:[userID rangeOfString:@"-" options:NSBackwardsSearch]];
     NSString *result = [[userID componentsSeparatedByString:@"-"] objectAtIndex:2];
-    NSLog(@"newString: %@",result);
+    //NSLog(@"newString: %@",result);
     _accept = @"application/vnd.proalumna.com; version=1";
     _client = @"";
     _accessToken = @"";
@@ -114,7 +114,7 @@
    /*
     * 1. Connect to your backend to generate an identity token using the provided nonce.
     */
-  NSLog(@"requestIdentityTokenForUserID %@",userID);
+  //NSLog(@"requestIdentityTokenForUserID %@",userID);
   [self requestIdentityTokenForUserID:userID appID:[layerClient.appID absoluteString] nonce:nonce completion:^(NSString *identityToken, NSError *error) {
     if (!identityToken) {
       if (completion) {
@@ -126,13 +126,13 @@
    /*
     * 2. Submit identity token to Layer for validation
     */
-    NSLog(@"authenticationChallenge: %@",identityToken);
+    //NSLog(@"authenticationChallenge: %@",identityToken);
     [layerClient authenticateWithIdentityToken:identityToken completion:^(LYRIdentity *authenticatedUser, NSError *error) {
       if (authenticatedUser) {
         if (completion) {
           completion(nil);
         }
-        NSLog(@"Layer Authenticated as User: %@", authenticatedUser.userID);
+        //NSLog(@"Layer Authenticated as User: %@", authenticatedUser.userID);
       } else {
         completion(error);
       }
@@ -157,7 +157,7 @@
     /*
      * 2. Acquire identity Token from Layer Identity Service
      */
-    NSLog(@"Layer UID: %@", lyrClient.appID);
+    //NSLog(@"Layer UID: %@", lyrClient.appID);
     [self requestIdentityTokenForUserID:userID appID:[lyrClient.appID absoluteString] nonce:nonce completion:^(NSString *identityToken, NSError *error) {
       if (!identityToken) {
         if (completion) {
@@ -174,7 +174,7 @@
           if (completion) {
             completion(YES, nil);
           }
-          NSLog(@"Layer Authenticated as User: %@", authenticatedUser.userID);
+          //NSLog(@"Layer Authenticated as User: %@", authenticatedUser.userID);
         } else {
           completion(NO, error);
         }
@@ -190,7 +190,7 @@
   NSParameterAssert(nonce);
   NSParameterAssert(completion);
   
-  NSLog(@"user_id: %@ app_id: %@ nonce: %@",userID, appID, nonce);
+  //NSLog(@"user_id: %@ app_id: %@ nonce: %@",userID, appID, nonce);
 
   // NSURL *identityTokenURL = [NSURL URLWithString:@"https://layer-identity-provider.herokuapp.com/identity_tokens"];
   // NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:identityTokenURL];
@@ -214,19 +214,19 @@
   
   NSURLSessionConfiguration *sessionConfiguration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
   NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfiguration];
-  NSLog(@"REQUEST: %@",request);
+  //NSLog(@"REQUEST: %@",request);
   [[session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
     if (error) {
       completion(nil, error);
       return;
     }
-    NSLog(@"raw data: %@",data);
+    //NSLog(@"raw data: %@",data);
     NSString *newStr = @"";
     //NSLog(@"string entry: %@",newStr);
     //newStr = [NSString stringWithUTF8String:[data bytes]];
     //NSLog(@"raw string: %@",newStr);
     newStr = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]; 
-    NSLog(@"raw string: %@",newStr);
+    //NSLog(@"raw string: %@",newStr);
     newStr = [newStr substringFromIndex:1];
     newStr = [newStr substringToIndex:[newStr length] - 1];
    // NSLog(@"string: %@",newStr);
@@ -250,7 +250,7 @@
     //if(![responseObject valueForKey:@"error"])
     if (data)
     {
-      NSLog(@"entro en data: %@", data);
+      //NSLog(@"entro en data: %@", data);
       NSString *identityToken = newStr;
       completion(identityToken, nil);
     }

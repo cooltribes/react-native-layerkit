@@ -50,15 +50,16 @@ LYRClient *_layerClient;
     self = [super init];
     self.bridge = bridge;
     _apiUrl = apiUrl;
-    NSLog(@"self.bridge 5 %@", self.bridge);
+    //NSLog(@"self.bridge 5 %@", self.bridge);
     if (self) {
-         NSLog(@"initWithLayerAppID self");
+         //NSLog(@"initWithLayerAppID self");
         _jsonHelper = [JSONHelper new];
         LYRClientOptions *clientOptions = [LYRClientOptions new];
         //clientOptions.synchronizationPolicy = 3;
         clientOptions.synchronizationPolicy = LYRClientSynchronizationPolicyPartialHistory;
         clientOptions.partialHistoryMessageCount = 1;
         _layerClient = [LYRClient clientWithAppID:layerAppID delegate:self options:clientOptions];
+        //_layerClient.debuggingEnabled = YES;
         _messageParts = [MessageParts new];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(receivedNotification:)
@@ -96,7 +97,7 @@ RCT_EXPORT_METHOD(connect:(NSString*)appIDstr header:(NSString*)header
     //     _layerClient = [LYRClient clientWithAppID:appID delegate:self options:clientOptions];
     // }
     //[_layerClient setDelegate:self];  
-    NSLog(@"initialize Connecting");  
+   //NSLog(@"initialize Connecting");  
     if (!_layerClient.isConnected) {
         [_layerClient connectWithCompletion:^(BOOL success, NSError *error) {
             if (!success) {
@@ -106,7 +107,7 @@ RCT_EXPORT_METHOD(connect:(NSString*)appIDstr header:(NSString*)header
                 [self sendErrorEvent:error];
                 reject(@"no_events", @"There were no events", error);
             } else {
-                NSLog(@"Connected to Layer!");
+                //NSLog(@"Connected to Layer!");
                 RCTLogInfo(@"Connected to Layer!");
                 if(_deviceToken)
                     [self updateRemoteNotificationDeviceToken:_deviceToken];
@@ -144,7 +145,7 @@ RCT_EXPORT_METHOD(disconnect)
     //} else {
     //    NSLog(@"setPresenceStatus to Offline"); 
    // }
-    NSLog(@"disconnect, entro");
+    //NSLog(@"disconnect, entro");
     [_layerClient deauthenticateWithCompletion:^(BOOL success, NSError *error) {
         if (!success) {
             NSLog(@"disconnect, Failed to deauthenticate user: %@", error);
@@ -200,7 +201,7 @@ RCT_EXPORT_METHOD(deleteMessage:(NSString*)messageID
     LYRMessage *message = [query fetchMessageWithId:messageID client:_layerClient error:error];
     BOOL success = [message delete:LYRDeletionModeAllParticipants error:&error];
     if (success){
-        resolve(@[@"YES"]); 
+        resolve(@"YES"); 
     } else {
     NSError *errorMessage = error;
     NSLog(@"Error deleteMessage: %@", errorMessage);
@@ -214,7 +215,7 @@ RCT_EXPORT_METHOD(addParticipants:(NSString*)convoID userIDs:(NSString*)userIDs
 {
   NSError *error = nil;
   if ([self.layerConversation addParticipants:@[userIDs] error:error]){
-    resolve(@[@"YES"]);    
+    resolve(@"YES");    
   } else {
     id retErr = RCTMakeAndLogError(@"Error addParticipants",error,nil);
     NSError *errorMessage = retErr;        
@@ -254,7 +255,7 @@ RCT_EXPORT_METHOD(newConversation:(NSArray*)userIDs
   //   reject(@"no_events", @"Error creating conversastion", nil);    
   // }
   self.layerConversation = [LayerConversation conversationWithParticipants:_layerClient bridge:(RCTBridge *)self.bridge userIDs:userIDs];
-  NSLog(@"newConversation conversation: %@", self.layerConversation);
+  //NSLog(@"newConversation conversation: %@", self.layerConversation);
   if (self.layerConversation.conversation){
     resolve(@[@"YES",[self.layerConversation.conversation.identifier absoluteString]]);    
   } else {
@@ -281,7 +282,7 @@ RCT_EXPORT_METHOD(sendMessageToConvoID:(NSArray*)parts convoID:(NSString*)convoI
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
 
-    NSLog(@"sendMessageToConvoID, Conversation 0: %@", self.layerConversation.conversation);
+    //NSLog(@"sendMessageToConvoID, Conversation 0: %@", self.layerConversation.conversation);
     if (!self.layerConversation.conversation)
       self.layerConversation = [LayerConversation conversationWithConvoID:_layerClient bridge:(RCTBridge *)self.bridge convoID:convoID];
     
@@ -331,23 +332,23 @@ RCT_EXPORT_METHOD(sendMessageToConvoID:(NSArray*)parts convoID:(NSString*)convoI
     //LYRMessage *message = [_layerClient newMessageWithParts:@[messagePart] options:messageOptions error:nil];
     LYRMessage *message = [_layerClient newMessageWithParts:arrayMessageParts options:messageOptions error:nil];
     // Sends the specified message
-    NSLog(@"sendMessageToConvoID, authenticatedUser %@", arrayMessageParts);
-    NSLog(@"sendMessageToConvoID, authenticatedUser %@", [[_layerClient authenticatedUser] displayName]);
-    NSLog(@"sendMessageToConvoID, getConversationIdentifier %@", [self getConversationIdentifier]);
-    NSLog(@"sendMessageToConvoID _layerClient.isConnected %d", _layerClient.isConnected);
+    // NSLog(@"sendMessageToConvoID, authenticatedUser %@", arrayMessageParts);
+    // NSLog(@"sendMessageToConvoID, authenticatedUser %@", [[_layerClient authenticatedUser] displayName]);
+    // NSLog(@"sendMessageToConvoID, getConversationIdentifier %@", [self getConversationIdentifier]);
+    // NSLog(@"sendMessageToConvoID _layerClient.isConnected %d", _layerClient.isConnected);
     
-    NSLog(@"sendMessageToConvoID, Conversation 2: %@", self.layerConversation.conversation);
-    NSLog(@"sendMessageToConvoID, Message: %@", message);
+    // NSLog(@"sendMessageToConvoID, Conversation 2: %@", self.layerConversation.conversation);
+    // NSLog(@"sendMessageToConvoID, Message: %@", message);
 
     BOOL success = [self.layerConversation.conversation sendMessage:message error:&error];
     
     if(success){
-      NSLog(@"sendMessageToConvoID, Layer Message sent to %@", convoID);
+      //NSLog(@"sendMessageToConvoID, Layer Message sent to %@", convoID);
       RCTLogInfo(@"sendMessageToConvoID, Layer Message sent to %@", convoID);
       resolve(@"YES");
     }
     else {
-      NSLog(@"sendMessageToConvoID, Error Sending Layer Message %@", error);
+      //NSLog(@"sendMessageToConvoID, Error Sending Layer Message %@", error);
       RCTLogInfo(@"Error Sending Layer Message",error);      
       NSLog(@"Error Sending Layer Message %@", error);
       [self sendErrorEvent:error];
@@ -475,10 +476,10 @@ typedef void (^ SuccessBlock)(BOOL success);
 typedef void (^ FailureBlock)(NSError *error, NSInteger statusCode);
 - (void)myFunction:(LYRClient*)layerClient  success:(SuccessBlock)success failure:(FailureBlock)failure{
     if (layerClient.isConnected) {
-        NSLog(@"Layer is connected, block");
+        //NSLog(@"Layer is connected, block");
         success(TRUE);
     } else {
-        NSLog(@"Layer is not connected, block");
+        //NSLog(@"Layer is not connected, block");
         [_layerClient connectWithCompletion:^(BOOL success, NSError *error) {
             // if (success){
             //     success(TRUE);
@@ -502,13 +503,14 @@ RCT_EXPORT_METHOD(getConversations:(int)limit offset:(int)offset
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
-   for (LYRSession *session in _layerClient.sessions) {
-    NSLog(@"Session authenticatedUser %@", session.authenticatedUser.userID);
-   }
+   // for (LYRSession *session in _layerClient.sessions) {
+   //  NSLog(@"Session authenticatedUser %@", session.authenticatedUser.userID);
+   // }
+   //NSLog(@"Authentication currentSession.state getConversations: %lu", _layerClient.currentSession.state);
    [self myFunction:_layerClient  success:^(BOOL success) {
        if(success){
-        NSLog(@"Entro en el block");
-        NSLog(@"Conversation layerConversation getConversations: %@", self.layerConversation);
+        //NSLog(@"Entro en el block");
+        //NSLog(@"Conversation layerConversation getConversations: %@", self.layerConversation);
         LayerQuery *query = [LayerQuery new];
         NSError *queryError;
         id allConvos = [query fetchConvosForClient:_layerClient limit:limit offset:offset error:queryError];
@@ -573,9 +575,9 @@ RCT_EXPORT_METHOD(getMessages:(NSString*)convoID userIDs:(NSArray*)userIDs limit
     if (convoID){
         if (![convoID isEqualToString:[self.layerConversation.conversation.identifier absoluteString]])
           self.layerConversation = [LayerConversation conversationWithConvoID:_layerClient bridge:(RCTBridge *)self.bridge convoID:convoID];
-        NSLog(@"Conversation layerConversation getMessages: %@", self.layerConversation);
-        NSLog(@"Conversation totalNumberOfMessages: %lu", self.layerConversation.conversation.totalNumberOfMessages);
-        NSLog(@"conversation messagesAvailableLocally: %lu", self.layerConversation.messagesAvailableLocally);
+        // NSLog(@"Conversation layerConversation getMessages: %@", self.layerConversation);
+        // NSLog(@"Conversation totalNumberOfMessages: %lu", self.layerConversation.conversation.totalNumberOfMessages);
+        // NSLog(@"conversation messagesAvailableLocally: %lu", self.layerConversation.messagesAvailableLocally);
         //self.conversation = [self conversationWithConvoID:convoID];
         _conversationIdentifier = [self getConversationIdentifier];
         //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(layerClientObjectsDidChange:) name:LYRClientObjectsDidChangeNotification object:nil];
@@ -630,11 +632,11 @@ RCT_EXPORT_METHOD(getMessages:(NSString*)convoID userIDs:(NSArray*)userIDs limit
         else
             conversationOptions.distinctByParticipants = YES;
         LYRConversation *conversation = [_layerClient newConversationWithParticipants:participants options:conversationOptions error:&errorConversation];
-        NSLog(@"No conversation");
-        NSLog(@"errorConversation %@", errorConversation);
+        //NSLog(@"No conversation");
+        //NSLog(@"errorConversation %@", errorConversation);
         if (errorConversation && errorConversation.code == LYRErrorDistinctConversationExists) {
             conversation = errorConversation.userInfo[LYRExistingDistinctConversationKey];
-            NSLog(@"old conversation");
+           // NSLog(@"old conversation");
         }
         if (conversation){
             LayerQuery *query = [LayerQuery new];
@@ -763,20 +765,20 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
 {
     [self sendLogEvent:[NSString stringWithFormat:@"Start Authentication state: %lu", _layerClient.currentSession.state]];
     
-    if (!_layerClient.isConnected) {
-        NSLog(@"authenticateLayerWithUserID, Layer is not connected");
-    } else {
-        NSLog(@"authenticateLayerWithUserID, Layer is connected");
-    }
+    // if (!_layerClient.isConnected) {
+    //     NSLog(@"authenticateLayerWithUserID, Layer is not connected");
+    // } else {
+    //     NSLog(@"authenticateLayerWithUserID, Layer is connected");
+    // }
     _userID = userID;
     [[NSNotificationCenter defaultCenter] removeObserver:self name:LYRConversationDidReceiveTypingIndicatorNotification object:nil];    
       LayerAuthenticate *lAuth = [LayerAuthenticate new];
-      NSLog(@"authenticateLayerWithUserID, Layer authenticating");
+      //NSLog(@"authenticateLayerWithUserID, Layer authenticating");
       [lAuth authenticateLayerWithUserID:userID header:header layerClient:_layerClient completion:^(NSError *error) {
           if (!error) {
               [self sendLogEvent:[NSString stringWithFormat:@"Successfully Authenticated state: %lu", _layerClient.currentSession.state]];
 
-              NSLog(@"authenticateLayerWithUserID, Layer authenticated");
+              //NSLog(@"authenticateLayerWithUserID, Layer authenticated");
               [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(didReceiveTypingIndicator:)
                                                name:LYRConversationDidReceiveTypingIndicatorNotification
@@ -788,7 +790,7 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
               NSError *errorStatus;
               BOOL success = [_layerClient setPresenceStatus:LYRIdentityPresenceStatusAvailable error:&errorStatus];
               if (!success) {
-                  NSLog(@"authenticateLayerWithUserID, Failed to setPresenceStatus: %@", errorStatus);
+                 // NSLog(@"authenticateLayerWithUserID, Failed to setPresenceStatus: %@", errorStatus);
                   [self sendErrorEvent:errorStatus];
                   // handle error here
               } else {
@@ -816,10 +818,10 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
     // [notification name] should always be @"TestNotification"
     // unless you use this method for observation of other notifications
     // as well.
-    NSLog (@"Enter to receivedNotification!");
+    //NSLog (@"Enter to receivedNotification!");
     if ([[notification name] isEqualToString:@"RNLayerKitNotification"])
     {
-        NSLog (@"Successfully received the test notification!");
+        //NSLog (@"Successfully received the test notification!");
         NSDictionary *userInfo = notification.userInfo;
         NSData *myToken = [userInfo objectForKey:@"deviceToken"];
         [self updateRemoteNotificationDeviceToken:myToken];
@@ -828,7 +830,7 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
 -(void)updateRemoteNotificationDeviceToken:(NSData*)deviceToken
 {
     // if we haven't initialize our client, then save the token for later
-    NSLog (@"Enter on updateRemoteNotificationDeviceToken %@", deviceToken);
+    //NSLog (@"Enter on updateRemoteNotificationDeviceToken %@", deviceToken);
     if(!_layerClient){
         _deviceToken=deviceToken;
     }
@@ -836,7 +838,7 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
         NSError *error;
         BOOL success = [_layerClient updateRemoteNotificationDeviceToken:deviceToken error:&error];
         if (success) {
-            NSLog(@"Application did register for remote notifications: %@", deviceToken);
+            //NSLog(@"Application did register for remote notifications: %@", deviceToken);
             [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                          body:@{@"source":@"LayerClient",@"type": @"didRegisterForRemoteNotificationsWithDeviceToken"}];
         } else {
@@ -917,7 +919,7 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
 }
 - (void)layerClient:(LYRClient *)client didReceiveAuthenticationChallengeWithNonce:(NSString *)nonce
 {
-    NSLog(@"Layer Client did receive an authentication challenge with nonce=%@", nonce);
+    //NSLog(@"Layer Client did receive an authentication challenge with nonce=%@", nonce);
    // NSLog(@"Header: %@",_header);
     if (_layerClient.authenticatedUser)
         _userID = _layerClient.authenticatedUser.userID;
@@ -999,7 +1001,7 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
                 //      body:@{@"source":@"LayerClient",
                 //             @"type": @"updateBadge",
                 //             @"badge":[query fetchUnReadMessagesCount:_layerClient error:queryError]}];               
-                NSLog(@"conversation totalNumberOfUnreadMessages: %lu", countBadge);
+                //NSLog(@"conversation totalNumberOfUnreadMessages: %lu", countBadge);
               }
               // if ([thisChange.property isEqualToString:@"hasUnreadMessages"])
               //   NSLog(@"hasUnreadMessages");
