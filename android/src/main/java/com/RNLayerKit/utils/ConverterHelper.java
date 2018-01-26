@@ -71,6 +71,13 @@ public class ConverterHelper {
                 writableMap.putMap("conversation", conversationToWritableMap(message.getConversation()));
             }
 
+            if (change.getObjectType() == LayerObject.Type.MESSAGE_PART) {
+                MessagePart part = (MessagePart) change.getObject();
+                if(part.getTransferStatus().toString() == "COMPLETE") {
+                    writableMap.putMap("part", messagePartToWritableMap(part));
+                    writableMap.putString("object", "LYRChangeImage");
+                }
+            }
 
             if (change.getAttributeName() != null) {
                 writableMap.putString("attribute", change.getAttributeName());
