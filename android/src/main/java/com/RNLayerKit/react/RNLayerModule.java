@@ -165,7 +165,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     @SuppressWarnings("unused")
-    public void sendTypingBegin(String convoID, Promise promise) {
+    public void sendTypingBegin(String convoID/*, Promise promise*/) {
         try {
 
             Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
@@ -176,18 +176,19 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             
             if (conversation != null) {                
                 conversation.send(LayerTypingIndicatorListener.TypingIndicator.STARTED);
-                promise.resolve( YES );                
+                // promise.resolve( YES );                
             } else  {
-                Log.v(TAG, "Error getting conversation from convo id");
-                promise.reject( new Throwable("Error getting conversation") );
+                Log.v(TAG, "Error getting conversation sendTypingBegin");
+                // promise.reject( new Throwable("Error getting conversation") );
             }
         } catch (IllegalViewOperationException e) {
-            promise.reject(e);
+            //promise.reject(e);
+            Log.v(TAG, "Error sendTypingBegin");
         }
     }
     @ReactMethod
     @SuppressWarnings("unused")
-    public void sendTypingEnd(String convoID, Promise promise) {
+    public void sendTypingEnd(String convoID/*, Promise promise*/) {
         try {
 
             Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
@@ -198,14 +199,15 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             
             if (conversation != null) {               
                 conversation.send(LayerTypingIndicatorListener.TypingIndicator.FINISHED);
-                promise.resolve( YES );
+                // promise.resolve( YES );
                 
             } else  {
-                Log.v(TAG, "Error getting conversation from convo id");
-                promise.reject( new Throwable("Error getting conversation") );
+                Log.v(TAG, "Error getting conversation sendTypingEnd");
+                // promise.reject( new Throwable("Error getting conversation") );
             }
         } catch (IllegalViewOperationException e) {
-            promise.reject(e);
+            // promise.reject(e);
+            Log.v(TAG, "Error sendTypingEnd");
         }
     }
 
@@ -348,6 +350,16 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
            return 0;
         }
 
+    }
+    
+    @ReactMethod
+    @SuppressWarnings("unused")
+    public void clearChat() {   
+
+        // Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
+        // Log.v(TAG, "ClearChat before -->"  + conversation.getId().toString()); 
+        LayerkitSingleton.getInstance().setConversationGlobal(null);
+        //Log.v(TAG, "ClearChat after -->"  + LayerkitSingleton.getInstance().getConversationGlobal()); 
     }
 
     @ReactMethod
