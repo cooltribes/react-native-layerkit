@@ -416,9 +416,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             if (results != null) {
                 Message del = results.get(0);
                 del.delete(DeletionMode.ALL_PARTICIPANTS);
-                writableArray.pushString(YES);
-                //writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
-                promise.resolve(writableArray);
+                // writableArray.pushString(YES);
+                // writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
+                promise.resolve(YES);
             } else {
                 Log.v(TAG, "Error delete message");
                 promise.reject( new Throwable("Error delete message") );
