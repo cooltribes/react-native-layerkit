@@ -44,17 +44,19 @@ public class ConverterHelper {
     private final static Charset UTF8_CHARSET = Charset.forName("UTF-8");
     public static ReactApplicationContext reactContext;
 
-    public static WritableMap convertChangesToArray(LayerChangeEvent event, RNLayerModule mRNLayerModule) {
+    public static WritableMap convertChangesToArray(LayerChange change, RNLayerModule mRNLayerModule) {
 
-        List<LayerChange> changes = event.getChanges();
-        WritableArray writableArray = new WritableNativeArray();
-        WritableMap params = Arguments.createMap();
+        // List<LayerChange> changes = event.getChanges();
+        // WritableArray writableArray = new WritableNativeArray();
+        // WritableMap params = Arguments.createMap();
 
-        for (int i = 0; i < changes.size(); i++) {
-            LayerChange change = changes.get(i);
+        // for (int i = 0; i < changes.size(); i++) {
+
+        //     LayerChange change = changes.get(i);
 
             WritableMap writableMap = new WritableNativeMap();
 
+            // Conversations
             if (change.getObjectType() == LayerObject.Type.CONVERSATION) {
                 writableMap.putString("object", "LYRConversation");
                 Conversation conversation = (Conversation) change.getObject();
@@ -63,6 +65,7 @@ public class ConverterHelper {
                 writableMap.putString("historicSyncStatus", conversation.getHistoricSyncStatus().toString());
             }
 
+            // Messages
             if (change.getObjectType() == LayerObject.Type.MESSAGE) {
                 writableMap.putString("object", "LYRMessage");
                 Message message = (Message) change.getObject();
@@ -77,6 +80,7 @@ public class ConverterHelper {
                 }
             }
 
+            // MessageParts
             if (change.getObjectType() == LayerObject.Type.MESSAGE_PART) {
                 MessagePart part = (MessagePart) change.getObject();
                 if(part.getTransferStatus().toString() == "COMPLETE") {
@@ -85,6 +89,7 @@ public class ConverterHelper {
                 }
             }
 
+            // PresenceStatus
             if (change.getAttributeName() != null) {
                 writableMap.putString("attribute", change.getAttributeName());
                 if(change.getAttributeName() == "presenceStatus") {
@@ -92,10 +97,11 @@ public class ConverterHelper {
                     //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!result: %s", participant.getUserId().toString()));
                     writableMap.putString("user", participant.getUserId().toString());
                 }
-                if(change.getAttributeName() == "totalUnreadMessageCount") {
+                /*if(change.getAttributeName() == "totalUnreadMessageCount") {
                     params.putInt("badge", mRNLayerModule.getMessagesCount());
-                }
+                }*/
             }
+
 
             if (change.getOldValue() != null) {
                 writableMap.putString("changeFrom", change.getOldValue().toString());
@@ -105,6 +111,7 @@ public class ConverterHelper {
                 writableMap.putString("changeTo", change.getNewValue().toString());
             }
 
+            // Type Change
             switch (change.getChangeType()) {
                 case INSERT:
                     writableMap.putString("type", "LYRObjectChangeTypeCreate");
@@ -117,14 +124,14 @@ public class ConverterHelper {
                     break;
             }
 
-            writableArray.pushMap(writableMap);
-        }
+            // writableArray.pushMap(writableMap);
+        // }
 
-        params.putString("source", "LayerClient");
-        params.putString("type", "objectsDidChange");
-        params.putArray("data", writableArray);
+        // params.putString("source", "LayerClient");
+        // params.putString("type", "objectsDidChange");
+        // params.putArray("data", writableArray);
 
-        return params;
+        return writableMap;
 
     }
 
