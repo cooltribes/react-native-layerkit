@@ -88,6 +88,7 @@ public class ChangeEventListener implements LayerChangeEventListener {
             					if(conversationGlobal != null) {
             						if(conversationGlobal.getId().toString().equals(conversationChange.getId().toString())) {
             							writableMap = ConverterHelper.convertChangesToArray(change, mRNLayerModule);
+            							conversationChange.getLastMessage().markAsRead();
             							// Log.v("CHANGESSS", "Case 2 -->"  + conversationChange.getId().toString());
             						}
             					}
