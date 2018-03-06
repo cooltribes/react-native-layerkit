@@ -26,6 +26,7 @@ import com.facebook.react.uimanager.IllegalViewOperationException;
 import com.layer.sdk.LayerClient;
 import com.layer.sdk.exceptions.LayerConversationException;
 import com.layer.sdk.messaging.Conversation;
+import com.layer.sdk.messaging.ConversationOptions;
 import com.layer.sdk.messaging.Identity;
 import com.layer.sdk.messaging.Message;
 import com.layer.sdk.messaging.MessageOptions;
@@ -920,8 +921,12 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
         Conversation conversation;
         try {
-            // Try creating a new distinct conversation with the given user
-            conversation = layerClient.newConversationWithUserIds(userIDsArray);
+            
+            ConversationOptions options = new ConversationOptions();
+            options.deliveryReceipts(userIDs.size() < 2);
+            options.distinct(userIDs.size() < 2);            
+
+            conversation = layerClient.newConversationWithUserIds(options, userIDsArray);
         } catch (LayerConversationException e) {
             // If a distinct conversation with the given user already exists, use that one instead
             conversation = e.getConversation();
