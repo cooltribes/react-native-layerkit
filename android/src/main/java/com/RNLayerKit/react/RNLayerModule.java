@@ -504,7 +504,10 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
                 if (conversation != null) {
                     // Set conversation global
-                    LayerkitSingleton.getInstance().setConversationGlobal(conversation);            
+                    LayerkitSingleton.getInstance().setConversationGlobal(conversation);
+                    // Add metadata
+                    conversation.putMetadataAtKeyPath("lastPosition", Long.toString(conversation.getLastMessage().getPosition()));
+
                 }
 
                 Builder builder = Query.builder(Message.class)
@@ -562,6 +565,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             if (conversation != null) {
                 // Set conversation global
                 LayerkitSingleton.getInstance().setConversationGlobal(conversation);
+                // Add metadata
+                conversation.putMetadataAtKeyPath("lastPosition", Long.toString(conversation.getLastMessage().getPosition()));
+
             }
             try {
                 Builder builder = Query.builder(Message.class)

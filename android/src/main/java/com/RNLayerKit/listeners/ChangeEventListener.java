@@ -19,6 +19,7 @@ import java.util.Set;
 import com.layer.sdk.messaging.Identity;
 import com.layer.sdk.messaging.Conversation;
 import android.util.Log;
+import com.layer.sdk.messaging.Metadata;
 
 public class ChangeEventListener implements LayerChangeEventListener {
 
@@ -70,7 +71,44 @@ public class ChangeEventListener implements LayerChangeEventListener {
             					break;
             			}
 	            	}
+
+                    // Insert
+                    if(change.getChangeType() == LayerChange.Type.INSERT) {
+                        
+                        Message message = (Message) change.getObject();
+
+                        Conversation conversationChange = message.getConversation();
+                        String lastPosition = null;
+                        
+                        if(conversationChange != null) {
+                            Metadata metadata = conversationChange.getMetadata();                        
+                            lastPosition = metadata.get("lastPosition").toString();
+                        }
+
+                        if(lastPosition != null) {
+                            if(Long.parseLong(lastPosition) <= message.getPosition()) {
+                                // Log.v("\n\n********************", "akiiiiiiiiiiiiiiiii -->"  + message.getId().toString());
+                                Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
+                                if(conversation != null) {
+                                    if(conversation.getId().toString().equals(message.getConversation().getId().toString())) {
+
+                                        writableMap = ConverterHelper.convertChangesToArray(change, mRNLayerModule);
+                                        // Mark Readed
+                                        Identity sender = message.getSender();
+                                        if(!sender.getUserId().equals(LayerkitSingleton.getInstance().getUserIdGlobal())) {
+                                            message.markAsRead();
+                                        }
+                                        // Update Metadata
+                                        conversation.putMetadataAtKeyPath("lastPosition", Long.toString(message.getPosition()));
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     break;
+
 
                 case CONVERSATION:
 
@@ -88,13 +126,7 @@ public class ChangeEventListener implements LayerChangeEventListener {
             					if(conversationGlobal != null) {
             						if(conversationGlobal.getId().toString().equals(conversationChange.getId().toString())) {
             							writableMap = ConverterHelper.convertChangesToArray(change, mRNLayerModule);
-
-            							Identity sender = conversationChange.getLastMessage().getSender();
-            							if(!sender.getUserId().equals(LayerkitSingleton.getInstance().getUserIdGlobal())) {
-	            							conversationChange.getLastMessage().markAsRead();
-	            						}
-            							// Log.v("CHANGESSS", "Case 2 -->"  + conversationChange.getId().toString());
-            						}
+                                    }
             					}
             					break;
 
@@ -133,10 +165,7 @@ public class ChangeEventListener implements LayerChangeEventListener {
         params.putString("type", "objectsDidChange");
         params.putArray("data", writableArray);
 
-        // WritableMap params = ConverterHelper.convertChangesToArray(event, mRNLayerModule);
-
         // Send Event React
         mRNLayerModule.sendEvent(mRNLayerModule.getReactContext(), "LayerEvent", params);
-
     }
 }
