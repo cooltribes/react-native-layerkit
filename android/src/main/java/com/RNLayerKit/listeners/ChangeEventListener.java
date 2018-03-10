@@ -81,8 +81,10 @@ public class ChangeEventListener implements LayerChangeEventListener {
                         String lastPosition = null;
                         
                         if(conversationChange != null) {
-                            Metadata metadata = conversationChange.getMetadata();                        
-                            lastPosition = metadata.get("lastPosition").toString();
+                            Metadata metadata = conversationChange.getMetadata();
+                            if(metadata.get("lastPosition") != null) {
+                                lastPosition = metadata.get("lastPosition").toString();
+                            }
                         }
 
                         if(lastPosition != null) {
