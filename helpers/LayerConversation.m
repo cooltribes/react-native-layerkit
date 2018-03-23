@@ -13,11 +13,13 @@
 
 + (instancetype)conversationWithParticipants:(LYRClient *)layerClient bridge:(RCTBridge *)bridge userIDs:(NSArray*)userIDs
 {    
+    NSLog(@"conversationWithParticipants");
     return [[self alloc] initWithLayerClientParticipants:layerClient bridge:bridge userIDs:userIDs];
 }
 
 + (instancetype)conversationWithConvoID:(LYRClient *)layerClient bridge:(RCTBridge *)bridge convoID:(NSString*)convoID
 {
+    NSLog(@"conversationWithConvoID");
     return [[self alloc] initWithLayerClient:layerClient bridge:bridge convoID:convoID];
 }
 
@@ -41,8 +43,11 @@
       //query.predicate = [LYRPredicate predicateWithProperty:@"identifier" predicateOperator:LYRPredicateOperatorIsEqualTo value:convoID];
       NSError *errorConversation = nil;
       LYRConversationOptions *conversationOptions = [LYRConversationOptions new];
+      //NSLog(@"participants.count: %lu", participants.count);
       conversationOptions.distinctByParticipants = participants.count < 2;
-      NSLog(@"createConversationWithParticipants: %@",participants);
+      conversationOptions.deliveryReceiptsEnabled = participants.count < 2;
+      //NSLog(@"conversationOptions: %@", conversationOptions);
+      //NSLog(@"createConversationWithParticipants: %@",participants);
       LYRConversation *conversation = [layerClient newConversationWithParticipants:participants options:conversationOptions error:&errorConversation];
       if (errorConversation){
         if  (errorConversation.code == LYRErrorDistinctConversationExists) {
@@ -52,11 +57,16 @@
         }
       }  
       self.conversation = conversation; 
-      NSLog(@"Salio createConversationWithParticipants %@", self.conversation);            
+      //NSLog(@"Salio createConversationWithParticipants %@", self.conversation);            
       _shouldSynchronizeRemoteMessages = YES;
       _layerClient = layerClient;
 
     }
+
+        // [[NSNotificationCenter defaultCenter] addObserver:self
+        //                                          selector:@selector(objectChangesUserInfoKey:)
+        //                                              name:@"LYRClientObjectsDidChangeNotification"
+        //                                            object:nil]; 
     return self;
 }
 
@@ -73,7 +83,13 @@
   		_shouldSynchronizeRemoteMessages = YES;
   		_layerClient = layerClient;
 
+
     }
+
+        // [[NSNotificationCenter defaultCenter] addObserver:self
+        //                                          selector:@selector(objectChangesUserInfoKey:)
+        //                                              name:@"LYRClientObjectsDidChangeNotification"
+        //                                            object:nil]; 
     return self;
 }
 
@@ -81,8 +97,11 @@
 {
   NSError *errorConversation = nil;
   LYRConversationOptions *conversationOptions = [LYRConversationOptions new];
+  NSLog(@"participants.count: %lu", participants.count);
   conversationOptions.distinctByParticipants = participants.count < 2;
-    NSLog(@"createConversationWithParticipants: %@",participants);
+  conversationOptions.deliveryReceiptsEnabled = participants.count < 2;
+  NSLog(@"conversationOptions: %@", conversationOptions);
+  NSLog(@"createConversationWithParticipants: %@",participants);
   LYRConversation *conversation = [self.layerClient newConversationWithParticipants:participants options:conversationOptions error:&errorConversation];
   if (errorConversation){
     if  (errorConversation.code == LYRErrorDistinctConversationExists) {
@@ -192,9 +211,9 @@
     __weak BOOL weakSendEvent = sendEvent;
     NSLog(@"Entro en synchronizeMoreMessages");    
     __weak typeof(self) weakSelf = self;
-    __block __weak id observer = [[NSNotificationCenter defaultCenter] addObserverForName:LYRConversationDidFinishSynchronizingNotification object:self.conversation queue:nil usingBlock:^(NSNotification * _Nonnull note) {
-        if (observer) {
-            [[NSNotificationCenter defaultCenter] removeObserver:observer];
+    __block __weak id observerSync = [[NSNotificationCenter defaultCenter] addObserverForName:LYRConversationDidFinishSynchronizingNotification object:self.conversation queue:nil usingBlock:^(NSNotification * _Nonnull note) {
+        if (observerSync) {
+            [[NSNotificationCenter defaultCenter] removeObserver:observerSync];
         }
         [weakSelf markAllMessagesAsRead];
         weakSelf.shouldSynchronizeRemoteMessages = YES;
@@ -222,14 +241,40 @@
     if (!success) {
     		NSLog(@"Error Synchronizing: %@", error);
     		//id retErr = RCTMakeAndLogError(@"Error marking messages as read ",error,NULL);
-        if (observer) {
-            [[NSNotificationCenter defaultCenter] removeObserver:observer];
+        if (observerSync) {
+            [[NSNotificationCenter defaultCenter] removeObserver:observerSync];
         }
         NSLog(@"conversation messagesAvailableLocally2: %lu", self.messagesAvailableLocally);
         //[weakSelf finishExpandingPaginationWindow];
         return;
     }
 }
+// - (void) objectChangesUserInfoKey:(NSNotification *) notification
+// {
+
+//   NSLog(@"NSNotification: %@",notification);
+//   NSLog(@"notification.object: %@",notification.object);
+
+//   if (![notification.object isEqual:self.layerClient]) return;
+//   NSLog(@"notification.userInfo: %@", notification.userInfo);
+//   NSArray *changes = notification.userInfo[LYRClientObjectChangesUserInfoKey];
+//   for(LYRObjectChange *thisChange in changes){
+//     NSLog(@"objectsDidChange: %@",thisChange);
+//   }
+//     // [notification name] should always be @"TestNotification"
+//     // unless you use this method for observation of other notifications
+//     // as well.
+//     //NSLog (@"Enter to receivedNotification!");
+//     // if ([[notification name] isEqualToString:@"RNLayerKitNotification"])
+//     // {
+//     //     //NSLog (@"Successfully received the test notification!");
+//     //     NSDictionary *userInfo = notification.userInfo;
+//     //     NSData *myToken = [userInfo objectForKey:@"deviceToken"];
+//     //     [self updateRemoteNotificationDeviceToken:myToken];
+//     // }
+// }
+
+
 
 
 @end

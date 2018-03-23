@@ -16,7 +16,7 @@
   if(limit>0)
     query.limit=limit;
   query.offset=offset;
-  
+  query.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"lastMessage.sentAt" ascending:NO]];
   NSError *error = nil;
   NSOrderedSet *conversations = [client executeQuery:query error:&error];
   if (conversations) {

@@ -19,5 +19,6 @@
 -(NSArray*)convertMessagesToArray:(NSOrderedSet*)allMessages;
 -(NSArray*)convertChangesToArray:(NSArray*)changes;
 -(NSArray*)convertChangeToArray:(LYRObjectChange*)changes;
+-(NSArray*)convertChangeTypeUpdateToArray:(LYRObjectChange*)changes;
 -(NSDictionary*)convertMessagePartToDict:(LYRMessagePart*)msgPart;
 @end

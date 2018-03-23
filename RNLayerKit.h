@@ -15,8 +15,11 @@
 @interface RNLayerKit : RCTEventEmitter <RCTBridgeModule, UNUserNotificationCenterDelegate>
 + (nonnull instancetype)bridgeWithLayerAppID:(nonnull NSURL *)layerAppID bridge:(RCTBridge *)bridge apiUrl:(NSString *)apiUrl;
 - (void)didReceiveTypingIndicator:(NSNotification *)notification;
+- (void)layerClientObjectsDidChange:(NSNotification *)notification;
 - (void)updateRemoteNotificationDeviceToken:(nullable NSData *)deviceToken;
 - (void)setPresenceStatusAway;
 - (void)setPresenceStatusAvailable;
 @property (nonatomic) LYRConversation *conversation;
+@property (nonatomic) LayerConversation *layerConversation;
+//@property (nonatomic, readwrite) id observer;
 @end
