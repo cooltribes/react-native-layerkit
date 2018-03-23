@@ -26,6 +26,7 @@ import com.facebook.react.uimanager.IllegalViewOperationException;
 import com.layer.sdk.LayerClient;
 import com.layer.sdk.exceptions.LayerConversationException;
 import com.layer.sdk.messaging.Conversation;
+import com.layer.sdk.messaging.ConversationOptions;
 import com.layer.sdk.messaging.Identity;
 import com.layer.sdk.messaging.Message;
 import com.layer.sdk.messaging.MessageOptions;
@@ -165,7 +166,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     @SuppressWarnings("unused")
-    public void sendTypingBegin(String convoID, Promise promise) {
+    public void sendTypingBegin(String convoID/*, Promise promise*/) {
         try {
 
             Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
@@ -176,18 +177,19 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             
             if (conversation != null) {                
                 conversation.send(LayerTypingIndicatorListener.TypingIndicator.STARTED);
-                promise.resolve( YES );                
+                // promise.resolve( YES );                
             } else  {
-                Log.v(TAG, "Error getting conversation from convo id");
-                promise.reject( new Throwable("Error getting conversation") );
+                Log.v(TAG, "Error getting conversation sendTypingBegin");
+                // promise.reject( new Throwable("Error getting conversation") );
             }
         } catch (IllegalViewOperationException e) {
-            promise.reject(e);
+            //promise.reject(e);
+            Log.v(TAG, "Error sendTypingBegin");
         }
     }
     @ReactMethod
     @SuppressWarnings("unused")
-    public void sendTypingEnd(String convoID, Promise promise) {
+    public void sendTypingEnd(String convoID/*, Promise promise*/) {
         try {
 
             Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
@@ -198,14 +200,15 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             
             if (conversation != null) {               
                 conversation.send(LayerTypingIndicatorListener.TypingIndicator.FINISHED);
-                promise.resolve( YES );
+                // promise.resolve( YES );
                 
             } else  {
-                Log.v(TAG, "Error getting conversation from convo id");
-                promise.reject( new Throwable("Error getting conversation") );
+                Log.v(TAG, "Error getting conversation sendTypingEnd");
+                // promise.reject( new Throwable("Error getting conversation") );
             }
         } catch (IllegalViewOperationException e) {
-            promise.reject(e);
+            // promise.reject(e);
+            Log.v(TAG, "Error sendTypingEnd");
         }
     }
 
@@ -349,6 +352,16 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
         }
 
     }
+    
+    @ReactMethod
+    @SuppressWarnings("unused")
+    public void clearChat() {   
+
+        // Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
+        // Log.v(TAG, "ClearChat before -->"  + conversation.getId().toString()); 
+        LayerkitSingleton.getInstance().setConversationGlobal(null);
+        //Log.v(TAG, "ClearChat after -->"  + LayerkitSingleton.getInstance().getConversationGlobal()); 
+    }
 
     @ReactMethod
     @SuppressWarnings({"unchecked", "UnusedParameters", "unused"})
@@ -403,9 +416,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             if (results != null) {
                 Message del = results.get(0);
                 del.delete(DeletionMode.ALL_PARTICIPANTS);
-                writableArray.pushString(YES);
-                //writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
-                promise.resolve(writableArray);
+                // writableArray.pushString(YES);
+                // writableArray.pushArray(ConverterHelper.messagesToWritableArray(results));
+                promise.resolve(YES);
             } else {
                 Log.v(TAG, "Error delete message");
                 promise.reject( new Throwable("Error delete message") );
@@ -491,7 +504,10 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
                 if (conversation != null) {
                     // Set conversation global
-                    LayerkitSingleton.getInstance().setConversationGlobal(conversation);            
+                    LayerkitSingleton.getInstance().setConversationGlobal(conversation);
+                    // Add metadata
+                    conversation.putMetadataAtKeyPath("lastPosition", Long.toString(conversation.getLastMessage().getPosition()));
+
                 }
 
                 Builder builder = Query.builder(Message.class)
@@ -549,6 +565,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             if (conversation != null) {
                 // Set conversation global
                 LayerkitSingleton.getInstance().setConversationGlobal(conversation);
+                // Add metadata
+                conversation.putMetadataAtKeyPath("lastPosition", Long.toString(conversation.getLastMessage().getPosition()));
+
             }
             try {
                 Builder builder = Query.builder(Message.class)
@@ -908,8 +927,12 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
         Conversation conversation;
         try {
-            // Try creating a new distinct conversation with the given user
-            conversation = layerClient.newConversationWithUserIds(userIDsArray);
+            
+            ConversationOptions options = new ConversationOptions();
+            options.deliveryReceipts(userIDs.size() < 2);
+            options.distinct(userIDs.size() < 2);            
+
+            conversation = layerClient.newConversationWithUserIds(options, userIDsArray);
         } catch (LayerConversationException e) {
             // If a distinct conversation with the given user already exists, use that one instead
             conversation = e.getConversation();
