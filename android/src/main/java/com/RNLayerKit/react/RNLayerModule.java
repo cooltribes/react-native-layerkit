@@ -338,13 +338,27 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
         try {
 
-            Query query = Query.builder(Message.class)
+            /*Query query = Query.builder(Message.class)
                 .predicate(new Predicate(Message.Property.IS_UNREAD, Predicate.Operator.EQUAL_TO, true))
                 .build();
 
             Long count = layerClient.executeQueryForCount(query);
-            
-            return count.intValue();
+
+            */
+
+            Builder builder = Query.builder(Conversation.class)
+                .sortDescriptor(new SortDescriptor(Conversation.Property.LAST_MESSAGE_RECEIVED_AT, SortDescriptor.Order.DESCENDING));
+
+            Query query = builder.build();
+            List results = layerClient.executeQuery(query, Query.ResultType.OBJECTS);
+
+            int count = 0;
+            for (int i = 0; i < results.size(); i++) {
+                Conversation conversation = (Conversation) results.get(i);
+                count = count + conversation.getTotalUnreadMessageCount();
+            }
+
+            return count;
 
         } catch (IllegalViewOperationException e) {
            Log.v(TAG, "Error get MessagesCount"); 
