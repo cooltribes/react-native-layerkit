@@ -258,10 +258,10 @@
 					"$(SRCROOT)/../../React/**",
 					"$(SRCROOT)/../ios/Pods/**",
 					"$(SRCROOT)/Pods",
-					"$(SRCROOT)/../../ios/Pods",
+					"$(SRCROOT)/../../../ios/Pods/**",
 					"$(SRCROOT)/../../node_modules/react-native/React/**",
-					"$(SRCROOT)/../../../ios/Crashlytics",
-					"$(SRCROOT)/../../../ios",
+					"$(SRCROOT)/../../../ios/Crashlytics/**",
+					"$(SRCROOT)/../../../ios/**",
 					"$(SRCROOT)/../../../ios/Pods/Headers/Public/Crashlytics",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
@@ -284,10 +284,10 @@
 					"$(SRCROOT)/../../React/**",
 					"$(SRCROOT)/../ios/Pods/**",
 					"$(SRCROOT)/Pods",
-					"$(SRCROOT)/../../ios/Pods",
+					"$(SRCROOT)/../../../ios/Pods/**",
 					"$(SRCROOT)/../../node_modules/react-native/React/**",
-					"$(SRCROOT)/../../../ios/Crashlytics",
-					"$(SRCROOT)/../../../ios",
+					"$(SRCROOT)/../../../ios/Crashlytics/**",
+					"$(SRCROOT)/../../../ios/**",
 					"$(SRCROOT)/../../../ios/Pods/Headers/Public/Crashlytics",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
