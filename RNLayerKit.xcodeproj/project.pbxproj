@@ -248,15 +248,21 @@
 		58B511F01A9E6C8500147676 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = "../../ios/Pods/**";
+				FRAMEWORK_SEARCH_PATHS = (
+					"../../ios/Pods/**",
+					"$(SRCROOT)/../../../ios/Pods/Crashlytics/iOS",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 					"$(SRCROOT)/../../React/**",
-					"$(SRCROOT)/../../node_modules/react-native/React/**",
 					"$(SRCROOT)/../ios/Pods/**",
-					"$(SRCROOT)/../../ios/Pods",
 					"$(SRCROOT)/Pods",
+					"$(SRCROOT)/../../ios/Pods",
+					"$(SRCROOT)/../../node_modules/react-native/React/**",
+					"$(SRCROOT)/../../../ios/Crashlytics",
+					"$(SRCROOT)/../../../ios",
+					"$(SRCROOT)/../../../ios/Pods/Headers/Public/Crashlytics",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
@@ -268,7 +274,10 @@
 		58B511F11A9E6C8500147676 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				FRAMEWORK_SEARCH_PATHS = "../../ios/Pods/**";
+				FRAMEWORK_SEARCH_PATHS = (
+					"../../ios/Pods/**",
+					"$(SRCROOT)/../../../ios/Pods/Crashlytics/iOS",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
@@ -277,6 +286,9 @@
 					"$(SRCROOT)/Pods",
 					"$(SRCROOT)/../../ios/Pods",
 					"$(SRCROOT)/../../node_modules/react-native/React/**",
+					"$(SRCROOT)/../../../ios/Crashlytics",
+					"$(SRCROOT)/../../../ios",
+					"$(SRCROOT)/../../../ios/Pods/Headers/Public/Crashlytics",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
