@@ -1,6 +1,6 @@
 #import "RNLayerKit.h"
 #import <AssetsLibrary/AssetsLibrary.h>
-#import <Crashlytics/Crashlytics.h>
+
 NSData *_deviceToken;
 LYRClient *_layerClient;
 id _observer;
@@ -947,7 +947,6 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
 }
 #pragma mark - Error Handle
 -(void)sendErrorEvent:(NSError*)error{
-    [[Crashlytics sharedInstance] recordError:error];
     [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
                                                  body:@{@"source":@"LayerClient", @"type": @"error",@"error":@{@"code":@(error.code),@"domain":error.domain,@"description":[error localizedDescription]}}];
 }
