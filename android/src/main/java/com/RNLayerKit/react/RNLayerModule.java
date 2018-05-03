@@ -171,7 +171,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
             Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
 
-            if(!conversation.getId().toString().equals(convoID) || conversation == null ) {                 
+            if(conversation == null || !conversation.getId().toString().equals(convoID) ) {                 
                 conversation = fetchConvoWithId(convoID, layerClient);
             }         
             
@@ -194,7 +194,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
             Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
 
-            if(!conversation.getId().toString().equals(convoID) || conversation == null ) {                 
+            if(conversation == null || !conversation.getId().toString().equals(convoID) ) {                 
                 conversation = fetchConvoWithId(convoID, layerClient);
             }   
             
@@ -705,7 +705,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
         try {
             Conversation conversation = LayerkitSingleton.getInstance().getConversationGlobal();
 
-            if(!conversation.getId().toString().equals(convoID) || conversation == null ) {               
+            if(conversation == null || !conversation.getId().toString().equals(convoID) ) {               
                 conversation = fetchConvoWithId(convoID, layerClient);
             }
 
