@@ -66,9 +66,11 @@ public class ChangeEventListener implements LayerChangeEventListener {
             					break;
 
             				case "isDeleted":
+                            case "isSent":
 
 		            			writableMap = ConverterHelper.convertChangesToArray(change, mRNLayerModule);
-            					break;
+            				    // Log.v("CHANGESSS", "is sent is delete-->"  + writableMap.toString());
+                                break;
             			}
 	            	}
 
