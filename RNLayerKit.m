@@ -1134,6 +1134,14 @@ RCT_EXPORT_METHOD(authenticateLayerWithUserID:(NSString *)userID header:(NSStrin
 
         if ([changeObject isKindOfClass:[LYRMessage class]]){
          //NSLog(@"layerClientObjectsDidChange LYRMessage %@", thisChange);
+          if(thisChange.type==LYRObjectChangeTypeUpdate && [thisChange.property isEqualToString:@"isSent"]){
+            [self.bridge.eventDispatcher sendAppEventWithName:@"LayerEvent"
+                 body:@{@"source":@"LayerClient",
+                        @"type": @"objectsDidChange",
+                        @"data":[_jsonHelper convertChangeToArray:thisChange]}]; 
+
+          } 
+
           if(thisChange.type==LYRObjectChangeTypeUpdate && [thisChange.property isEqualToString:@"recipientStatusByUserID"]){
             //TODO || message.conversation.participants.size <= 2
             if (self.layerConversation){
