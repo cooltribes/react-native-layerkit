@@ -51,6 +51,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 
 import javax.annotation.Nullable;
 import java.io.InputStream;
@@ -786,9 +787,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 conversation = fetchConvoWithId(convoID, layerClient);
             }
 
-            List<MessagePart> partes = new ArrayList<MessagePart>();
+            Set<MessagePart> partes = new HashSet();
 
-            MessagePart messagePart;
             for (int i = 0; i < parts.size(); i++) {
                 
                 if(parts.getMap(i).getString("type").equals("image/jpg")) {
@@ -801,18 +801,16 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                         Bitmap bm = BitmapFactory.decodeStream(imageStream);
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         bm.compress(Bitmap.CompressFormat.JPEG, 100, baos); //bm is the bitmap object
-                        byte[] decodedBytes = baos.toByteArray();
-                      
-                        messagePart = layerClient.newMessagePart("image/jpg", decodedBytes);                        
-                        partes.add(i,messagePart);
+                        byte[] decodedBytes = baos.toByteArray();                        
+
+                        partes.add(layerClient.newMessagePart("image/jpg", decodedBytes));  
                     }
                     catch (FileNotFoundException ex) {
                         Log.d(TAG, String.format("Error load image: %s", ex.toString()));
                     }
                 } else {
                     //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!texto: %s", parts.getMap(i).getString("type").toString()));
-                    messagePart = layerClient.newMessagePart(parts.getMap(i).getString("type"), parts.getMap(i).getString("message").getBytes());                    
-                    partes.add(i,messagePart);
+                    partes.add(layerClient.newMessagePart(parts.getMap(i).getString("type"), parts.getMap(i).getString("message").getBytes()));
                 }                
             }
 
@@ -865,6 +863,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             Message message = layerClient.newMessage(options, partes);
 
             conversation.send(message);
+
             promise.resolve(YES);
 
         } catch (IllegalViewOperationException e) {
