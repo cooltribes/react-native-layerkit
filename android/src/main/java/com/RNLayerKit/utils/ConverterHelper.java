@@ -321,11 +321,13 @@ public class ConverterHelper {
             /////////////////////////////////////////////
         }
 
-        MessagePart part = message.getMessageParts().iterator().next();
+        Set<MessagePart> parts = message.getMessageParts();
 
-        if (part.getMimeType().equals("text/plain")) {
-            if(part.getData() != null) {
-                messageMap.putString("text", new String(part.getData(), UTF8_CHARSET));
+        for (MessagePart part : parts) {
+            if (part.getMimeType().equals("text/plain")) {
+                if(part.getData() != null) {
+                    messageMap.putString("text", new String(part.getData(), UTF8_CHARSET));
+                }
             }
         }
 
