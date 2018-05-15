@@ -28,13 +28,13 @@ public class IndicatorListener implements LayerTypingIndicatorListener {
         //super.onResume();        
         // Register this Activity to receive remote typing indications from Layer
         layerClient.registerTypingIndicator(this);        
-        Log.d(TAG, "********** Register IndicatorListener");
+        Log.d(TAG, "\n\n********** Register IndicatorListener **********\n\n");
     }   
     public void onPause() {
         //super.onPause();
         // Stop receiving remote typing indications from Layer when this Activity pauses
         layerClient.unregisterTypingIndicator(this);
-        Log.d(TAG, "********** Unregister IndicatorListener");
+        Log.d(TAG, "\n\n********** Unregister IndicatorListener **********\n\n");
     }
 
     @Override

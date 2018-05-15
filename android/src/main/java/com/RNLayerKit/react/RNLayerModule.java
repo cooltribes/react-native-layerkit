@@ -43,6 +43,7 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import com.layer.sdk.services.LayerFcmInstanceIdService;
 import com.google.firebase.iid.FirebaseInstanceIdService;
 import java.io.IOException;
+import com.layer.sdk.LayerClient.DeauthenticationAction;
 
 import java.lang.Long;
 import java.util.Collections;
@@ -252,7 +253,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             }
             layerClient.registerSyncListener(layerSyncListener);  
 
-            layerClient.connect();
+            if (!layerClient.isConnected()) {              
+               layerClient.connect();
+            }
 
             promise.resolve( YES );
 
@@ -267,9 +270,13 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     public void disconnect() {
 
         if (layerClient != null) {
+
             if (layerClient.isConnected()) {              
-                layerClient.deauthenticate();
                 layerClient.disconnect();
+            }
+
+            if(layerClient.isAuthenticated()) {
+                layerClient.deauthenticate(DeauthenticationAction.KEEP_LOCAL_DATA);
                 // Unregister Events
                 layerClient.unregisterAuthenticationListener(authenticationListener);                
                 layerClient.unregisterConnectionListener(connectionListener);
@@ -286,8 +293,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     public void refreshToken(String token) {
 
         String refreshedToken = FirebaseInstanceId.getInstance().getToken();
-        Log.v(TAG, " ------\n--------\n------\n------refreshedToken: " + refreshedToken);
-        Log.v(TAG, " ------\n--------\n------\n------refreshedToken: ");
+        Log.v(TAG, "\n\n ********** refreshedToken: " + refreshedToken + "\n\n");
+        // Log.v(TAG, " ------\n--------\n------\n------refreshedToken: ");
         /*try {
             FirebaseInstanceId.getInstance().deleteInstanceId();
         } catch (IOException e) {
@@ -305,17 +312,21 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
         try {
 
-            LayerkitSingleton.getInstance().setUserIdGlobal(userID);
             LayerkitSingleton.getInstance().setHeaderGlobal(header);
 
-            if (!layerClient.isConnected())  
+            if (!layerClient.isConnected()) {
                 layerClient.connect();
+            }
             
-            if(!layerClient.isAuthenticated())
+            if(!layerClient.isAuthenticated()) {
                 layerClient.authenticate();
+            } else {
+                LayerkitSingleton.getInstance().setUserIdGlobal(userID);
+                layerClient.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
+            }
 
-            if(layerClient.isAuthenticated() && layerClient.isConnected())
-              layerClient.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
+            //if(layerClient.isAuthenticated() && layerClient.isConnected())
+            //  layerClient.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
 
             layerClient.setAutoDownloadSizeThreshold(1024 * 100);
             layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/jpg"));
