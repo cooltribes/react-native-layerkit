@@ -44,6 +44,8 @@ public class ChangeEventListener implements LayerChangeEventListener {
 
 	        WritableMap writableMap = new WritableNativeMap();
 
+            boolean hasData = false;
+
             switch (change.getObjectType()) {
 
             	case MESSAGE:
@@ -61,6 +63,7 @@ public class ChangeEventListener implements LayerChangeEventListener {
             					// Caso 1: conversation opened || chat 1-1
             					if(LayerkitSingleton.getInstance().getConversationGlobal() != null || participants.size() == 2) {
             						writableMap = ConverterHelper.convertChangesToArray(change, mRNLayerModule);
+                                    hasData = true;
             						// Log.v("CHANGESSS", "Case 1 -->"  + LayerkitSingleton.getInstance().getConversationGlobal().getId().toString());
             					}
             					break;
@@ -69,6 +72,7 @@ public class ChangeEventListener implements LayerChangeEventListener {
                             case "isSent":
 
 		            			writableMap = ConverterHelper.convertChangesToArray(change, mRNLayerModule);
+                                hasData = true;
             				    // Log.v("CHANGESSS", "is sent is delete-->"  + writableMap.toString());
                                 break;
             			}
@@ -97,6 +101,7 @@ public class ChangeEventListener implements LayerChangeEventListener {
                                     if(conversation.getId().toString().equals(message.getConversation().getId().toString())) {
 
                                         writableMap = ConverterHelper.convertChangesToArray(change, mRNLayerModule);
+                                        hasData = true;
                                         // Mark Readed
                                         Identity sender = message.getSender();
                                         if(!sender.getUserId().equals(LayerkitSingleton.getInstance().getUserIdGlobal())) {
@@ -130,6 +135,7 @@ public class ChangeEventListener implements LayerChangeEventListener {
             					if(conversationGlobal != null) {
             						if(conversationGlobal.getId().toString().equals(conversationChange.getId().toString())) {
             							writableMap = ConverterHelper.convertChangesToArray(change, mRNLayerModule);
+                                        hasData = true;
                                     }
             					}
             					break;
@@ -139,6 +145,7 @@ public class ChangeEventListener implements LayerChangeEventListener {
             				case "participants":
 
 								writableMap = ConverterHelper.convertChangesToArray(change, mRNLayerModule);
+                                hasData = true;
             					params.putInt("badge", mRNLayerModule.getMessagesCount());
             					break;
             			}
@@ -147,22 +154,26 @@ public class ChangeEventListener implements LayerChangeEventListener {
 	            	// Create
 	            	if(change.getChangeType() == LayerChange.Type.INSERT) {
 	            		writableMap = ConverterHelper.convertChangesToArray(change, mRNLayerModule);
+                        hasData = true;
 	            	}
                     break;
 
                 case IDENTITY:
 
                     writableMap = ConverterHelper.convertChangesToArray(change, mRNLayerModule);
+                    hasData = true;
                     break;
 
                 case MESSAGE_PART:
                     
                     writableMap = ConverterHelper.convertChangesToArray(change, mRNLayerModule);                    
+                    hasData = true;
                     break;
             }
 
-            writableArray.pushMap(writableMap);
-           
+            if(hasData == true) {
+                writableArray.pushMap(writableMap);
+            }
         }
 
         params.putString("source", "LayerClient");
