@@ -321,9 +321,13 @@ public class ConverterHelper {
             /////////////////////////////////////////////
         }
 
-        if (message.getMessageParts().get(0).getMimeType().equals("text/plain")) {
-            if(message.getMessageParts().get(0).getData() != null) {
-                messageMap.putString("text", new String(message.getMessageParts().get(0).getData(), UTF8_CHARSET));
+        Set<MessagePart> parts = message.getMessageParts();
+
+        for (MessagePart part : parts) {
+            if (part.getMimeType().equals("text/plain")) {
+                if(part.getData() != null) {
+                    messageMap.putString("text", new String(part.getData(), UTF8_CHARSET));
+                }
             }
         }
 
@@ -331,14 +335,14 @@ public class ConverterHelper {
 
     }
 
-    private static WritableArray messagePartsToWritableMap(List<MessagePart> messageParts) {
+    private static WritableArray messagePartsToWritableMap(Set<MessagePart> messageParts) {
         WritableArray messagePartArray = new WritableNativeArray();
 
         if (messageParts == null) {
             return null;
         }
-        for (int i = 0; i < messageParts.size(); i++) {
-            messagePartArray.pushMap(messagePartToWritableMap(messageParts.get(i)));
+        for (MessagePart part : messageParts) {
+            messagePartArray.pushMap(messagePartToWritableMap(part));
         }
 
         return messagePartArray;

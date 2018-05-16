@@ -39,7 +39,7 @@ public class AuthenticationListener implements LayerAuthenticationListener {
     @Override
     public void onAuthenticationChallenge(LayerClient client, final String nonce) {
 
-        Log.d(TAG, "On Authentication Challenge");
+        Log.d(TAG, "\n\n********** On Authentication Challenge **********\n\n");
 
         new AutenticationChallenge(client, nonce).execute();
     }
@@ -62,7 +62,7 @@ public class AuthenticationListener implements LayerAuthenticationListener {
             try {
 
                 if (LayerkitSingleton.getInstance().getHeaderGlobal() == null) {
-                    Log.e(TAG, "Header is null");
+                    Log.e(TAG, "\n\n********** Header is null **********\n\n");
                     return null;
                 }
 
@@ -100,7 +100,7 @@ public class AuthenticationListener implements LayerAuthenticationListener {
 
                 try {
                     if (LayerkitSingleton.getInstance().getHeaderGlobal() == null) {
-                        Log.d(TAG, "Header is null");
+                        Log.d(TAG, "\n\n******* Header is null *********\n\n");
                         return null;
                     }
 
@@ -138,7 +138,7 @@ public class AuthenticationListener implements LayerAuthenticationListener {
 
                 if (stream != null) {
                     result = getStringFromInputStream(stream);
-                    Log.d(TAG, String.format("result: %s", result));
+                    Log.d(TAG, String.format("\n\n******* result: %s", result));
                     layerClient.answerAuthenticationChallenge(result);
                 }
 
@@ -191,8 +191,9 @@ public class AuthenticationListener implements LayerAuthenticationListener {
      */
     @Override
     public void onAuthenticated(LayerClient client, String userID) {
-        Log.d(TAG, "On Authenticated");
-        //Start the conversation view after a successful authentication        
+        Log.d(TAG, "\n\n********** On Authenticated **********\n\n" + userID);
+        //Start the conversation view after a successful authentication
+        LayerkitSingleton.getInstance().setUserIdGlobal(userID);
         LayerkitSingleton.getInstance().setUserIdentityGlobal(client.getAuthenticatedUser());
         client.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
     }
@@ -213,7 +214,7 @@ public class AuthenticationListener implements LayerAuthenticationListener {
      */
     @Override
     public void onDeauthenticated(LayerClient client) {
-        Log.d(TAG, "User is deauthenticated.");       
+        Log.d(TAG, "\n\n********** User is deauthenticated **********\n\n");       
         //client.setPresenceStatus(Presence.PresenceStatus.OFFLINE);
         LayerkitSingleton.deleteInstance();
     }

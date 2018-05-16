@@ -31,14 +31,16 @@ public class ConnectionListener implements LayerConnectionListener {
      public void onConnectionConnected(LayerClient layerClient) {
         // Ask the LayerClient to authenticate. If no auth credentials are present,
         // an authentication challenge is issued
-        Log.d(TAG, "********** ConnectionListener Connected");
-        layerClient.authenticate();
+        Log.d(TAG, "\n\n********** ConnectionListener Connected **********\n\n");
+        if(!layerClient.isAuthenticated()) {
+            layerClient.authenticate();
+        }
         //Log.d(TAG, String.format("result: %s", result));
      }
      @Override
      // Called when the LayerClient Disconnected network connection
      public void onConnectionDisconnected(LayerClient layerClient) {
-        Log.d(TAG, "********** ConnectionListener Disconnected");
+        Log.d(TAG, "\n\n********** ConnectionListener Disconnected ************\n\n");
      }
      @Override
      // Called when the LayerClient ConnectionError network connection
