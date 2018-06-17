@@ -363,7 +363,8 @@ RCT_EXPORT_METHOD(sendMessageToConvoID:(NSArray*)parts convoID:(NSString*)convoI
     
     //LYRMessagePart *messagePart = [self createMessagePartTextPlain:messageText];
     //LYRMessage *message = [_layerClient newMessageWithParts:@[messagePart] options:messageOptions error:nil];
-    LYRMessage *message = [_layerClient newMessageWithParts:arrayMessageParts options:messageOptions error:nil];
+    //LYRMessage *message = [_layerClient newMessageWithParts:arrayMessageParts options:messageOptions error:nil];
+    LYRMessage *message = [_layerClient newMessageWithParts:[NSSet setWithArray:arrayMessageParts] options:messageOptions error:nil];
     // Sends the specified message
     // NSLog(@"sendMessageToConvoID, authenticatedUser %@", arrayMessageParts);
     // NSLog(@"sendMessageToConvoID, authenticatedUser %@", [[_layerClient authenticatedUser] displayName]);
