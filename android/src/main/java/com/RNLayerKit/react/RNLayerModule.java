@@ -43,6 +43,7 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import com.layer.sdk.services.LayerFcmInstanceIdService;
 import com.google.firebase.iid.FirebaseInstanceIdService;
 import java.io.IOException;
+import com.layer.sdk.LayerClient.DeauthenticationAction;
 
 import java.lang.Long;
 import java.util.Collections;
@@ -50,6 +51,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 
 import javax.annotation.Nullable;
 import java.io.InputStream;
@@ -252,7 +254,9 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             }
             layerClient.registerSyncListener(layerSyncListener);  
 
-            layerClient.connect();
+            if (!layerClient.isConnected()) {              
+               layerClient.connect();
+            }
 
             promise.resolve( YES );
 
@@ -267,9 +271,13 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     public void disconnect() {
 
         if (layerClient != null) {
+
             if (layerClient.isConnected()) {              
-                layerClient.deauthenticate();
                 layerClient.disconnect();
+            }
+
+            if(layerClient.isAuthenticated()) {
+                layerClient.deauthenticate(DeauthenticationAction.KEEP_LOCAL_DATA);
                 // Unregister Events
                 layerClient.unregisterAuthenticationListener(authenticationListener);                
                 layerClient.unregisterConnectionListener(connectionListener);
@@ -286,8 +294,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
     public void refreshToken(String token) {
 
         String refreshedToken = FirebaseInstanceId.getInstance().getToken();
-        Log.v(TAG, " ------\n--------\n------\n------refreshedToken: " + refreshedToken);
-        Log.v(TAG, " ------\n--------\n------\n------refreshedToken: ");
+        Log.v(TAG, "\n\n ********** refreshedToken: " + refreshedToken + "\n\n");
+        // Log.v(TAG, " ------\n--------\n------\n------refreshedToken: ");
         /*try {
             FirebaseInstanceId.getInstance().deleteInstanceId();
         } catch (IOException e) {
@@ -305,17 +313,21 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
 
         try {
 
-            LayerkitSingleton.getInstance().setUserIdGlobal(userID);
             LayerkitSingleton.getInstance().setHeaderGlobal(header);
 
-            if (!layerClient.isConnected())  
+            if (!layerClient.isConnected()) {
                 layerClient.connect();
+            }
             
-            if(!layerClient.isAuthenticated())
+            if(!layerClient.isAuthenticated()) {
                 layerClient.authenticate();
+            } else {
+                LayerkitSingleton.getInstance().setUserIdGlobal(userID);
+                layerClient.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
+            }
 
-            if(layerClient.isAuthenticated() && layerClient.isConnected())
-              layerClient.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
+            //if(layerClient.isAuthenticated() && layerClient.isConnected())
+            //  layerClient.setPresenceStatus(Presence.PresenceStatus.AVAILABLE);
 
             layerClient.setAutoDownloadSizeThreshold(1024 * 100);
             layerClient.setAutoDownloadMimeTypes(Arrays.asList("image/jpg"));
@@ -775,9 +787,8 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                 conversation = fetchConvoWithId(convoID, layerClient);
             }
 
-            List<MessagePart> partes = new ArrayList<MessagePart>();
+            Set<MessagePart> partes = new HashSet();
 
-            MessagePart messagePart;
             for (int i = 0; i < parts.size(); i++) {
                 
                 if(parts.getMap(i).getString("type").equals("image/jpg")) {
@@ -790,18 +801,16 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
                         Bitmap bm = BitmapFactory.decodeStream(imageStream);
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         bm.compress(Bitmap.CompressFormat.JPEG, 100, baos); //bm is the bitmap object
-                        byte[] decodedBytes = baos.toByteArray();
-                      
-                        messagePart = layerClient.newMessagePart("image/jpg", decodedBytes);                        
-                        partes.add(i,messagePart);
+                        byte[] decodedBytes = baos.toByteArray();                        
+
+                        partes.add(layerClient.newMessagePart("image/jpg", decodedBytes));  
                     }
                     catch (FileNotFoundException ex) {
                         Log.d(TAG, String.format("Error load image: %s", ex.toString()));
                     }
                 } else {
                     //Log.d(TAG, String.format("!!!!!!!!!!!!!!!!!!!!texto: %s", parts.getMap(i).getString("type").toString()));
-                    messagePart = layerClient.newMessagePart(parts.getMap(i).getString("type"), parts.getMap(i).getString("message").getBytes());                    
-                    partes.add(i,messagePart);
+                    partes.add(layerClient.newMessagePart(parts.getMap(i).getString("type"), parts.getMap(i).getString("message").getBytes()));
                 }                
             }
 
@@ -854,6 +863,7 @@ public class RNLayerModule extends ReactContextBaseJavaModule {
             Message message = layerClient.newMessage(options, partes);
 
             conversation.send(message);
+
             promise.resolve(YES);
 
         } catch (IllegalViewOperationException e) {
